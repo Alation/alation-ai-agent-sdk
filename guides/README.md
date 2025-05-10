@@ -1,10 +1,16 @@
 # Usage Guides and Examples
 
-Here are a handful of examples and guides for working with the Alation AI Agent SDK.
+Here are a handful of guides & examples to show you how to work with the Alation AI Agent SDK.
 
-## Langchain
+## General
 
-- [Langchain Integration](./langchain/README.md)
+- [Integration Planning](./planning.md)
+- [Using Signatures](./signature.md)
+- [Supported Object Types and Fields](./supported.md)
+
+## LangChain
+
+- [LangChain Integration](./langchain/README.md)
 - [Basic Usage](../python/dist-langchain/examples/basic_usage/README.md)
 - [Multi Agent Usage](../python/dist-langchain/examples/multi_agent_return_eligibility/README.md)
 

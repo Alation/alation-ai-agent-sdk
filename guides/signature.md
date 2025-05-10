@@ -1,8 +1,8 @@
-# Using Signatures with Alation AI Agent SDK
+# Using Signatures
 
 ## What are Signatures?
 
-The signature feature allows you to customize the data returned from the Alation context tool. This provides fine-grained control over the response format and content, enabling efficient and targeted retrieval from your Alation data catalog.
+The signature feature allows you to customize the data returned from the Alation context tool (`alation-context`). This provides fine-grained control over the response format and content, enabling efficient and targeted retrieval from your Alation data catalog.
 
 Signatures provide three main benefits:
 - **Control which fields are returned** for each object type (tables, columns, etc.)
