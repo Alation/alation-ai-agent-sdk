@@ -1,0 +1,31 @@
+name: Build & Test CI Pipeline
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches-ignore: [main]
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: write
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+
+  test-sdk:
+    needs: build
+    uses: ./.github/workflows/test-sdk.yml
+
+  test-mcp:
+    needs: build
+    uses: ./.github/workflows/test-mcp.yml
+
+  test-langchain:
+    needs: build
+    uses: ./.github/workflows/test-langchain.yml
+
+  summary:
+    needs: [test-sdk, test-mcp, test-langchain]
+    uses: ./.github/workflows/summary.yml

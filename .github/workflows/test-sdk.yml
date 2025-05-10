@@ -1,0 +1,54 @@
+name: Test SDK
+permissions:
+  contents: read
+on:
+  workflow_call:
+jobs:
+  test-sdk:
+    runs-on: ubuntu-latest-4-cores
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: sdk-wheel
+          path: artifacts
+
+      - run: pip install artifacts/*.whl pytest==8.3.5
+
+      - run: |
+          set +e
+          pytest python/core-sdk --tb=short --maxfail=50 --disable-warnings -rF > sdk-test-output.log
+          echo $? > sdk-exit-code.txt
+          set -e
+
+      - run: |
+          TEST_EXIT_CODE=$(cat sdk-exit-code.txt)
+          TOTAL=$(grep -oP 'collected \K[0-9]+' sdk-test-output.log || echo "0")
+          PASSED=$(grep -oP '([0-9]+) passed' sdk-test-output.log | grep -oP '^[0-9]+' || echo "0")
+          FAILED=$((TOTAL - PASSED))
+          {
+            echo "### ✅ SDK Test Summary"
+            echo ""
+            echo "| Suite | Total | Passed | Failed |"
+            echo "|--------|--------|--------|--------|"
+            echo "| SDK    | $TOTAL | $PASSED | $FAILED |"
+            if [ "$FAILED" -gt 0 ]; then
+              echo ""
+              echo "**❌ Failed Tests:**"
+              echo '```'
+              grep -Eo 'sdk/.*::.*' sdk-test-output.log || echo "Failed test names not found"
+              echo '```'
+            fi
+          } > sdk-test-summary.md
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sdk-test-summary
+          path: sdk-test-summary.md
+
+      - run: exit $(cat sdk-exit-code.txt)

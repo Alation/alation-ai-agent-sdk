@@ -1,0 +1,58 @@
+name: Test MCP
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  test-mcp:
+    runs-on: ubuntu-latest-4-cores
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Download all wheels
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - run: pip install artifacts/**/*.whl pytest==8.3.5
+
+      - run: |
+          set +e
+          pytest python/dist-mcp/tests/test_mcp_server.py --tb=short --maxfail=50 --disable-warnings -rF > mcp-test-output.log
+          echo $? > mcp-exit-code.txt
+          cat mcp-test-output.log
+          set -e
+
+      - run: |
+          TEST_EXIT_CODE=$(cat mcp-exit-code.txt)
+          TOTAL=$(grep -oP 'collected \K[0-9]+' mcp-test-output.log || echo "0")
+          PASSED=$(grep -oP '([0-9]+) passed' mcp-test-output.log | grep -oP '^[0-9]+' || echo "0")
+          FAILED=$((TOTAL - PASSED))
+          {
+            echo "### 🔧 MCP Test Summary"
+            echo ""
+            echo "| Suite | Total | Passed | Failed |"
+            echo "|--------|--------|--------|--------|"
+            echo "| MCP    | $TOTAL | $PASSED | $FAILED |"
+            if [ "$FAILED" -gt 0 ]; then
+              echo ""
+              echo "**❌ Failed Tests:**"
+              echo '```'
+              grep -Eo 'test_.*::.*' mcp-test-output.log || echo "Failed test names not found"
+              echo '```'
+            fi
+          } > mcp-test-summary.md
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mcp-test-summary
+          path: mcp-test-summary.md
+
+      - run: exit $(cat mcp-exit-code.txt)

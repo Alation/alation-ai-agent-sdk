@@ -1,0 +1,86 @@
+name: Post PR Summary
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  post-summary:
+    name: Post Combined Test Summary
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download SDK Summary
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: sdk-test-summary
+          path: summaries/sdk
+
+      - name: Download MCP Summary
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: mcp-test-summary
+          path: summaries/mcp
+
+      - name: Download Langchain Summary
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: langchain-test-summary
+          path: summaries/langchain
+
+      - name: Combine summaries into one table
+        run: |
+          echo "### ✅ Combined Test Summary" > test-summary.md
+          echo "" >> test-summary.md
+          echo "| Suite | Total | Passed | Failed |" >> test-summary.md
+          echo "|-------|-------|--------|--------|" >> test-summary.md
+
+          grep '^| SDK' summaries/sdk/sdk-test-summary.md >> test-summary.md || true
+          grep '^| MCP' summaries/mcp/mcp-test-summary.md >> test-summary.md || true
+          grep '^| LANGCHAIN' summaries/langchain/langchain-test-summary.md >> test-summary.md || true
+
+          if [ -f summaries/sdk/sdk-test-summary.md ] && grep -q '\*\*❌ Failed Tests:' summaries/sdk/sdk-test-summary.md; then
+            echo "" >> test-summary.md
+            echo "**❌ SDK Failed Tests:**" >> test-summary.md
+            sed -n '/\*\*❌ Failed Tests:/,/```/p' summaries/sdk/sdk-test-summary.md | tail -n +2 >> test-summary.md || true
+          fi
+
+          if [ -f summaries/mcp/mcp-test-summary.md ] && grep -q '\*\*❌ Failed Tests:' summaries/mcp/mcp-test-summary.md; then
+            echo "" >> test-summary.md
+            echo "**❌ MCP Failed Tests:**" >> test-summary.md
+            sed -n '/\*\*❌ Failed Tests:/,/```/p' summaries/mcp/mcp-test-summary.md | tail -n +2 >> test-summary.md || true
+          fi
+
+          if [ -f summaries/langchain/langchain-test-summary.md ] && grep -q '\*\*❌ Failed Tests:' summaries/langchain/langchain-test-summary.md; then
+            echo "" >> test-summary.md
+            echo "**❌ LANGCHAIN Failed Tests:**" >> test-summary.md
+            sed -n '/\*\*❌ Failed Tests:/,/```/p' summaries/langchain/langchain-test-summary.md | tail -n +2 >> test-summary.md || true
+          fi
+
+      - name: Find existing summary comment
+        id: find-comment
+        uses: peter-evans/find-comment@v3
+        continue-on-error: true
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: github-actions[bot]
+          body-includes: "Combined Test Summary"
+
+      - name: Post or update test summary in PR
+        uses: peter-evans/create-or-update-comment@v4
+        continue-on-error: true
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-file: test-summary.md
+          token: ${{ secrets.GITHUB_TOKEN }}
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          edit-mode: replace

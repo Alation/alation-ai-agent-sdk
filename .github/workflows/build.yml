@@ -1,0 +1,53 @@
+name: Build SDK & MCP
+on:
+  workflow_call:
+    inputs:
+      run-sdk:
+        type: boolean
+        default: true
+      run-mcp:
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest-4-cores
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - run: pip install pdm pytest==8.3.5
+
+      - name: Build SDK
+        working-directory: python/core-sdk
+        run: pdm build
+
+      - name: Build MCP
+        working-directory: python/dist-mcp
+        run: pdm build
+
+      - name: Build Langchain
+        working-directory: python/dist-langchain
+        run: pdm build
+
+      - name: Upload SDK wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdk-wheel
+          path: python/core-sdk/dist/*.whl
+
+      - name: Upload MCP wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-wheel
+          path: python/dist-mcp/dist/*.whl
+
+      - name: Upload Langchain wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: langchain-wheel
+          path: python/dist-langchain/dist/*.whl
