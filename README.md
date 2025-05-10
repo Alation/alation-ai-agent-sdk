@@ -142,6 +142,6 @@ Enable agentic experiences with the Alation data catalog.
 ### LangChain
 
 Harness the SDK to build complex agents and workflows.
-- [LangChain Integration](./guides/langchain/README.md) - How to integrate the SDK into your LangChain
-- [Basic Usage Example](./python/dist-langchain/examples/basic_usage/README.md)
-- [Multi Agent Example](./python/dist-langchain/examples/multi_agent_return_eligibility/README.md)
+- [LangChain Integration](./guides/langchain/README.md) - How to integrate the SDK into your LangChain agents.
+- [Basic Usage Example](./python/dist-langchain/examples/basic_usage/README.md) - A simple example.
+- [Multi Agent Example](./python/dist-langchain/examples/multi_agent_return_eligibility/README.md) - A multi agent workflow with several SDK integration points.
