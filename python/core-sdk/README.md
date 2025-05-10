@@ -36,7 +36,9 @@ sdk = AlationAIAgentSDK(
 )
 
 # Ask a question about your data
-response = sdk.get_context("What tables contain sales information?")
+response = sdk.get_context(
+    "What tables contain sales information?"
+)
 print(response)
 
 # Use a signature to customize the response format
@@ -46,7 +48,10 @@ signature = {
         }
     }
 
-response = sdk.get_context("What are the customer tables?", signature)
+response = sdk.get_context(
+    "What are the customer tables?",
+    signature
+)
 print(response)
 ```
 
@@ -65,7 +70,10 @@ table_signature = {
     }
 }
 
-response = sdk.get_context("What are our fact tables?", table_signature)
+response = sdk.get_context(
+    "What are our fact tables?",
+    table_signature
+)
 ```
 
 For detailed documentation on signature format and capabilities, see [Using Signatures](../signature.md).
@@ -76,7 +84,3 @@ For detailed documentation on signature format and capabilities, see [Using Sign
 # Get all available tools
 tools = sdk.get_tools()
 ```
-
-## Advanced Usage
-
-See the [examples directory](../examples/) for more advanced usage scenarios.

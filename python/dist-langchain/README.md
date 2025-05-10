@@ -1,4 +1,4 @@
-# Alation AI Agent SDK - Langchain Integration
+# Langchain Integration
 
 This package integrates the Alation AI Agent SDK with the Langchain framework, allowing Langchain agents to leverage metadata from the Alation Data Catalog.
 
@@ -57,7 +57,9 @@ agent = create_openai_functions_agent(llm=llm, tools=tools, prompt=prompt)
 executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
 # Run the agent
-response = executor.invoke({"input": "What tables contain customer data?"})
+response = executor.invoke({
+  "input": "What tables contain customer data?"}
+)
 print(response)
 ```
 

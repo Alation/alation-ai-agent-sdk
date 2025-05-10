@@ -34,7 +34,11 @@ The integration requires these main components:
 
 3. **Agent Setup**
    ```python
-   agent = create_openai_functions_agent(llm=llm, tools=tools, prompt=prompt)
+   agent = create_openai_functions_agent(
+      llm=llm,
+      tools=tools,
+      prompt=prompt
+   )
    executor = AgentExecutor(agent=agent, tools=tools)
    ```
    
@@ -57,7 +61,7 @@ signature = {
 }
 
 # Use it with your agent
-response = agent_executor.run({
+response = executor.run({
     "question": "What tables contain customer data?",
     "signature": signature
 })

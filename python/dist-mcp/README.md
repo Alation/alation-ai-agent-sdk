@@ -1,6 +1,8 @@
-# Alation AI Agent SDK - MCP Integration
+# MCP Integration
 
-This package provides an MCP (Model Context Protocol) server that exposes Alation Data Catalog capabilities to AI agents via the MCP standard.
+The SDK includes built-in support for the Model Context Protocol (MCP), which enables AI models to retrieve knowledge from Alation during inference.
+
+This package provides an MCP server that exposes Alation Data Catalog capabilities to AI agents.
 
 ## Overview
 
@@ -37,6 +39,9 @@ Run the server:
 ```bash
 python -m alation_ai_agent_mcp
 ```
+
+> Note: Running this command only starts the MCP server - you won't be able to ask questions directly. The server needs to be connected to an MCP client (like Claude Desktop or LibreChat) or tested with the MCP Inspector tool. See the guides below for details on connecting to clients.
+
 
 ### Example Usage with MCP Clients
 Please refer to our guides for specific examples of:
