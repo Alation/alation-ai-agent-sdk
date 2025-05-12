@@ -1,6 +1,6 @@
 # Planning and Integration
 
-To get the most out of the SDK it's important to maximize the content in the data catalog for your agents. Review the next sections to determine how you'd like to leverage it via signatures.
+To get the most out of the SDK it's important to maximize the content in the Alation Data Catalog for your agents. Review the next sections to determine how you'd like to leverage it via signatures.
 
 ### Decide which objects should be used
 

@@ -6,7 +6,7 @@ The Alation AI Agent SDK enables AI agents to access and leverage metadata from 
 
 This SDK empowers AI agents to:
 
-- Retrieve contextual information from Alation's data catalog
+- Retrieve contextual information from Alation's Data Catalog
 - Use natural language to search for relevant metadata
 - Customize response formats using flexible signature specifications
 - Integrate seamlessly with AI frameworks like LangChain and MCP
@@ -120,28 +120,28 @@ response = sdk.get_context(
 )
 ```
 
-For more information about signatures, refer to [Using Signatures](guides/signature.md).
+For more information about signatures, refer to [Using Signatures](./guides/signature.md).
 
 ## Guides and Example Agents
 
 ### General
-- [Planning an Integration](./guides/planning.md) - Practical considerations for getting the most out of your agents and the Alation data catalog.
+- [Planning an Integration](./guides/planning.md) - Practical considerations for getting the most out of your agents and the Alation Data Catalog.
 - [Using Signatures](./guides/signature.md) - How to customize your agent with concrete examples.
 - [Supported Object Types and Fields](./guides/supported.md) - See what's available.
 
 
 ### Model Context Protocol (MCP)
 
-Enable agentic experiences with the Alation data catalog.
+Enable agentic experiences with the Alation Data Catalog.
 
-- [MCP Integration](./guides/mcp/README.md) - Getting the Alation MCP server up and running.
+- [MCP Integration](./guides/mcp/) - Getting the Alation MCP server up and running.
 - [Testing with MCP Inspector](./guides/mcp/testing_with_mcp_inspector.md) - Steps for debugging and verification.
-- [Claude Desktop Integration](./mcp/guides/claude_desktop.md) - Leverage the Alation MCP server within Claude Desktop.
-- [LibreChat Integration](./mcp/guides/librechat.md) - Create assistants and agents alike.
+- [Claude Desktop Integration](./guides/mcp/claude_desktop.md) - Leverage the Alation MCP server within Claude Desktop.
+- [LibreChat Integration](./guides/mcp/librechat.md) - Create assistants and agents alike.
 
 ### LangChain
 
 Harness the SDK to build complex agents and workflows.
-- [LangChain Integration](./guides/langchain/README.md) - How to integrate the SDK into your LangChain agents.
-- [Basic Usage Example](./python/dist-langchain/examples/basic_usage/README.md) - A simple example.
-- [Multi Agent Example](./python/dist-langchain/examples/multi_agent_return_eligibility/README.md) - A multi agent workflow with several SDK integration points.
+- [LangChain Integration](./python/dist-langchain/) - How to integrate the SDK into your LangChain agents.
+- [Basic Usage Example](./python/dist-langchain/examples/basic_usage/) - A simple example.
+- [Multi Agent Example](./python/dist-langchain/examples/multi_agent_return_eligibility/) - A multi agent workflow with several SDK integration points.
