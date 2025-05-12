@@ -114,10 +114,10 @@ python run.py
 
 ## Further Resources
 
-- [Alation AI Agent SDK Documentation](https://github.com/Alation/ai-agent-sdk)
+- [Alation AI Agent SDK Documentation](https://github.com/Alation/alation-ai-agent-sdk)
 - [LangChain Documentation](https://python.langchain.com/docs/get_started/introduction)
 - [LangGraph Documentation](https://python.langchain.com/docs/langgraph)
 - [Anthropic's Building Effective Agents](https://www.anthropic.com/engineering/building-effective-agents)
-- [Model Context Protocol Guide](https://github.com/Alation/ai-agent-sdk/blob/main/guides/mcp/readme.md)
+- [Model Context Protocol Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/mcp/readme.md)
 
 ---

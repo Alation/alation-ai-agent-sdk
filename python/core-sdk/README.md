@@ -76,7 +76,7 @@ response = sdk.get_context(
 )
 ```
 
-For detailed documentation on signature format and capabilities, see [Using Signatures](../signature.md).
+For detailed documentation on signature format and capabilities, see [Using Signatures](../../guides/signature.md).
 ### Getting Available Tools
 
 

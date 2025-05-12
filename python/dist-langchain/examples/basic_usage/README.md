@@ -1,6 +1,6 @@
 # LangChain Basic Usage Example
 
-This example demonstrates how to create a basic LangChain agent that integrates with the [Alation AI Agent SDK](https://github.com/Alation/ai-agent-sdk) and uses OpenAI's GPT models to query Alation’s metadata catalog. The agent processes natural language questions and returns structured responses based on metadata from the Alation catalog.
+This example demonstrates how to create a basic LangChain agent that integrates with the [Alation AI Agent SDK](https://github.com/Alation/alation-ai-agent-sdk) and uses OpenAI's GPT models to query Alation’s metadata catalog. The agent processes natural language questions and returns structured responses based on metadata from the Alation catalog.
 
 ## Requirements
 
