@@ -17,6 +17,6 @@ Here are a handful of guides & examples to show you how to work with the Alation
 
 ## LangChain
 
-- [LangChain Integration](../../python/dist-langchain/)
+- [LangChain Integration](../python/dist-langchain/)
 - [Basic Usage](../python/dist-langchain/examples/basic_usage/)
 - [Multi Agent Usage](../python/dist-langchain/examples/multi_agent_return_eligibility/)
