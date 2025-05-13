@@ -24,9 +24,8 @@ def create_server():
     # Initialize Alation SDK
     alation_sdk = AlationAIAgentSDK(base_url, user_id, refresh_token)
 
-    @mcp.tool(name=alation_sdk.context_tool.name)
+    @mcp.tool(name=alation_sdk.context_tool.name, description=alation_sdk.context_tool.description)
     def alation_context(question: str, signature: Dict[str, Any] | None = None) -> str:
-        f"""{alation_sdk.context_tool.description}"""
         result = alation_sdk.get_context(question, signature)
         return str(result)
 

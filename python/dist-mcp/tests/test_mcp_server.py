@@ -43,9 +43,10 @@ def mock_fastmcp():
     mock_mcp_instance = MagicMock()
     mock_mcp_instance.tools = {}
 
-    def mock_tool_decorator(name):
+    def mock_tool_decorator(name, description):
         def decorator(func):
             mock_mcp_instance.tools[name] = MagicMock(__wrapped__=func)
+            mock_mcp_instance.tools[description] = MagicMock(__wrapped__=func)
             return func
 
         return decorator
@@ -101,7 +102,10 @@ def test_tool_registration(manage_environment_variables, mock_alation_sdk, mock_
     server.create_server()
 
     expected_tool_name = mock_sdk_instance.context_tool.name
-    mock_mcp_instance.tool.assert_called_once_with(name=expected_tool_name)
+    expected_description = mock_sdk_instance.context_tool.description
+    mock_mcp_instance.tool.assert_called_once_with(
+        name=expected_tool_name, description=expected_description
+    )
     assert expected_tool_name in mock_mcp_instance.tools
     assert isinstance(mock_mcp_instance.tools[expected_tool_name], MagicMock)
     assert hasattr(mock_mcp_instance.tools[expected_tool_name], "__wrapped__")
