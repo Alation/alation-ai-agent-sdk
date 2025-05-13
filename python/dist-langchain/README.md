@@ -84,4 +84,4 @@ print(response)
 ```
 
 
-See the [examples directory](examples/) for a complete example of a return eligibility agent built with Langchain and Alation.
+See the [examples directory](https://github.com/Alation/alation-ai-agent-sdk/tree/main/python/dist-langchain/examples/) for a complete example of a return eligibility agent built with Langchain and Alation.
