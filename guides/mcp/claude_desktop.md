@@ -6,49 +6,13 @@ This guide explains how to set up and use the Alation Model Context Protocol (MC
 
 - [Claude Desktop](https://claude.ai/download) application installed (macOS or Windows)
 - Python 3.10 or higher
-- Access to an Alation instance with valid credentials
+- Access to an Alation Cloud Service instance
+- Your Alation user ID
+- A valid refresh token created from your user account in Alation (Instructions on how to obtains one are available at the [developer documentation portal](https://developer.alation.com/dev/docs/authentication-into-alation-apis#create-a-refresh-token-via-the-ui))
 
-## Installation
+## Quick start
 
-### Step 1: Clone the Repository (TODO: pip install when we have package published)
-
-Clone the repository to your local machine:
-
-```bash
-git clone https://github.com/Alation/ai-agent-sdk.git
-cd ai-agent-sdk
-```
-
-### Step 2: Create and Activate a Virtual Environment
-
-Create and activate a Python virtual environment to isolate your dependencies:
-
-```bash
-# Create a virtual environment
-python -m venv venv
-
-# Activate the virtual environment
-# On macOS/Linux:
-source venv/bin/activate
-# On Windows:
-venv\Scripts\activate
-```
-
-### Step 3: Install the Package with All Dependencies
-
-Install the package in development mode with all required dependencies:
-
-```bash
-# Navigate to the python directory if necessary
-cd python
-
-# Install with all dependencies
-pip install pdm
-cd dist-mcp
-pdm install
-```
-
-### Step 4: Configure Claude Desktop
+### Step 1: Configure Claude Desktop
 
 1. Open Claude Desktop and click on the Claude menu in the top menu bar
 2. Select "Settings..."
@@ -59,39 +23,49 @@ This will create or open the configuration file at:
 - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 
-### Step 5: Add the Alation MCP Server Configuration
+### Method 1: Using `uvx`
+> This method requires minimal setup, uvx downloads and installs the package in a isolated environment; Ensure uvx is installed in your environment
 
-Add the following configuration to your `claude_desktop_config.json` file:
+Add the following configuration to your `claude_desktop_config.json`. See [here](https://modelcontextprotocol.io/quickstart/user) for more details.
 
 ```json
 {
   "mcpServers": {
     "alation": {
-      "command": "/full/path/to/python",
+      "command": "uvx",
       "args": [
-        "-m",
-        "alation_ai_agent_mcp"
+        "--from", "alation-ai-agent-mcp","start-mcp-server"
       ],
       "env": {
-        "ALATION_BASE_URL": "https://your-alation-instance.com",
-        "ALATION_USER_ID": "123456",
-        "ALATION_REFRESH_TOKEN": "your-refresh-token"
+        "ALATION_BASE_URL": "https://company.alationcloud.com",
+        "ALATION_USER_ID": "98",
+        "ALATION_REFRESH_TOKEN":"<token>"
       }
     }
-  }
+}
 }
 ```
 
-**Important Notes:**
-- Replace `/full/path/to/python` with the absolute path to your Python executable
-  - On macOS/Linux: Find it with `which python` (while your virtual environment is activated)
-  - On Windows: Find it with `where python` (while your virtual environment is activated)
-- Replace the Alation variables with your actual values:
-  - `https://your-alation-instance.com` with your actual Alation instance URL
-  - `123456` with your numeric Alation user ID
-  - `your-refresh-token` with your Alation refresh token
+### Method 2: Using Docker
+> This assumes you've already locally built a docker image following the instructions from [this guide](https://github.com/Alation/alation-ai-agent-sdk/tree/main/python/dist-mcp/README.md#debugging-the-server)
+```json
+{
+  "mcpServers": {
+    "alation-context-tool": {
+      "command": "docker",
+      "args": [
+        "run","-i","--rm",
+        "-e", "ALATION_BASE_URL=https://company.alationcloud.com",
+        "-e", "ALATION_USER_ID=98",
+        "-e", "ALATION_REFRESH_TOKEN=<token>",
+        "alation-mcp-server:latest"
+      ]
+    }
+}
+}
+```
 
-### Step 6: Save and Restart Claude Desktop
+### Step 2: Save and Restart Claude Desktop
 
 1. Save the configuration file
 2. Completely close Claude Desktop
