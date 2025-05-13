@@ -1,0 +1,10 @@
+# Refer: https://help.github.com/articles/about-codeowners/
+# NOTE: 1. Never use individual owners here - use groups
+#       2. Order is important; the last matching pattern takes the most precedence.
+
+################################################################################
+#           Everything                                                         #
+################################################################################
+# Start with everything and split when it grows bigger
+
+@Alation/co-ai-agent-sdk
