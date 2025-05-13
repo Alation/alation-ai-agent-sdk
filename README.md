@@ -23,19 +23,19 @@ The project is organized into multiple components:
 
 The core SDK provides the foundation for interacting with the Alation API. It handles authentication, request formatting, and response parsing.
 
-[Learn more about the Core SDK](./python/core-sdk/README.md)
+[Learn more about the Core SDK](https://github.com/Alation/alation-ai-agent-sdk/tree/main/python/core-sdk/)
 
 ### LangChain Integration (`alation-ai-agent-langchain`)
 
 This component integrates the SDK with the LangChain framework, enabling the creation of sophisticated AI agents that can reason about your data catalog.
 
-[Learn more about the LangChain Integration](./python/dist-langchain/README.md)
+[Learn more about the LangChain Integration](https://github.com/Alation/alation-ai-agent-sdk/tree/main/python/dist-langchain/)
 
 ### MCP Integration (`alation-ai-agent-mcp`)
 
 The MCP integration provides an MCP-compatible server that exposes Alation's context capabilities to any MCP client.
 
-[Learn more about the MCP Integration](./python/dist-mcp/README.md)
+[Learn more about the MCP Integration](https://github.com/Alation/alation-ai-agent-sdk/tree/main/python/dist-mcp/)
 
 ## Getting Started
 
@@ -120,28 +120,28 @@ response = sdk.get_context(
 )
 ```
 
-For more information about signatures, refer to [Using Signatures](./guides/signature.md).
+For more information about signatures, refer to [Using Signatures](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/signature.md).
 
 ## Guides and Example Agents
 
 ### General
-- [Planning an Integration](./guides/planning.md) - Practical considerations for getting the most out of your agents and the Alation Data Catalog.
-- [Using Signatures](./guides/signature.md) - How to customize your agent with concrete examples.
-- [Supported Object Types and Fields](./guides/supported.md) - See what's available.
+- [Planning an Integration](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/planning.md) - Practical considerations for getting the most out of your agents and the Alation Data Catalog.
+- [Using Signatures](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/signature.md) - How to customize your agent with concrete examples.
+- [Supported Object Types and Fields](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/supported.md) - See what's available.
 
 
 ### Model Context Protocol (MCP)
 
 Enable agentic experiences with the Alation Data Catalog.
 
-- [MCP Integration](./guides/mcp/) - Getting the Alation MCP server up and running.
-- [Testing with MCP Inspector](./guides/mcp/testing_with_mcp_inspector.md) - Steps for debugging and verification.
-- [Claude Desktop Integration](./guides/mcp/claude_desktop.md) - Leverage the Alation MCP server within Claude Desktop.
-- [LibreChat Integration](./guides/mcp/librechat.md) - Create assistants and agents alike.
+- [MCP Integration](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/mcp/) - Getting the Alation MCP server up and running.
+- [Testing with MCP Inspector](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/mcp/testing_with_mcp_inspector.md) - Steps for debugging and verification.
+- [Claude Desktop Integration](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/mcp/claude_desktop.md) - Leverage the Alation MCP server within Claude Desktop.
+- [LibreChat Integration](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/mcp/librechat.md) - Create assistants and agents alike.
 
 ### LangChain
 
 Harness the SDK to build complex agents and workflows.
-- [LangChain Integration](./python/dist-langchain/) - How to integrate the SDK into your LangChain agents.
-- [Basic Usage Example](./python/dist-langchain/examples/basic_usage/) - A simple example.
-- [Multi Agent Example](./python/dist-langchain/examples/multi_agent_return_eligibility/) - A multi agent workflow with several SDK integration points.
+- [LangChain Integration](https://github.com/Alation/alation-ai-agent-sdk/tree/main/python/dist-langchain/) - How to integrate the SDK into your LangChain agents.
+- [Basic Usage Example](https://github.com/Alation/alation-ai-agent-sdk/tree/main/python/dist-langchain/examples/basic_usage/) - A simple example.
+- [Multi Agent Example](https://github.com/Alation/alation-ai-agent-sdk/tree/main/python/dist-langchain/examples/multi_agent_return_eligibility/) - A multi agent workflow with several SDK integration points.
