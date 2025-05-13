@@ -56,15 +56,15 @@ Confirm that LibreChat successfully loads the `alation` MCP server. If there are
 
 1. In the LibreChat UI, navigate to the agent builder using the right side navigation bar
 
-<img width="320" alt="Screenshot 2025-05-05 at 8 08 31 PM" src="./librechat-agent-builder-ui.png" />
+<img width="320" alt="LibreChat Agent Builder UI" src="./images/librechat-agent-builder-ui.png" />
 
 2. Scroll down to find `Add tools`
 
-<img width="300" alt="Screenshot 2025-05-05 at 8 08 25 PM" src="./librechat-agent-builder-add-tools.png" />
+<img width="300" alt="LibreChat add tools UI" src="./images/librechat-agent-builder-add-tools.png" />
 
-4. If installed correcntly, you should see the `Alation Context` tool listed
+4. If installed correctly, you should see the `Alation Context` tool listed
 
-![Screenshot 2025-05-05 at 8 08 17 PM](./librechat-select-agent-tools.jpg)
+![select agent tools](./images/librechat-select-agent-tools.jpg)
 
 ### Example question
 ```text
