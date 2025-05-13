@@ -7,55 +7,39 @@ This guide explains how to set up and use the **Alation Context API MCP server**
 
 ## Prerequisites
 
-- **LibreChat** self-hosted environment properly installed
-- Python 3.10 or later
-- Access to Alation instance with:
-  - User ID
-  - valid Refresh token
-
----
-
-## Installation
-
-### Step 1: Clone the Repository
-
-```bash
-git clone https://github.com/Alation/ai-agent-sdk.git
-cd ai-agent-sdk
-```
-### Step 2: Install the required dependencies
-
-```bash
-cd python/ai_agent_sdk/dist-mcp
-pip install -e ".[all]"
-```
+- Installed and configured **LibreChat** client v0.7.8 or newer ([instructions](https://www.librechat.ai/docs/quick_start/local_setup))
+- Access to an Alation Cloud Service instance
+- Your Alation user ID
+- A valid refresh token created from your user account in Alation (Instructions on how to obtains one are available at the [developer documentation portal](https://developer.alation.com/dev/docs/authentication-into-alation-apis#create-a-refresh-token-via-the-ui))
 
 ---
 
 ## Configuration
 
-### Step 4: Add MCP Server Entry in `librechat.yaml`
+### Step 1: Add MCP Server Entry in `librechat.yaml`
 
-Edit your `librechat.yaml` configuration to define a new `mcpServer` using the `stdio` protocol.
-The LibreChat Docker image includes the [`uv`](https://github.com/astral-sh/uv) package manager by default (from version v0.7.8-rc1).
+Edit your `librechat.yaml` configuration to define a new `mcpServer` using the `stdio` protocol. Alation MCP server currently only supports the STDIO protocol.
+
 
 ```yaml
 mcpServers:
   alation:
     type: stdio
-    command: uv
+    command: uvx
     args:
-      - "-m"
-      - "alation_ai_agent_mcp"
+      - "--from"
+      - "alation-ai-agent-mcp"
+      - "start-mcp-server"
     env:
-      ALATION_API_BASE: "https://your.alation.instance"
-      USER_ID: "3"
-      REFRESH_TOKEN: "your-token"
-    iconPath: "https://i.postimg.cc/mZVp7vF9/Alation-logo.png"
+      ALATION_REFRESH_TOKEN: "<your-refresh-token>"
+      ALATION_USER_ID: "<user-id>"
+      ALATION_BASE_URL: "https://company.mtse.alationcloud.com"
 ```
+This command automatically pulls the [alation-agent-mcp package](https://pypi.org/project/alation-ai-agent-mcp/) from Pypi and runs it when the LLM calls it.
+
 ---
 
-## Step 5: Rebuild & Restart LibreChat
+## Step 2: Restart LibreChat
 
 After updating `librechat.yaml`, restart LibreChat:
 
@@ -64,25 +48,25 @@ docker compose down
 docker compose up -d
 ```
 
-Confirm that LibreChat successfully loads the `alation` MCP server. If there are errors, check the logs from `docker compose logs` or MCP output directly.
+Confirm that LibreChat successfully loads the `alation` MCP server. If there are errors, check the logs from `docker compose logs` or MCP output directly. There is no need to start the MCP server as the LLM invoking it will auto manage the lifecycle of the server.
 
 ---
 
 ## Verifying the Integration
 
-1. In the LibreChat UI, navigate the the agent builder using the right side navigation bar
+1. In the LibreChat UI, navigate to the agent builder using the right side navigation bar
 
-<img width="320" alt="Screenshot 2025-05-05 at 8 08 31 PM" src="https://github.com/user-attachments/assets/0a5ec475-4322-4b2f-b78d-997b2a68cae6" />
+<img width="320" alt="LibreChat Agent Builder UI" src="./images/librechat-agent-builder-ui.png" />
 
 2. Scroll down to find `Add tools`
 
-<img width="300" alt="Screenshot 2025-05-05 at 8 08 25 PM" src="https://github.com/user-attachments/assets/76886312-9d95-428a-af95-915e880940b8" />
+<img width="300" alt="LibreChat add tools UI" src="./images/librechat-agent-builder-add-tools.png" />
 
-4. If installed correcntly, you should see the `Alation Context` tool listed
+4. If installed correctly, you should see the `Alation Context` tool listed
 
-![Screenshot 2025-05-05 at 8 08 17 PM](https://github.com/user-attachments/assets/22660586-a9c6-4d99-9c11-54df2011c540)
+![select agent tools](./images/librechat-select-agent-tools.jpg)
 
-
+### Example question
 ```text
 What certified data sets are related to revenue forecasting?
 Find documentation about our customer 360 platform.
@@ -95,7 +79,7 @@ LibreChat will invoke the MCP tool, which will forward the context API queries t
 
 ## Using Custom Signatures (Optional)
 
-To fine-tune data retrieval, you can embed **signatures** into prompts, just like Claude Desktop.
+To fine-tune data retrieval, you can embed **signatures** learn more about them [here](../signature.md) into prompts, just like Claude Desktop.
 
 ### Example Signature for Trusted Tables
 
@@ -138,42 +122,5 @@ What trusted tables exist for financial transactions?
 
 | Symptom | Solution |
 |--------|----------|
-| Tool doesn't show in UI | Confirm `mcpServers` is properly defined in `librechat.yaml`, and restart the backend |
-| MCP logs show `ModuleNotFoundError` | Ensure you installed the Python package with `pip install -e ".[all]"` in the correct directory |
+| Tool doesn't show in UI | Confirm `mcpServers` is properly defined in `librechat.yaml`, and restart the backend; `docker logs LibreChat` will show mcp server init logs |
 | Data not fetched correctly | Check Alation credentials (`USER_ID`, `REFRESH_TOKEN`, `ALATION_API_BASE`) |
-
----
-
-## Docker Deployment Notes for STDIO MCP Servers
-
-### STDIO vs SSE
-
-**LibreChat supports both STDIO and SSE-based MCP servers**, but the `alation_context` tool only supports STDIO mode as of now. This means the MCP server **must run inside the same Docker container** as the LibreChat backend (`api` service), or be mounted into it with the correct path.
-
----
-
-## Mounting MCP Server Inside LibreChat Container
-
-Update your `docker-compose.override.yaml` file to mount the Python-based Alation MCP server into the LibreChat container:
-
-```yaml
-services:
-  api:
-    volumes:
-      - type: bind
-        source: ./librechat.yaml
-        target: /app/librechat.yaml
-      - type: bind
-        source: ../alation-mcp-server
-        target: /app/mcp-server/alation
-```
-
-> Make sure `../alation-mcp-server` is the directory where your Python MCP server (`alation_ai_agent_mcp`) is located.
-
----
-
-## Notes
-
-- Ensure your `librechat.yaml` references the correct mounted path and tool module
-- Validate that all environment variables (`USER_ID`, `REFRESH_TOKEN`, etc.) are correctly set
-- Restart LibreChat with `docker compose up -d --build` to apply all changes
