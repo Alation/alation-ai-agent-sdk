@@ -11,15 +11,20 @@ The MCP integration enables:
 - Running an MCP-compatible server that provides access to Alation's context capabilities
 - Making Alation metadata accessible to any MCP client
 
+## Installation
+
+```bash
+pip install alation-ai-agent-mcp
+```
+
 ## Prerequisites
 
 - Python 3.10 or higher
 - A valid API Access Token created on your Alation Data Catalog instance
 
-## Setup
+## Running the Server
 
-### Method 1: Using `uvx` or `pipx` (Quickest)
-The quickest way to try out the server is using `pipx` or `uvx`
+### Using Environment Variables
 
 Set up your environment variables:
 
@@ -29,14 +34,10 @@ export ALATION_USER_ID="12345"
 export ALATION_REFRESH_TOKEN="your-refresh-token"
 ```
 
-To run the Alation MCP Server, use [uvx](https://docs.astral.sh/uv/guides/tools/) (recommend), use the following command:
+Run the server:
 
 ```bash
-uvx --from alation-ai-agent-mcp start-mcp-server
-```
-If you prefer to use `pipx`, run the following command:
-```bash
-pipx run alation-ai-agent-mcp
+python -m alation_ai_agent_mcp
 ```
 
 > Note: Running this command only starts the MCP server - you won't be able to ask questions directly. The server needs to be connected to an MCP client (like Claude Desktop or LibreChat) or tested with the MCP Inspector tool. See the guides below for details on connecting to clients.
@@ -46,37 +47,4 @@ pipx run alation-ai-agent-mcp
 Please refer to our guides for specific examples of:
 - [Using with Claude Desktop](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/mcp/claude_desktop.md)
 - [Testing with MCP Inspector](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/mcp/testing_with_mcp_inspector.md)
-- [Integrating with LibreChat](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/mcp/librechat.md)
-
-## Debugging the Server
-
-To debug the server, you can use the [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector)
-
-First clone and build the server
-```bash
-git clone https://github.com/Alation/alation-ai-agent-sdk.git
-cd python/dist-mcp
-
-python3.10` -m venv venv
-source venv/bin/activate
-
-pip3 install pdm
-
-pdm install
-```
-> Make sure you run the npx command from the active venv terminal
-```bash
-npx @modelcontextprotocol/inspector python3 alation_ai_agent_mcp/server.py
-```
-
-### Buildi using Docker
-
-First build the server
-```
-docker build -t alation-mcp-server .
-```
-
-Run the following command in your terminal:
-```
-docker run --rm alation-mcp-server
-```
+- [Integrating with LibreChat](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/mcp/mcp/librechat.md)
