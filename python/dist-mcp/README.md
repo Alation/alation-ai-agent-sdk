@@ -45,6 +45,6 @@ python -m alation_ai_agent_mcp
 
 ### Example Usage with MCP Clients
 Please refer to our guides for specific examples of:
-- [Using with Claude Desktop](../../guides/mcp/claude_desktop.md)
-- [Testing with MCP Inspector](../../guides/mcp/testing_with_mcp_inspector.md)
-- [Integrating with LibreChat](../../guides/mcp/librechat.md)
+- [Using with Claude Desktop](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/mcp/claude_desktop.md)
+- [Testing with MCP Inspector](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/mcp/testing_with_mcp_inspector.md)
+- [Integrating with LibreChat](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/mcp/librechat.md)
