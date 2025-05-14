@@ -17,7 +17,7 @@ The project is organized into multiple components:
 
 - **Core SDK** - Foundation with API client and context tools
 - **LangChain Integration** - Adapters for the LangChain framework
-- **MCP Integration** - Server implementation for Model Completion Protocol
+- **MCP Integration** - Server implementation for Model Context Protocol
 
 ### Core SDK (`alation-ai-agent-sdk`)
 
@@ -145,3 +145,9 @@ Harness the SDK to build complex agents and workflows.
 - [LangChain Integration](https://github.com/Alation/alation-ai-agent-sdk/tree/main/python/dist-langchain/) - How to integrate the SDK into your LangChain agents.
 - [Basic Usage Example](https://github.com/Alation/alation-ai-agent-sdk/tree/main/python/dist-langchain/examples/basic_usage/) - A simple example.
 - [Multi Agent Example](https://github.com/Alation/alation-ai-agent-sdk/tree/main/python/dist-langchain/examples/multi_agent_return_eligibility/) - A multi agent workflow with several SDK integration points.
+
+## Integrating with other toolkits
+
+The number of published agent frameworks + toolkits appear to be increasing everyday. If you don't happen to see the framework or toolkit you're using here, it's still possible to adapt `alation-ai-agent-sdk` to your needs. It may as simple as writing a wrapping function where a decorator is applied.
+
+While we want to reach as many developers as possible and make it as convenient as possible, we anticipate a long tail distribution of toolkits and won't be able to write adapters for every case.
