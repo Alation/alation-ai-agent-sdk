@@ -8,9 +8,9 @@ This guide explains how to set up and use the **Alation Context API MCP server**
 ## Prerequisites
 
 - Installed and configured **LibreChat** client v0.7.8 or newer ([instructions](https://www.librechat.ai/docs/quick_start/local_setup))
-- Access to an Alation Cloud Service instance
-- Your Alation user ID
-- A valid refresh token created from your user account in Alation (Instructions on how to obtains one are available at the [developer documentation portal](https://developer.alation.com/dev/docs/authentication-into-alation-apis#create-a-refresh-token-via-the-ui))
+- Python 3.10 or higher
+- Access to an Alation Data Catalog instance
+- A valid refresh token created from your user account in Alation ([instructions](https://developer.alation.com/dev/docs/authentication-into-alation-apis#create-a-refresh-token-via-the-ui))
 
 ---
 
@@ -18,6 +18,7 @@ This guide explains how to set up and use the **Alation Context API MCP server**
 
 ### Step 1: Add MCP Server Entry in `librechat.yaml`
 
+#### Method 1: Using uvx
 Edit your `librechat.yaml` configuration to define a new `mcpServer` using the `stdio` protocol. Alation MCP server currently only supports the STDIO protocol.
 
 
@@ -37,6 +38,26 @@ mcpServers:
 ```
 This command automatically pulls the [alation-agent-mcp package](https://pypi.org/project/alation-ai-agent-mcp/) from Pypi and runs it when the LLM calls it.
 
+#### Method 2: Using pip
+
+1. Install the package: ```pip install alation-ai-agent-mcp```
+
+2. After installation, you can use the start-mcp-server command. Find the installation paths.
+```
+which start-mcp-server  # On macOS/Linux
+where start-mcp-server  # On Windows
+```
+3. Update your `librechat.yaml` configuration:
+```yaml
+mcpServers:
+  alation:
+    type: stdio
+    command: /full/path/to/venv/bin/start-mcp-server
+    env:
+      ALATION_BASE_URL: "https://company.alationcloud.com"
+      ALATION_USER_ID: "123"
+      ALATION_REFRESH_TOKEN: "<your-refresh-token>"
+```
 ---
 
 ## Step 2: Restart LibreChat

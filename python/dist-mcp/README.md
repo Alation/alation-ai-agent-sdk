@@ -14,7 +14,8 @@ The MCP integration enables:
 ## Prerequisites
 
 - Python 3.10 or higher
-- A valid API Access Token created on your Alation Data Catalog instance
+- Access to an Alation Data Catalog instance
+- A valid refresh token created from your user account in Alation ([instructions](https://developer.alation.com/dev/docs/authentication-into-alation-apis#create-a-refresh-token-via-the-ui))
 
 ## Setup
 
@@ -37,6 +38,17 @@ uvx --from alation-ai-agent-mcp start-mcp-server
 If you prefer to use `pipx`, run the following command:
 ```bash
 pipx run alation-ai-agent-mcp
+```
+
+### Method 2: Using pip
+1. Install the package: ```pip install alation-ai-agent-mcp```
+2. Run the server:
+```
+# Option A: Using entry point
+start-mcp-server
+
+# Option B: Using Python module
+python -m alation_ai_agent_mcp
 ```
 
 > Note: Running this command only starts the MCP server - you won't be able to ask questions directly. The server needs to be connected to an MCP client (like Claude Desktop or LibreChat) or tested with the MCP Inspector tool. See the guides below for details on connecting to clients.

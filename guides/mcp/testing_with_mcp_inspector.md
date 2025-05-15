@@ -5,21 +5,11 @@ This guide walks through the process of testing your Alation AI Agent SDK's Mode
 ## Prerequisites
 
 - Python 3.10 or higher
+- Access to an Alation Data Catalog instance
+- A valid refresh token created from your user account in Alation ([instructions](https://developer.alation.com/dev/docs/authentication-into-alation-apis#create-a-refresh-token-via-the-ui))
 - Node.js installed (for npx)
-- Access to an Alation instance
 
-## Step 1: Activate Your Environment
-
-First, activate your Python virtual environment:
-
-```bash
-# If using venv or please replace venv with your virtual envt
-source /path/to/your/venv/bin/activate
-```
-
-Verify your environment is active by checking the prompt - it should show `(venv)` at the beginning.
-
-## Step 2: Set Required Environment Variables
+## Step 1: Set Required Environment Variables
 
 The Alation MCP server requires three environment variables:
 
@@ -38,23 +28,26 @@ echo $ALATION_USER_ID
 echo $ALATION_REFRESH_TOKEN
 ```
 
-## Step 3: Run the MCP Server with Inspector
+## Step 2: Run the MCP Server with Inspector
 
-You have two options to run your server with the MCP Inspector:
+You have several options to run your server with the MCP Inspector:
 
-### Option 1: Using MCP CLI
-
+### Option 1: Using uvx
 ```bash
-# Navigate to your python directory first
-cd /path/to/workspace/ai-agent-sdk/python
-
-# Using explicit absolute path
-mcp dev /home/username/projects/ai-agent-sdk/python/dist-mcp/alation_ai_agent_mcp/server.py
-
+uvx --from alation-ai-agent-mcp start-mcp-server
+# Then run the MCP Inspector:
+npx @modelcontextprotocol/inspector uvx --from alation-ai-agent-mcp start-mcp-server
 ```
 
-### Option 2: Using NPX
+### Option 2: Using pip with Inspector
+```bash
+# Install the package via pip
+pip install alation-ai-agent-mcp
+# Then run:
+npx @modelcontextprotocol/inspector start-mcp-server
+```
 
+### Option 3: Direct python execution
 ```bash
 # Navigate to your python directory first
 cd /path/to/workspace/ai-agent-sdk/python
@@ -63,9 +56,9 @@ cd /path/to/workspace/ai-agent-sdk/python
 npx @modelcontextprotocol/inspector python /home/username/projects/ai-agent-sdk/python/dist-mcp/alation_ai_agent_mcp/server.py
 ```
 
-Either approach will launch the MCP Inspector UI in your browser.
+Any of these approaches will launch the MCP Inspector UI in your browser.
 
-## Step 4: Test with the Inspector UI (TODO: Add a screenshot)
+## Step 3: Test with the Inspector UI
 
 1. Click the "Connect" button in the Inspector UI
 2. Once connected, navigate to the "Tools" tab
@@ -74,6 +67,9 @@ Either approach will launch the MCP Inspector UI in your browser.
 5. In the right panel, enter your natural language question in the "question" section. 
 6. Click "Call Tool" to execute
 7. Review the response in the results section below
+
+![MCP Inspector Interface](./images/mcp-inspector-interface.png)
+
 
 ## Using Signatures with MCP Inspector
 

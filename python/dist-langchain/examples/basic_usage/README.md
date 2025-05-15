@@ -4,10 +4,10 @@ This example demonstrates how to create a basic LangChain agent that integrates 
 
 ## Requirements
 
-- Python 3.10+
-- Access to:
-  - Alation Data Catalog
-  - OpenAI API
+- Python 3.10 or higher
+- Access to an Alation Data Catalog instance
+- A valid refresh token created from your user account in Alation ([instructions](https://developer.alation.com/dev/docs/authentication-into-alation-apis#create-a-refresh-token-via-the-ui))
+- OpenAI API key
 
 Install all dependencies with:
 

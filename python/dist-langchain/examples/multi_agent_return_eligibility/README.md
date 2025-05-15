@@ -53,9 +53,10 @@ Each agent accesses specific information from the Alation catalog to make inform
 ## Setup & Installation
 
 ### Prerequisites
-- Python 3.10+
-- A valid API Access Token created on your Alation Data Catalog instance
-- OpenAPI API Key
+- Python 3.10 or higher
+- Access to an Alation Data Catalog instance
+- A valid refresh token created from your user account in Alation ([instructions](https://developer.alation.com/dev/docs/authentication-into-alation-apis#create-a-refresh-token-via-the-ui))
+- OpenAI API key
 
 ### Installation Steps
 
