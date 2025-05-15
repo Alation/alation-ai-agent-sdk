@@ -39,3 +39,8 @@ dev = [
     "pytest>=8.3.5",
     "ruff>=0.11.8",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Alation/alation-ai-agent-sdk/tree/main/python/core-sdk"
+Issues = "https://github.com/Alation/alation-ai-agent-sdk/issues"
+Documentation = "https://github.com/Alation/alation-ai-agent-sdk/blob/main/python/core-sdk/README.md"

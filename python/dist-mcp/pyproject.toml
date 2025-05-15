@@ -52,9 +52,9 @@ includes = ["alation_ai_agent_mcp/"]
 test = "pytest tests/"
 
 [project.urls]
-Homepage = "https://github.com/Alation/ai-agent-sdk"
-Issues = "https://github.com/Alation/ai-agent-sdk/issues"
-Documentation = "https://github.com/Alation/ai-agent-sdk"
+Homepage = "https://github.com/Alation/alation-ai-agent-sdk/tree/main/python/dist-mcp"
+Issues = "https://github.com/Alation/alation-ai-agent-sdk/issues"
+Documentation = "https://github.com/Alation/alation-ai-agent-sdk/blob/main/python/dist-mcp/README.md"
 
 [tool.ruff.lint]
 ignore = ["TID252", "B021"]
