@@ -49,11 +49,14 @@ npx @modelcontextprotocol/inspector start-mcp-server
 
 ### Option 3: Direct python execution
 ```bash
-# Navigate to your python directory first
-cd /path/to/workspace/ai-agent-sdk/python
+# Navigate to the dist-mcp directory
+cd /path/to/workspace/alation-ai-agent-sdk/python/dist-mcp
+
+# Install the package in development mode
+pip install -e .
 
 # Run the server with NPX
-npx @modelcontextprotocol/inspector python /home/username/projects/ai-agent-sdk/python/dist-mcp/alation_ai_agent_mcp/server.py
+npx @modelcontextprotocol/inspector python3 /path/to/alation-ai-agent-sdk/python/dist-mcp/alation_ai_agent_mcp/server.py
 ```
 
 Any of these approaches will launch the MCP Inspector UI in your browser.
