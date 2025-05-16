@@ -27,9 +27,9 @@ The Alation MCP Server exposes the following tools:
 
 The MCP server requires the following environment variables:
 ```
-ALATION_BASE_URL
-ALATION_USER_ID
-ALATION_REFRESH_TOKEN
+ALATION_BASE_URL - The URL of your Alation instance
+ALATION_USER_ID - Your numeric user ID in Alation
+ALATION_REFRESH_TOKEN - Your refresh token for Alation authentication
 ```
 
 See the specific client guides for detailed configuration steps.

@@ -8,17 +8,43 @@ This guide explains how to set up and use the **Alation Context API MCP server**
 ## Prerequisites
 
 - Installed and configured **LibreChat** client v0.7.8 or newer ([instructions](https://www.librechat.ai/docs/quick_start/local_setup))
-- Access to an Alation Cloud Service instance
-- Your Alation user ID
-- A valid refresh token created from your user account in Alation (Instructions on how to obtains one are available at the [developer documentation portal](https://developer.alation.com/dev/docs/authentication-into-alation-apis#create-a-refresh-token-via-the-ui))
+- Python 3.10 or higher
+- Access to an Alation Data Catalog instance
+- A valid refresh token created from your user account in Alation ([instructions](https://developer.alation.com/dev/docs/authentication-into-alation-apis#create-a-refresh-token-via-the-ui))
 
 ---
 
 ## Configuration
 
-### Step 1: Add MCP Server Entry in `librechat.yaml`
+### Step 1: Configure Environment Variables
 
-Edit your `librechat.yaml` configuration to define a new `mcpServer` using the `stdio` protocol. Alation MCP server currently only supports the STDIO protocol.
+First, you'll need to set up environment variables for any AI providers you want to use. In your LibreChat root directory, update the `.env` file with your credentials:
+
+#### For AWS Bedrock:
+Uncomment and configure these lines in your `.env` file:
+```env
+BEDROCK_AWS_DEFAULT_REGION=us-east-1 # A default region must be provided
+BEDROCK_AWS_ACCESS_KEY_ID=your-access-key-id
+BEDROCK_AWS_SECRET_ACCESS_KEY=your-secret-access-key
+```
+
+#### For Other Providers:
+Configure additional providers as needed:
+```
+# OpenAI
+OPENAI_API_KEY=your-openai-api-key
+
+# Anthropic
+ANTHROPIC_API_KEY=your-anthropic-api-key
+
+# Google
+GOOGLE_KEY=your-google-api-key
+```
+
+### Step 2: Create librechat.yaml Configuration File
+
+1. Copy the contents of librechat.example.yaml to a new file named librechat.yaml.
+2. Edit your `librechat.yaml` configuration to define a new `mcpServer` using the `stdio` protocol. Alation MCP server currently only supports the STDIO protocol.
 
 
 ```yaml
@@ -37,9 +63,21 @@ mcpServers:
 ```
 This command automatically pulls the [alation-agent-mcp package](https://pypi.org/project/alation-ai-agent-mcp/) from Pypi and runs it when the LLM calls it.
 
----
 
-## Step 2: Restart LibreChat
+### Step 3: Set Up Docker Override Configuration
+1. Copy the contents of docker-compose.override.yaml.example to docker-compose.override.yaml
+2. Edit docker-compose.override.yaml and uncomment the following section:
+```
+services:
+  api:
+    volumes:
+    - type: bind
+      source: ./librechat.yaml
+      target: /app/librechat.yaml
+```
+This ensures that your librechat.yaml configuration file is mounted into the Docker container.
+
+### Step 4: Restart LibreChat
 
 After updating `librechat.yaml`, restart LibreChat:
 
@@ -47,6 +85,12 @@ After updating `librechat.yaml`, restart LibreChat:
 docker compose down
 docker compose up -d
 ```
+LibreChat will now be accessible at: http://localhost:3080/
+
+Note: On first access, you'll need to:
+- Register a new account (you can use any temporary email - LibreChat won't validate it)
+- Login with your newly created credentialw
+
 
 Confirm that LibreChat successfully loads the `alation` MCP server. If there are errors, check the logs from `docker compose logs` or MCP output directly. There is no need to start the MCP server as the LLM invoking it will auto manage the lifecycle of the server.
 

@@ -10,16 +10,17 @@ The Langchain integration enables:
 - Accessing Alation metadata through Langchain's structured tools interface
 - Building sophisticated AI agents that can reason about your data catalog
 
+## Prerequisites
+
+- Python 3.10 or higher
+- Access to an Alation Data Catalog instance
+- A valid refresh token created from your user account in Alation ([instructions](https://developer.alation.com/dev/docs/authentication-into-alation-apis#create-a-refresh-token-via-the-ui))
+
 ## Installation
 
 ```bash
 pip install alation-ai-agent-langchain
 ```
-
-## Prerequisites
-
-- Python 3.10 or higher
-- Access to an Alation Data Catalog instance
 
 ## Quick Start
 

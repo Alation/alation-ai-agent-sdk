@@ -39,6 +39,12 @@ The MCP integration provides an MCP-compatible server that exposes Alation's con
 
 ## Getting Started
 
+### Prerequisites
+
+- Python 3.10 or higher
+- Access to an Alation Data Catalog instance
+- A valid refresh token created from your user account in Alation ([instructions](https://developer.alation.com/dev/docs/authentication-into-alation-apis#create-a-refresh-token-via-the-ui))
+
 ### Installation
 
 ```bash
@@ -51,13 +57,6 @@ pip install alation-ai-agent-langchain
 # Install MCP integration
 pip install alation-ai-agent-mcp
 ```
-
-### Prerequisites
-
-To use the SDK, you'll need:
-
-- Python 3.10 or higher
-- A valid API Access Token created on your Alation Data Catalog instance
 
 ## Usage
 
@@ -129,6 +128,11 @@ For more information about signatures, refer to [Using Signatures](https://githu
 - [Using Signatures](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/signature.md) - How to customize your agent with concrete examples.
 - [Supported Object Types and Fields](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/supported.md) - See what's available.
 
+### Core SDK
+
+Direct usage examples for the Alation AI Agent SDK:
+- [Basic Usage Example](https://github.com/Alation/alation-ai-agent-sdk/tree/main/python/core-sdk/examples/basic_usage/) - Simple example showing SDK initialization and context queries.
+- [QA Chatbot Example](https://github.com/Alation/alation-ai-agent-sdk/tree/main/python/core-sdk/examples/qa_chatbot/) - Interactive chatbot demonstrating conversation context and signature usage.
 
 ### Model Context Protocol (MCP)
 
@@ -148,6 +152,6 @@ Harness the SDK to build complex agents and workflows.
 
 ## Integrating with other toolkits
 
-The number of published agent frameworks + toolkits appear to be increasing everyday. If you don't happen to see the framework or toolkit you're using here, it's still possible to adapt `alation-ai-agent-sdk` to your needs. It may as simple as writing a wrapping function where a decorator is applied.
+The number of published agent frameworks and toolkits appears to be increasing every day. If you don't happen to see the framework or toolkit you're using here, it's still possible to adapt `alation-ai-agent-sdk` to your needs. It may be as simple as writing a wrapping function where a decorator is applied.
 
-While we want to reach as many developers as possible and make it as convenient as possible, we anticipate a long tail distribution of toolkits and won't be able to write adapters for every case.
+While we want to reach as many developers as possible and make it as convenient as possible, we anticipate a long tail distribution of toolkits and won't be able to write adapters for every case. If you'd like support for a specific toolkit, please [create an issue](https://github.com/Alation/alation-ai-agent-sdk/issues) to discuss.

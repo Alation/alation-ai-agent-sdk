@@ -6,9 +6,8 @@ This guide explains how to set up and use the Alation Model Context Protocol (MC
 
 - [Claude Desktop](https://claude.ai/download) application installed (macOS or Windows)
 - Python 3.10 or higher
-- Access to an Alation Cloud Service instance
-- Your Alation user ID
-- A valid refresh token created from your user account in Alation (Instructions on how to obtains one are available at the [developer documentation portal](https://developer.alation.com/dev/docs/authentication-into-alation-apis#create-a-refresh-token-via-the-ui))
+- Access to an Alation Data Catalog instance
+- A valid refresh token created from your user account in Alation ([instructions](https://developer.alation.com/dev/docs/authentication-into-alation-apis#create-a-refresh-token-via-the-ui))
 
 ## Quick start
 
@@ -38,7 +37,7 @@ Add the following configuration to your `claude_desktop_config.json`. See [here]
       ],
       "env": {
         "ALATION_BASE_URL": "https://company.alationcloud.com",
-        "ALATION_USER_ID": "98",
+        "ALATION_USER_ID": "123",
         "ALATION_REFRESH_TOKEN":"<token>"
       }
     }
@@ -46,7 +45,30 @@ Add the following configuration to your `claude_desktop_config.json`. See [here]
 }
 ```
 
-### Method 2: Using Docker
+### Method 2: Using `pip`
+1. Install the package: ```pip install alation-ai-agent-mcp```
+
+2. After installation, you can use the start-mcp-server command. Find the installation paths.
+```
+which start-mcp-server  # On macOS/Linux
+where start-mcp-server  # On Windows
+```
+3. Add the following configuration to your `claude_desktop_config.json`.
+```json
+{
+  "mcpServers": {
+    "alation": {
+      "command": "/full/path/to/start-mcp-server",
+      "env": {
+        "ALATION_BASE_URL": "https://company.alationcloud.com",
+        "ALATION_USER_ID": "123",
+        "ALATION_REFRESH_TOKEN": "<token>"
+      }
+    }
+  }
+}
+```
+### Method 3: Using Docker
 > This assumes you've already locally built a docker image following the instructions from [this guide](https://github.com/Alation/alation-ai-agent-sdk/tree/main/python/dist-mcp/README.md#debugging-the-server)
 ```json
 {
@@ -56,7 +78,7 @@ Add the following configuration to your `claude_desktop_config.json`. See [here]
       "args": [
         "run","-i","--rm",
         "-e", "ALATION_BASE_URL=https://company.alationcloud.com",
-        "-e", "ALATION_USER_ID=98",
+        "-e", "ALATION_USER_ID=123",
         "-e", "ALATION_REFRESH_TOKEN=<token>",
         "alation-mcp-server:latest"
       ]
