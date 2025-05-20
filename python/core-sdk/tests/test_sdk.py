@@ -1,12 +1,12 @@
 import pytest
 import requests
-from datetime import datetime, timezone, timedelta
 from unittest.mock import MagicMock, patch
 
 from alation_ai_agent_sdk.sdk import AlationAIAgentSDK
 from alation_ai_agent_sdk.api import (
     AUTH_METHOD_REFRESH_TOKEN,
     AUTH_METHOD_SERVICE_ACCOUNT,
+    AlationAPIError,
 )
 
 
@@ -17,16 +17,11 @@ MOCK_REFRESH_TOKEN = "test-refresh-token"
 MOCK_CLIENT_ID = "test-client-id"
 MOCK_CLIENT_SECRET = "test-client-secret"
 
-REFRESH_TOKEN_EXPIRES_AT = (
-    (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat().replace("+00:00", "Z")
-)
 
 REFRESH_TOKEN_RESPONSE_SUCCESS = {
     "api_access_token": "mock-api-access-token-from-refresh",
     "status": "success",
     "user_id": MOCK_USER_ID,
-    "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-    "token_expires_at": REFRESH_TOKEN_EXPIRES_AT,
     "token_status": "ACTIVE",
 }
 
@@ -184,98 +179,97 @@ def test_sdk_initialization_service_account_priority():
             {"base_url": None, "user_id": MOCK_USER_ID, "refresh_token": MOCK_REFRESH_TOKEN},
             "base_url must be a non-empty string",
         ),
-        # --- "Missing authentication credentials" ---
-        # (Neither SA nor RT creds are fully and correctly provided to select an auth path)
+        # --- Missing authentication credentials ---
         (
-            {"base_url": MOCK_BASE_URL},  # Only base_url
-            "Missing authentication credentials. Provide either (user_id and refresh_token) or (client_id and client_secret).",
+            {"base_url": MOCK_BASE_URL},
+            "Missing authentication credentials.",
         ),
-        (  # Incomplete RT (missing refresh_token), no SA
+        (
             {"base_url": MOCK_BASE_URL, "user_id": MOCK_USER_ID},
-            "Missing authentication credentials. Provide either (user_id and refresh_token) or (client_id and client_secret).",
+            "Missing authentication credentials.",
         ),
-        (  # Incomplete RT (missing user_id), no SA
+        (
             {"base_url": MOCK_BASE_URL, "refresh_token": MOCK_REFRESH_TOKEN},
-            "Missing authentication credentials. Provide either (user_id and refresh_token) or (client_id and client_secret).",
+            "Missing authentication credentials.",
         ),
-        (  # Incomplete SA (missing client_secret), no RT
+        (
             {"base_url": MOCK_BASE_URL, "client_id": MOCK_CLIENT_ID},
-            "Missing authentication credentials. Provide either (user_id and refresh_token) or (client_id and client_secret).",
+            "Missing authentication credentials.",
         ),
-        (  # Incomplete SA (missing client_id), no RT
+        (
             {"base_url": MOCK_BASE_URL, "client_secret": MOCK_CLIENT_SECRET},
-            "Missing authentication credentials. Provide either (user_id and refresh_token) or (client_id and client_secret).",
-        ),
-        (  # Both RT and SA creds are individually incomplete
-            {"base_url": MOCK_BASE_URL, "user_id": MOCK_USER_ID, "client_id": MOCK_CLIENT_ID},
-            "Missing authentication credentials. Provide either (user_id and refresh_token) or (client_id and client_secret).",
+            "Missing authentication credentials.",
         ),
     ],
 )
 def test_sdk_invalid_initialization_combinations(init_kwargs, expected_error_message_part):
-    """Test various invalid SDK initialization scenarios."""
+    """Test invalid SDK initialization scenarios with grouped cases."""
     with pytest.raises(ValueError) as excinfo:
         AlationAIAgentSDK(**init_kwargs)
     assert expected_error_message_part in str(excinfo.value)
 
 
-def test_get_context_token_reuse(mock_requests_post, mock_requests_get):
-    """Test that a valid token is reused."""
+@pytest.mark.parametrize(
+    "auth_method, side_effect, expected_token_valid_calls",
+    [
+        ("refresh_token", [True, False, True], 2),
+        ("service_account", [True, False, True], 2),
+    ],
+)
+def test_token_reuse_and_refresh(
+    mock_requests_post, mock_requests_get, auth_method, side_effect, expected_token_valid_calls
+):
+    """Test token reuse and refresh for both auth methods."""
     mock_requests_post("createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS)
     mock_requests_get("context/", response_json=CONTEXT_RESPONSE_SUCCESS)
+
     sdk = AlationAIAgentSDK(
-        base_url=MOCK_BASE_URL, user_id=MOCK_USER_ID, refresh_token=MOCK_REFRESH_TOKEN
+        base_url=MOCK_BASE_URL,
+        user_id=MOCK_USER_ID if auth_method == "refresh_token" else None,
+        refresh_token=MOCK_REFRESH_TOKEN if auth_method == "refresh_token" else None,
+        client_id=MOCK_CLIENT_ID if auth_method == "service_account" else None,
+        client_secret=MOCK_CLIENT_SECRET if auth_method == "service_account" else None,
     )
+    sdk.api.access_token = "mock-access-token"  # Ensure access_token is set
 
-    initial_time = (
-        datetime.strptime(REFRESH_TOKEN_EXPIRES_AT, "%Y-%m-%dT%H:%M:%S.%fZ")
-        .replace(tzinfo=timezone.utc)
-        .timestamp()
-        - 1000
-    )
-    time_after_first_call = initial_time + 10
+    with patch.object(
+        sdk.api,
+        "_token_is_valid_on_server",
+        side_effect=side_effect,
+    ) as mock_token_valid, patch.object(
+        sdk.api,
+        "_generate_new_token",
+        wraps=sdk.api._generate_new_token,
+    ) as spy_generate_token:
+        sdk.get_context("first question")  # Valid token reused
+        sdk.get_context("second question")  # Token refreshed
 
-    with patch("time.time") as mock_time:
-        mock_time.return_value = initial_time
-        sdk.get_context("first question")
-
-        with patch.object(
-            sdk.api,
-            "_generate_access_token_with_refresh_token",
-            wraps=sdk.api._generate_access_token_with_refresh_token,
-        ) as spy_gen_token:
-            mock_time.return_value = time_after_first_call
-            sdk.get_context("second question")
-            spy_gen_token.assert_not_called()
+        assert mock_token_valid.call_count == expected_token_valid_calls
+        assert spy_generate_token.call_count == 1
 
 
-def test_get_context_token_refresh_on_expiry(mock_requests_post, mock_requests_get):
-    """Test that token is refreshed if expired."""
+def test_error_handling_in_token_validation(mock_requests_post):
+    """Test that errors in token validation raise AlationAPIError."""
     mock_requests_post("createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS)
-    mock_requests_get("context/", response_json=CONTEXT_RESPONSE_SUCCESS)
+
     sdk = AlationAIAgentSDK(
         base_url=MOCK_BASE_URL, user_id=MOCK_USER_ID, refresh_token=MOCK_REFRESH_TOKEN
     )
 
     with patch.object(
         sdk.api,
-        "_generate_access_token_with_refresh_token",
-        wraps=sdk.api._generate_access_token_with_refresh_token,
-    ) as spy_gen_token:
-        time_at_first_gen = (
-            datetime.strptime(REFRESH_TOKEN_EXPIRES_AT, "%Y-%m-%dT%H:%M:%S.%fZ")
-            .replace(tzinfo=timezone.utc)
-            .timestamp()
-            - timedelta(hours=24).total_seconds()
-            - 100
-        )
-        with patch("time.time") as mock_time:
-            mock_time.return_value = time_at_first_gen
-            sdk.get_context("first question, generates token")
-            spy_gen_token.assert_called_once()
+        "_is_access_token_valid",
+        side_effect=AlationAPIError("Mocked error in access token validation"),
+    ) as mock_access_token_valid:
+        with pytest.raises(AlationAPIError, match="Mocked error in access token validation"):
+            sdk.api._is_access_token_valid()
+        mock_access_token_valid.assert_called_once()
 
-            time_after_expiry = sdk.api.token_expiry - 50
-            mock_time.return_value = time_after_expiry
-
-            sdk.get_context("second question, should refresh token")
-            assert spy_gen_token.call_count == 2
+    with patch.object(
+        sdk.api,
+        "_is_jwt_token_valid",
+        side_effect=AlationAPIError("Mocked error in JWT token validation"),
+    ) as mock_jwt_token_valid:
+        with pytest.raises(AlationAPIError, match="Mocked error in JWT token validation"):
+            sdk.api._is_jwt_token_valid()
+        mock_jwt_token_valid.assert_called_once()

@@ -44,8 +44,7 @@ class AlationAIAgentSDK:
                     "client_secret must be a non-empty string for service account authentication."
                 )
             self.auth_params = {"client_id": client_id, "client_secret": client_secret}
-            if is_refresh_token_auth:
-                pass
+
         elif is_refresh_token_auth:
             if not isinstance(user_id, int):
                 raise ValueError("user_id must be an integer for refresh token authentication.")
