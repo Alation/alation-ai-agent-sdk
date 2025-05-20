@@ -88,7 +88,9 @@ def test_create_server_success(manage_environment_variables, mock_alation_sdk, m
     mcp_result = server.create_server()
 
     mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version="0.1.0")
-    mock_sdk_class.assert_called_once_with("https://fake-alation.com", 12345, "fake-token")
+    mock_sdk_class.assert_called_once_with(
+        "https://fake-alation.com", 12345, "fake-token", None, None
+    )
     assert mcp_result is mock_mcp_instance
 
 

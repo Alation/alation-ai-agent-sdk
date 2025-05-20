@@ -10,10 +10,13 @@ def create_server():
     base_url = os.getenv("ALATION_BASE_URL")
     user_id_raw = os.getenv("ALATION_USER_ID")
     refresh_token = os.getenv("ALATION_REFRESH_TOKEN")
+    client_id = os.getenv("ALATION_CLIENT_ID")
+    client_secret = os.getenv("ALATION_CLIENT_SECRET")
 
-    if not base_url or not user_id_raw or not refresh_token:
+    if not base_url or not ((user_id_raw and refresh_token) or (client_id and client_secret)):
         raise ValueError(
-            "Missing required environment variables: ALATION_BASE_URL, ALATION_USER_ID, ALATION_REFRESH_TOKEN"
+            "Missing required environment variables: ALATION_BASE_URL and either "
+            "(ALATION_USER_ID + ALATION_REFRESH_TOKEN) or (ALATION_CLIENT_ID + ALATION_CLIENT_SECRET)"
         )
 
     user_id = int(user_id_raw)
@@ -22,7 +25,7 @@ def create_server():
     mcp = FastMCP(name="Alation MCP Server", version="0.1.0")
 
     # Initialize Alation SDK
-    alation_sdk = AlationAIAgentSDK(base_url, user_id, refresh_token)
+    alation_sdk = AlationAIAgentSDK(base_url, user_id, refresh_token, client_id, client_secret)
 
     @mcp.tool(name=alation_sdk.context_tool.name, description=alation_sdk.context_tool.description)
     def alation_context(question: str, signature: Dict[str, Any] | None = None) -> str:
