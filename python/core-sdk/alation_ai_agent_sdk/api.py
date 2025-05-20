@@ -133,6 +133,15 @@ class AlationAPI:
     Client for interacting with the Alation API.
     This class manages authentication (via refresh token or service account)
     and provides methods to retrieve context-specific information from the Alation catalog.
+
+    Attributes:
+    base_url (str): Base URL for the Alation instance
+    user_id (int): Numeric ID of the Alation user
+    refresh_token (str): Refresh token for API authentication
+    access_token (str, optional): Current API access token
+    client_id (str, optional): id from the OAuth Client Application
+    client_secret (str, optional): secret from OAuth Client Application
+    token_expiry (int): Timestamp for token expiration (Unix timestamp)
     """
 
     def __init__(
