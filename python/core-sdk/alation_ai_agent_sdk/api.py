@@ -5,7 +5,6 @@ from typing import Dict, Any, Optional
 from http import HTTPStatus
 import requests
 
-# Constants for authentication methods
 AUTH_METHOD_REFRESH_TOKEN = "refresh_token"
 AUTH_METHOD_SERVICE_ACCOUNT = "service_account"
 
@@ -156,7 +155,7 @@ class AlationAPI:
         client_id: Optional[str] = None,
         client_secret: Optional[str] = None,
     ):
-        self.base_url = base_url.rstrip("/")  # Ensure no trailing slash
+        self.base_url = base_url.rstrip("/")
         self.access_token: Optional[str] = None
 
         if user_id is not None and refresh_token is not None:
@@ -301,8 +300,11 @@ class AlationAPI:
             )
 
     def _is_access_token_valid(self) -> bool:
-        # 200 if valid
-        # 401 if invalid or revoked
+        """
+        Check if the access token is valid by making a request to the validation endpoint.
+        Returns True if valid, False if invalid or revoked.
+
+        """
 
         url = f"{self.base_url}/integration/v1/validateAPIAccessToken/"
         payload = {"api_access_token": self.access_token, "user_id": self.user_id}
