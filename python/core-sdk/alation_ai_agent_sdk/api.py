@@ -65,8 +65,9 @@ class AlationErrorClassifier:
                 or "Request was malformed. Check the query and signature structure."
             )
             help_links = [
-                "https://github.com/Alation/ai-agent-sdk/blob/main/guides/signature.md",
-                "https://github.com/Alation/ai-agent-sdk/blob/main/README.md",
+                "https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/signature.md",
+                "https://github.com/Alation/alation-ai-agent-sdk?tab=readme-ov-file#usage",
+                "https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature",
             ]
         elif status_code == HTTPStatus.UNAUTHORIZED:
             reason = "Unauthorized"
@@ -89,15 +90,21 @@ class AlationErrorClassifier:
             resolution_hint = (
                 "The requested resource was not found or is not enabled, check feature flag"
             )
-            help_links = ["https://developer.alation.com/"]
+            help_links = [
+                "https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta"
+            ]
         elif status_code == HTTPStatus.TOO_MANY_REQUESTS:
             reason = "Too Many Requests"
             resolution_hint = "Rate limit exceeded. Retry after some time."
-            help_links = ["https://developer.alation.com/dev/docs/api-throttling"]
+            help_links = [
+                "https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta#rate-limiting"
+            ]
         elif status_code == HTTPStatus.INTERNAL_SERVER_ERROR:
             reason = "Internal Server Error"
             resolution_hint = "Server error. Retry later or contact Alation support."
-            help_links = ["https://developer.alation.com/", "https://docs.alation.com/en/latest/"]
+            help_links = [
+                "https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta"
+            ]
 
         return {"reason": reason, "resolution_hint": resolution_hint, "help_links": help_links}
 
