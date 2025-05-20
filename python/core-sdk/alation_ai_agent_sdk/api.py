@@ -135,13 +135,13 @@ class AlationAPI:
     and provides methods to retrieve context-specific information from the Alation catalog.
 
     Attributes:
-    base_url (str): Base URL for the Alation instance
-    user_id (int): Numeric ID of the Alation user
-    refresh_token (str): Refresh token for API authentication
-    access_token (str, optional): Current API access token
-    client_id (str, optional): id from the OAuth Client Application
-    client_secret (str, optional): secret from OAuth Client Application
-    token_expiry (int): Timestamp for token expiration (Unix timestamp)
+        base_url (str): Base URL for the Alation instance
+        user_id (int): Numeric ID of the Alation user
+        refresh_token (str): Refresh token for API authentication
+        access_token (str, optional): Current API access token
+        client_id (str, optional): id from the OAuth Client Application
+        client_secret (str, optional): secret from OAuth Client Application
+        token_expiry (int): Timestamp for token expiration (Unix timestamp)
     """
 
     def __init__(
@@ -170,7 +170,7 @@ class AlationAPI:
             raise ValueError(
                 "Either (user_id and refresh_token) or (client_id and client_secret) must be provided."
             )
-        logging.debug(f"AlationAPI initialized with auth method: {self.auth_method}")
+        logger.debug(f"AlationAPI initialized with auth method: {self.auth_method}")
 
     def _generate_access_token_with_refresh_token(self):
         """
@@ -182,7 +182,7 @@ class AlationAPI:
             "user_id": self.user_id,
             "refresh_token": self.refresh_token,
         }
-        logging.debug(f"Generating access token using refresh token for user_id: {self.user_id}")
+        logger.debug(f"Generating access token using refresh token for user_id: {self.user_id}")
 
         try:
             response = requests.post(url, json=payload)
@@ -235,7 +235,7 @@ class AlationAPI:
         )
 
         self.token_expiry = expires_at.timestamp()
-        logging.debug(f"Access token generated from refresh token")
+        logger.debug(f"Access token generated from refresh token")
 
     def _generate_jwt_token(self):
         """
@@ -252,7 +252,7 @@ class AlationAPI:
             "accept": "application/json",
             "content-type": "application/x-www-form-urlencoded",
         }
-        logging.debug(f"Generating JWT token")
+        logger.debug(f"Generating JWT token")
         try:
             response = requests.post(url, data=payload, headers=headers)
             response.raise_for_status()
@@ -299,17 +299,17 @@ class AlationAPI:
         self.access_token = data["access_token"]
         expires_in_seconds = int(data["expires_in"])
         self.token_expiry = time.time() + expires_in_seconds
-        logging.debug(f"JWT token generated from client ID and secret")
+        logger.debug(f"JWT token generated from client ID and secret")
 
     def _ensure_token_is_valid(self):
         """
         Ensures a valid access token is available, generating one if needed.
         """
         if self.access_token is not None and time.time() < (self.token_expiry - 60):
-            logging.debug("Access token is still valid.")
+            logger.debug("Access token is still valid.")
             return
 
-        logging.info("Access token is invalid or expired. Attempting to generate a new one.")
+        logger.info("Access token is invalid or expired. Attempting to generate a new one.")
         if self.auth_method == AUTH_METHOD_REFRESH_TOKEN:
             self._generate_access_token_with_refresh_token()
         elif self.auth_method == AUTH_METHOD_SERVICE_ACCOUNT:

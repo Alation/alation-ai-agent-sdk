@@ -11,7 +11,7 @@ from alation_ai_agent_sdk.api import (
 
 
 # --- Mock API Responses & Constants ---
-MOCK_BASE_URL = "https://fake-alation-instance.com"
+MOCK_BASE_URL = "https://mock-alation-instance.com"
 MOCK_USER_ID = 123
 MOCK_REFRESH_TOKEN = "test-refresh-token"
 MOCK_CLIENT_ID = "test-client-id"

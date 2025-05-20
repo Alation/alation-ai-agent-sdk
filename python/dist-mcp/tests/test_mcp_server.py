@@ -12,9 +12,9 @@ def manage_environment_variables(monkeypatch):
         "ALATION_USER_ID": os.environ.get("ALATION_USER_ID"),
         "ALATION_REFRESH_TOKEN": os.environ.get("ALATION_REFRESH_TOKEN"),
     }
-    monkeypatch.setenv("ALATION_BASE_URL", "https://fake-alation.com")
+    monkeypatch.setenv("ALATION_BASE_URL", "https://mock-alation.com")
     monkeypatch.setenv("ALATION_USER_ID", "12345")
-    monkeypatch.setenv("ALATION_REFRESH_TOKEN", "fake-token")
+    monkeypatch.setenv("ALATION_REFRESH_TOKEN", "mock-token")
     yield
     for key, value in original_vars.items():
         if value is None:
@@ -89,7 +89,7 @@ def test_create_server_success(manage_environment_variables, mock_alation_sdk, m
 
     mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version="0.1.0")
     mock_sdk_class.assert_called_once_with(
-        "https://fake-alation.com", 12345, "fake-token", None, None
+        "https://mock-alation.com", 12345, "mock-token", None, None
     )
     assert mcp_result is mock_mcp_instance
 
