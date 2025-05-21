@@ -10,53 +10,28 @@ class AlationAIAgentSDK:
     SDK for interacting with Alation AI Agent capabilities.
 
     Can be initialized using one of two authentication methods:
-    1. User ID and Refresh Token:
-       sdk = AlationAIAgentSDK(base_url="https://company.alationcloud.com", user_id=123, refresh_token="your_refresh_token")
-    2. Service Account (Client ID and Client Secret):
-       sdk = AlationAIAgentSDK(base_url="https://company.alationcloud.com", client_id="your_client_id", client_secret="your_client_secret")
-
-    If both sets of credentials are provided, Client ID and Client Secret will be used by default.
+    1. Refresh Token Authentication:
+       sdk = AlationAIAgentSDK(base_url="https://company.alationcloud.com", auth_method="refresh_token", auth_params=(123, "your_refresh_token"))
+    2. Service Account Authentication:
+       sdk = AlationAIAgentSDK(base_url="https://company.alationcloud.com", auth_method="service_account", auth_params=("your_client_id", "your_client_secret"))
     """
 
     def __init__(
         self,
         base_url: str,
-        user_id: Optional[int] = None,
-        refresh_token: Optional[str] = None,
-        client_id: Optional[str] = None,
-        client_secret: Optional[str] = None,
+        auth_method: str,
+        auth_params: tuple,
     ):
         if not base_url or not isinstance(base_url, str):
             raise ValueError("base_url must be a non-empty string.")
 
-        # Determine authentication method, prioritizing service account if both are provided
-        is_service_account_auth = client_id is not None and client_secret is not None
-        is_refresh_token_auth = user_id is not None and refresh_token is not None
+        if not auth_method or not isinstance(auth_method, str):
+            raise ValueError("auth_method must be a non-empty string.")
 
-        if is_service_account_auth:
-            # Use service account credentials
-            if not client_id or not isinstance(client_id, str):
-                raise ValueError(
-                    "client_id must be a non-empty string for service account authentication."
-                )
-            if not client_secret or not isinstance(client_secret, str):
-                raise ValueError(
-                    "client_secret must be a non-empty string for service account authentication."
-                )
-            self.auth_params = {"client_id": client_id, "client_secret": client_secret}
+        if not isinstance(auth_params, tuple):
+            raise ValueError("auth_params must be a tuple.")
 
-        elif is_refresh_token_auth:
-            if not isinstance(user_id, int):
-                raise ValueError("user_id must be an integer for refresh token authentication.")
-            if not refresh_token or not isinstance(refresh_token, str):
-                raise ValueError("refresh_token must be a non-empty string")
-            self.auth_params = {"user_id": user_id, "refresh_token": refresh_token}
-        else:
-            raise ValueError(
-                "Missing authentication credentials. Provide either (user_id and refresh_token) or (client_id and client_secret)."
-            )
-
-        self.api = AlationAPI(base_url=base_url, **self.auth_params)
+        self.api = AlationAPI(base_url=base_url, auth_method=auth_method, auth_params=auth_params)
         self.context_tool = AlationContextTool(self.api)
 
     def get_context(

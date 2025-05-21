@@ -4,6 +4,7 @@ import json
 from typing import Dict, Any, Optional
 from http import HTTPStatus
 import requests
+import requests.exceptions
 
 AUTH_METHOD_REFRESH_TOKEN = "refresh_token"
 AUTH_METHOD_SERVICE_ACCOUNT = "service_account"
@@ -140,42 +141,58 @@ class AlationAPI:
 
     Attributes:
         base_url (str): Base URL for the Alation instance
-        user_id (int, optional): Numeric ID of the Alation user
-        refresh_token (str, optional): Refresh token for API authentication
-        access_token (str, optional): Current API access token
-        client_id (str, optional): id from the OAuth Client Application
-        client_secret (str, optional): secret from OAuth Client Application
+        auth_method (str): Authentication method ("refresh_token" or "service_account")
+        auth_params (tuple): Parameters required for the chosen authentication method
     """
 
     def __init__(
         self,
         base_url: str,
-        user_id: Optional[int] = None,
-        refresh_token: Optional[str] = None,
-        client_id: Optional[str] = None,
-        client_secret: Optional[str] = None,
+        auth_method: str,
+        auth_params: tuple,
     ):
         self.base_url = base_url.rstrip("/")
         self.access_token: Optional[str] = None
+        self.auth_method = auth_method
 
-        if user_id is not None and refresh_token is not None:
-            self.auth_method = AUTH_METHOD_REFRESH_TOKEN
-            self.user_id = user_id
-            self.refresh_token = refresh_token
+        # Validate auth_method and auth_params
+        if auth_method == AUTH_METHOD_REFRESH_TOKEN:
+            if (
+                len(auth_params) != 2
+                or not isinstance(auth_params[0], int)
+                or not isinstance(auth_params[1], str)
+            ):
+                raise ValueError(
+                    "For 'refresh_token' auth_method, auth_params must be a tuple of (user_id: int, refresh_token: str)."
+                )
+            self.user_id, self.refresh_token = auth_params
 
-        elif client_id is not None and client_secret is not None:
-            self.auth_method = AUTH_METHOD_SERVICE_ACCOUNT
-            self.client_id = client_id
-            self.client_secret = client_secret
+        elif auth_method == AUTH_METHOD_SERVICE_ACCOUNT:
+            if (
+                len(auth_params) != 2
+                or not isinstance(auth_params[0], str)
+                or not isinstance(auth_params[1], str)
+            ):
+                raise ValueError(
+                    "For 'service_account' auth_method, auth_params must be a tuple of (client_id: str, client_secret: str)."
+                )
+            self.client_id, self.client_secret = auth_params
 
         else:
-            raise ValueError(
-                "Either (user_id and refresh_token) or (client_id and client_secret) must be provided."
-            )
+            raise ValueError("auth_method must be either 'refresh_token' or 'service_account'.")
+
         logger.debug(f"AlationAPI initialized with auth method: {self.auth_method}")
 
     def _handle_request_error(self, exception: requests.RequestException, context: str):
         """Utility function to handle request exceptions."""
+        if isinstance(exception, requests.exceptions.Timeout):
+            raise AlationAPIError(
+                f"Request to {context} timed out after 60 seconds.",
+                reason="Timeout Error",
+                resolution_hint="Ensure the server is reachable and try again later.",
+                help_links=["https://developer.alation.com/"],
+            )
+
         status_code = getattr(exception.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR)
         response_text = getattr(exception.response, "text", "No response received from server")
         parsed = {"error": response_text}
@@ -204,7 +221,7 @@ class AlationAPI:
         logger.debug(f"Generating access token using refresh token for user_id: {self.user_id}")
 
         try:
-            response = requests.post(url, json=payload)
+            response = requests.post(url, json=payload, timeout=60)
             response.raise_for_status()
         except requests.RequestException as e:
             self._handle_request_error(e, "access token generation")
@@ -252,7 +269,7 @@ class AlationAPI:
         }
         logger.debug(f"Generating JWT token")
         try:
-            response = requests.post(url, data=payload, headers=headers)
+            response = requests.post(url, data=payload, headers=headers, timeout=60)
             response.raise_for_status()
         except requests.RequestException as e:
             self._handle_request_error(e, "JWT token generation")
@@ -311,7 +328,7 @@ class AlationAPI:
         headers = {"accept": "application/json", "content-type": "application/json"}
 
         try:
-            response = requests.post(url, json=payload, headers=headers)
+            response = requests.post(url, json=payload, headers=headers, timeout=60)
             response.raise_for_status()
         except requests.RequestException as e:
             status_code = getattr(e.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR)
@@ -345,7 +362,6 @@ class AlationAPI:
         Payload when token is inactive: status: 200
             {
                 "active": false,
-                ...
             }
         """
 
@@ -363,7 +379,7 @@ class AlationAPI:
         }
 
         try:
-            response = requests.post(url, data=payload, headers=headers)
+            response = requests.post(url, data=payload, headers=headers, timeout=60)
             response.raise_for_status()
             data = response.json()
             return data.get("active", False)
@@ -404,7 +420,7 @@ class AlationAPI:
     def _with_valid_token(self):
         """
         Ensures a valid access token is available, generating one if needed.
-        First check time based validity and then check validity on server (other services can revoke and invalidate tokens)
+        Check validity on server (other services can revoke and invalidate tokens)
         """
         try:
             if self.access_token and self._token_is_valid_on_server():
@@ -437,24 +453,11 @@ class AlationAPI:
         url = f"{self.base_url}/integration/v2/context/?{encoded_params}"
 
         try:
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers, timeout=60)
             response.raise_for_status()
 
         except requests.RequestException as e:
-            status_code = getattr(e.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR)
-            response_text = getattr(e.response, "text", "No response received from server")
-            parsed = {"error": response_text}
-            meta = AlationErrorClassifier.classify_catalog_error(status_code, parsed)
-
-            raise AlationAPIError(
-                "HTTP error during catalog search",
-                original_exception=e,
-                status_code=status_code,
-                response_body=parsed,
-                reason=meta["reason"],
-                resolution_hint=meta["resolution_hint"],
-                help_links=meta["help_links"],
-            )
+            self._handle_request_error(e, "catalog search")
 
         try:
             return response.json()

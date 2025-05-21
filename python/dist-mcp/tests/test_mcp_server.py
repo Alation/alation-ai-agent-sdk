@@ -9,10 +9,14 @@ def manage_environment_variables(monkeypatch):
     """Fixture to manage environment variables for tests."""
     original_vars = {
         "ALATION_BASE_URL": os.environ.get("ALATION_BASE_URL"),
+        "ALATION_AUTH_METHOD": os.environ.get("ALATION_AUTH_METHOD"),
         "ALATION_USER_ID": os.environ.get("ALATION_USER_ID"),
         "ALATION_REFRESH_TOKEN": os.environ.get("ALATION_REFRESH_TOKEN"),
+        "ALATION_CLIENT_ID": os.environ.get("ALATION_CLIENT_ID"),
+        "ALATION_CLIENT_SECRET": os.environ.get("ALATION_CLIENT_SECRET"),
     }
     monkeypatch.setenv("ALATION_BASE_URL", "https://mock-alation.com")
+    monkeypatch.setenv("ALATION_AUTH_METHOD", "refresh_token")
     monkeypatch.setenv("ALATION_USER_ID", "12345")
     monkeypatch.setenv("ALATION_REFRESH_TOKEN", "mock-token")
     yield
@@ -89,7 +93,7 @@ def test_create_server_success(manage_environment_variables, mock_alation_sdk, m
 
     mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version="0.1.0")
     mock_sdk_class.assert_called_once_with(
-        "https://mock-alation.com", 12345, "mock-token", None, None
+        "https://mock-alation.com", "refresh_token", (12345, "mock-token")
     )
     assert mcp_result is mock_mcp_instance
 

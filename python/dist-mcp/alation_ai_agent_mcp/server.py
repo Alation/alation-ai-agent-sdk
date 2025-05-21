@@ -8,24 +8,44 @@ from alation_ai_agent_sdk import AlationAIAgentSDK
 def create_server():
     # Load Alation credentials from environment variables
     base_url = os.getenv("ALATION_BASE_URL")
-    user_id_raw = os.getenv("ALATION_USER_ID")
-    refresh_token = os.getenv("ALATION_REFRESH_TOKEN")
-    client_id = os.getenv("ALATION_CLIENT_ID")
-    client_secret = os.getenv("ALATION_CLIENT_SECRET")
+    auth_method = os.getenv("ALATION_AUTH_METHOD")
 
-    if not base_url or not ((user_id_raw and refresh_token) or (client_id and client_secret)):
+    if not base_url or not auth_method:
         raise ValueError(
-            "Missing required environment variables: ALATION_BASE_URL and either "
-            "(ALATION_USER_ID + ALATION_REFRESH_TOKEN) or (ALATION_CLIENT_ID + ALATION_CLIENT_SECRET)"
+            "Missing required environment variables: ALATION_BASE_URL and ALATION_AUTH_METHOD"
         )
 
-    user_id = int(user_id_raw)
+    # Parse raw auth parameters based on auth_method
+    if auth_method == "refresh_token":
+        user_id = os.getenv("ALATION_USER_ID")
+        refresh_token = os.getenv("ALATION_REFRESH_TOKEN")
+        if not user_id or not refresh_token:
+            raise ValueError(
+                "Missing required environment variables: ALATION_USER_ID and ALATION_REFRESH_TOKEN for 'refresh_token' auth_method"
+            )
+        try:
+            user_id = int(user_id)  # Ensure user_id is an integer
+        except ValueError:
+            raise ValueError("ALATION_USER_ID must be an integer.")
+        auth_params = (user_id, refresh_token)
+
+    elif auth_method == "service_account":
+        client_id = os.getenv("ALATION_CLIENT_ID")
+        client_secret = os.getenv("ALATION_CLIENT_SECRET")
+        if not client_id or not client_secret:
+            raise ValueError(
+                "Missing required environment variables: ALATION_CLIENT_ID and ALATION_CLIENT_SECRET for 'service_account' auth_method"
+            )
+        auth_params = (client_id, client_secret)
+
+    else:
+        raise ValueError("Invalid ALATION_AUTH_METHOD. Must be 'refresh_token' or 'service_account'.")
 
     # Initialize FastMCP server
     mcp = FastMCP(name="Alation MCP Server", version="0.1.0")
 
     # Initialize Alation SDK
-    alation_sdk = AlationAIAgentSDK(base_url, user_id, refresh_token, client_id, client_secret)
+    alation_sdk = AlationAIAgentSDK(base_url, auth_method, auth_params)
 
     @mcp.tool(name=alation_sdk.context_tool.name, description=alation_sdk.context_tool.description)
     def alation_context(question: str, signature: Dict[str, Any] | None = None) -> str:

@@ -140,84 +140,52 @@ def mock_requests_get(monkeypatch):
 
 # --- SDK Initialization Tests ---
 
-
 def test_sdk_valid_initialization_refresh_token():
-    """Test valid SDK init with user_id and refresh_token."""
+    """Test valid SDK init with refresh_token auth method."""
     sdk = AlationAIAgentSDK(
-        base_url=MOCK_BASE_URL, user_id=MOCK_USER_ID, refresh_token=MOCK_REFRESH_TOKEN
+        base_url=MOCK_BASE_URL,
+        auth_method=AUTH_METHOD_REFRESH_TOKEN,
+        auth_params=(MOCK_USER_ID, MOCK_REFRESH_TOKEN),
     )
     assert sdk.api.auth_method == AUTH_METHOD_REFRESH_TOKEN
     assert sdk.api.user_id == MOCK_USER_ID
-
+    assert sdk.api.refresh_token == MOCK_REFRESH_TOKEN
 
 def test_sdk_valid_initialization_service_account():
-    """Test valid SDK init with client_id and client_secret."""
+    """Test valid SDK init with service_account auth method."""
     sdk = AlationAIAgentSDK(
-        base_url=MOCK_BASE_URL, client_id=MOCK_CLIENT_ID, client_secret=MOCK_CLIENT_SECRET
+        base_url=MOCK_BASE_URL,
+        auth_method=AUTH_METHOD_SERVICE_ACCOUNT,
+        auth_params=(MOCK_CLIENT_ID, MOCK_CLIENT_SECRET),
     )
     assert sdk.api.auth_method == AUTH_METHOD_SERVICE_ACCOUNT
     assert sdk.api.client_id == MOCK_CLIENT_ID
-
-
-def test_sdk_initialization_service_account_priority():
-    """Test SDK defaults to service account if all credentials provided."""
-    sdk = AlationAIAgentSDK(
-        base_url=MOCK_BASE_URL,
-        user_id=MOCK_USER_ID,
-        refresh_token=MOCK_REFRESH_TOKEN,
-        client_id=MOCK_CLIENT_ID,
-        client_secret=MOCK_CLIENT_SECRET,
-    )
-    assert sdk.api.auth_method == AUTH_METHOD_SERVICE_ACCOUNT
-
+    assert sdk.api.client_secret == MOCK_CLIENT_SECRET
 
 @pytest.mark.parametrize(
-    "init_kwargs, expected_error_message_part",
+    "auth_method, auth_params, expected_error_message_part",
     [
-        # --- Base URL Validation ---
-        (
-            {"base_url": None, "user_id": MOCK_USER_ID, "refresh_token": MOCK_REFRESH_TOKEN},
-            "base_url must be a non-empty string",
-        ),
-        # --- Missing authentication credentials ---
-        (
-            {"base_url": MOCK_BASE_URL},
-            "Missing authentication credentials.",
-        ),
-        (
-            {"base_url": MOCK_BASE_URL, "user_id": MOCK_USER_ID},
-            "Missing authentication credentials.",
-        ),
-        (
-            {"base_url": MOCK_BASE_URL, "refresh_token": MOCK_REFRESH_TOKEN},
-            "Missing authentication credentials.",
-        ),
-        (
-            {"base_url": MOCK_BASE_URL, "client_id": MOCK_CLIENT_ID},
-            "Missing authentication credentials.",
-        ),
-        (
-            {"base_url": MOCK_BASE_URL, "client_secret": MOCK_CLIENT_SECRET},
-            "Missing authentication credentials.",
-        ),
+        (AUTH_METHOD_REFRESH_TOKEN, (MOCK_USER_ID,), "auth_params must be a tuple of (user_id: int, refresh_token: str)"),
+        (AUTH_METHOD_REFRESH_TOKEN, ("invalid_user_id", MOCK_REFRESH_TOKEN), "auth_params must be a tuple of (user_id: int, refresh_token: str)"),
+        (AUTH_METHOD_SERVICE_ACCOUNT, (MOCK_CLIENT_ID,), "auth_params must be a tuple of (client_id: str, client_secret: str)"),
+        ("invalid_method", (MOCK_USER_ID, MOCK_REFRESH_TOKEN), "auth_method must be either 'refresh_token' or 'service_account'"),
     ],
 )
-def test_sdk_invalid_initialization_combinations(init_kwargs, expected_error_message_part):
-    """Test invalid SDK initialization scenarios with grouped cases."""
+def test_sdk_invalid_initialization(auth_method, auth_params, expected_error_message_part):
+    """Test invalid SDK initialization scenarios."""
     with pytest.raises(ValueError) as excinfo:
-        AlationAIAgentSDK(**init_kwargs)
+        AlationAIAgentSDK(base_url=MOCK_BASE_URL, auth_method=auth_method, auth_params=auth_params)
     assert expected_error_message_part in str(excinfo.value)
 
-
 @pytest.mark.parametrize(
-    "auth_method, side_effect, expected_token_valid_calls",
+    "auth_method, auth_params, side_effect, expected_token_valid_calls",
     [
-        ("refresh_token", [True, False, True], 2),
-        ("service_account", [True, False, True], 2),
+        (AUTH_METHOD_REFRESH_TOKEN, (MOCK_USER_ID, MOCK_REFRESH_TOKEN), [True, False, True], 2),
+        (AUTH_METHOD_SERVICE_ACCOUNT, (MOCK_CLIENT_ID, MOCK_CLIENT_SECRET), [True, False, True], 2),
     ],
 )
 def test_token_reuse_and_refresh(
-    mock_requests_post, mock_requests_get, auth_method, side_effect, expected_token_valid_calls
+    mock_requests_post, mock_requests_get, auth_method, auth_params, side_effect, expected_token_valid_calls
 ):
     """Test token reuse and refresh for both auth methods."""
     mock_requests_post("createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS)
@@ -225,10 +193,8 @@ def test_token_reuse_and_refresh(
 
     sdk = AlationAIAgentSDK(
         base_url=MOCK_BASE_URL,
-        user_id=MOCK_USER_ID if auth_method == "refresh_token" else None,
-        refresh_token=MOCK_REFRESH_TOKEN if auth_method == "refresh_token" else None,
-        client_id=MOCK_CLIENT_ID if auth_method == "service_account" else None,
-        client_secret=MOCK_CLIENT_SECRET if auth_method == "service_account" else None,
+        auth_method=auth_method,
+        auth_params=auth_params,
     )
     sdk.api.access_token = "mock-access-token"  # Ensure access_token is set
 
@@ -247,13 +213,14 @@ def test_token_reuse_and_refresh(
         assert mock_token_valid.call_count == expected_token_valid_calls
         assert spy_generate_token.call_count == 1
 
-
 def test_error_handling_in_token_validation(mock_requests_post):
     """Test that errors in token validation raise AlationAPIError."""
     mock_requests_post("createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS)
 
     sdk = AlationAIAgentSDK(
-        base_url=MOCK_BASE_URL, user_id=MOCK_USER_ID, refresh_token=MOCK_REFRESH_TOKEN
+        base_url=MOCK_BASE_URL,
+        auth_method=AUTH_METHOD_REFRESH_TOKEN,
+        auth_params=(MOCK_USER_ID, MOCK_REFRESH_TOKEN),
     )
 
     with patch.object(
