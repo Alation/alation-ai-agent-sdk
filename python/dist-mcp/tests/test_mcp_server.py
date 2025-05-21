@@ -171,3 +171,24 @@ def test_run_server_calls_create_and_run(mock_create_server, mock_fastmcp):
     mock_create_server.assert_called_once()
     mock_mcp_instance.run.assert_called_once()
     assert server.mcp is mock_mcp_instance
+
+
+def test_create_server_service_account(manage_environment_variables, monkeypatch, mock_alation_sdk, mock_fastmcp):
+    """
+    Test successful creation of the server with service_account authentication.
+    """
+    # Set environment variables for service_account auth method
+    monkeypatch.setenv("ALATION_AUTH_METHOD", "service_account")
+    monkeypatch.setenv("ALATION_CLIENT_ID", "mock-client-id")
+    monkeypatch.setenv("ALATION_CLIENT_SECRET", "mock-client-secret")
+
+    mock_sdk_class, mock_sdk_instance = mock_alation_sdk
+    mock_mcp_class, mock_mcp_instance = mock_fastmcp
+
+    mcp_result = server.create_server()
+
+    mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version="0.1.0")
+    mock_sdk_class.assert_called_once_with(
+        "https://mock-alation.com", "service_account", ("mock-client-id", "mock-client-secret")
+    )
+    assert mcp_result is mock_mcp_instance
