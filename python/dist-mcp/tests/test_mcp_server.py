@@ -2,6 +2,7 @@ import os
 import pytest
 from unittest.mock import patch, MagicMock
 from alation_ai_agent_mcp import server
+from alation_ai_agent_sdk import UserAccountAuthParams, ServiceAccountAuthParams
 
 
 @pytest.fixture(autouse=True)
@@ -16,7 +17,7 @@ def manage_environment_variables(monkeypatch):
         "ALATION_CLIENT_SECRET": os.environ.get("ALATION_CLIENT_SECRET"),
     }
     monkeypatch.setenv("ALATION_BASE_URL", "https://mock-alation.com")
-    monkeypatch.setenv("ALATION_AUTH_METHOD", "refresh_token")
+    monkeypatch.setenv("ALATION_AUTH_METHOD", "user_account")
     monkeypatch.setenv("ALATION_USER_ID", "12345")
     monkeypatch.setenv("ALATION_REFRESH_TOKEN", "mock-token")
     yield
@@ -93,7 +94,7 @@ def test_create_server_success(manage_environment_variables, mock_alation_sdk, m
 
     mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version="0.1.0")
     mock_sdk_class.assert_called_once_with(
-        "https://mock-alation.com", "refresh_token", (12345, "mock-token")
+        "https://mock-alation.com", "user_account", UserAccountAuthParams(12345, "mock-token")
     )
     assert mcp_result is mock_mcp_instance
 
@@ -189,6 +190,6 @@ def test_create_server_service_account(manage_environment_variables, monkeypatch
 
     mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version="0.1.0")
     mock_sdk_class.assert_called_once_with(
-        "https://mock-alation.com", "service_account", ("mock-client-id", "mock-client-secret")
+        "https://mock-alation.com", "service_account", ServiceAccountAuthParams("mock-client-id", "mock-client-secret")
     )
     assert mcp_result is mock_mcp_instance

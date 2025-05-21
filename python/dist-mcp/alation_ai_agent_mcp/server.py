@@ -2,7 +2,7 @@ import os
 from typing import Dict, Any
 
 from mcp.server.fastmcp import FastMCP
-from alation_ai_agent_sdk import AlationAIAgentSDK
+from alation_ai_agent_sdk import AlationAIAgentSDK, UserAccountAuthParams, ServiceAccountAuthParams
 
 
 def create_server():
@@ -15,19 +15,18 @@ def create_server():
             "Missing required environment variables: ALATION_BASE_URL and ALATION_AUTH_METHOD"
         )
 
-    # Parse raw auth parameters based on auth_method
-    if auth_method == "refresh_token":
+    if auth_method == "user_account":
         user_id = os.getenv("ALATION_USER_ID")
         refresh_token = os.getenv("ALATION_REFRESH_TOKEN")
         if not user_id or not refresh_token:
             raise ValueError(
-                "Missing required environment variables: ALATION_USER_ID and ALATION_REFRESH_TOKEN for 'refresh_token' auth_method"
+                "Missing required environment variables: ALATION_USER_ID and ALATION_REFRESH_TOKEN for 'user_account' auth_method"
             )
         try:
-            user_id = int(user_id)  # Ensure user_id is an integer
+            user_id = int(user_id)
         except ValueError:
             raise ValueError("ALATION_USER_ID must be an integer.")
-        auth_params = (user_id, refresh_token)
+        auth_params = UserAccountAuthParams(user_id, refresh_token)
 
     elif auth_method == "service_account":
         client_id = os.getenv("ALATION_CLIENT_ID")
@@ -36,10 +35,12 @@ def create_server():
             raise ValueError(
                 "Missing required environment variables: ALATION_CLIENT_ID and ALATION_CLIENT_SECRET for 'service_account' auth_method"
             )
-        auth_params = (client_id, client_secret)
+        auth_params = ServiceAccountAuthParams(client_id, client_secret)
 
     else:
-        raise ValueError("Invalid ALATION_AUTH_METHOD. Must be 'refresh_token' or 'service_account'.")
+        raise ValueError(
+            "Invalid ALATION_AUTH_METHOD. Must be 'user_account' or 'service_account'."
+        )
 
     # Initialize FastMCP server
     mcp = FastMCP(name="Alation MCP Server", version="0.1.0")

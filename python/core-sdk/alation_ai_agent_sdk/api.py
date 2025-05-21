@@ -1,12 +1,12 @@
 import logging
 import urllib.parse
 import json
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union, Tuple, NamedTuple
 from http import HTTPStatus
 import requests
 import requests.exceptions
 
-AUTH_METHOD_REFRESH_TOKEN = "refresh_token"
+AUTH_METHOD_USER_ACCOUNT = "user_account"
 AUTH_METHOD_SERVICE_ACCOUNT = "service_account"
 
 logger = logging.getLogger(__name__)
@@ -133,6 +133,19 @@ class AlationErrorClassifier:
         return {"reason": reason, "resolution_hint": resolution_hint, "help_links": help_links}
 
 
+class UserAccountAuthParams(NamedTuple):
+    user_id: int
+    refresh_token: str
+
+
+class ServiceAccountAuthParams(NamedTuple):
+    client_id: str
+    client_secret: str
+
+
+AuthParams = Union[UserAccountAuthParams, ServiceAccountAuthParams]
+
+
 class AlationAPI:
     """
     Client for interacting with the Alation API.
@@ -141,45 +154,37 @@ class AlationAPI:
 
     Attributes:
         base_url (str): Base URL for the Alation instance
-        auth_method (str): Authentication method ("refresh_token" or "service_account")
-        auth_params (tuple): Parameters required for the chosen authentication method
+        auth_method (str): Authentication method ("user_account" or "service_account")
+        auth_params (AuthParams): Parameters required for the chosen authentication method
     """
 
     def __init__(
         self,
         base_url: str,
         auth_method: str,
-        auth_params: tuple,
+        auth_params: AuthParams,
     ):
         self.base_url = base_url.rstrip("/")
         self.access_token: Optional[str] = None
         self.auth_method = auth_method
 
         # Validate auth_method and auth_params
-        if auth_method == AUTH_METHOD_REFRESH_TOKEN:
-            if (
-                len(auth_params) != 2
-                or not isinstance(auth_params[0], int)
-                or not isinstance(auth_params[1], str)
-            ):
+        if auth_method == AUTH_METHOD_USER_ACCOUNT:
+            if not isinstance(auth_params, UserAccountAuthParams):
                 raise ValueError(
-                    "For 'refresh_token' auth_method, auth_params must be a tuple of (user_id: int, refresh_token: str)."
+                    "For 'user_account' authentication, provide a tuple with (user_id: int, refresh_token: str)."
                 )
             self.user_id, self.refresh_token = auth_params
 
         elif auth_method == AUTH_METHOD_SERVICE_ACCOUNT:
-            if (
-                len(auth_params) != 2
-                or not isinstance(auth_params[0], str)
-                or not isinstance(auth_params[1], str)
-            ):
+            if not isinstance(auth_params, ServiceAccountAuthParams):
                 raise ValueError(
-                    "For 'service_account' auth_method, auth_params must be a tuple of (client_id: str, client_secret: str)."
+                    "For 'service_account' authentication, provide a tuple with (client_id: str, client_secret: str)."
                 )
             self.client_id, self.client_secret = auth_params
 
         else:
-            raise ValueError("auth_method must be either 'refresh_token' or 'service_account'.")
+            raise ValueError("auth_method must be either 'user_account' or 'service_account'.")
 
         logger.debug(f"AlationAPI initialized with auth method: {self.auth_method}")
 
@@ -286,10 +291,10 @@ class AlationAPI:
                 help_links=["https://developer.alation.com/"],
             )
 
-        if "access_token" not in data or "expires_in" not in data:
+        if "access_token" not in data:
             meta = AlationErrorClassifier.classify_token_error(response.status_code, data)
             raise AlationAPIError(
-                f"Access token or expires_in missing in JWT API response from {url}",
+                f"Access token missing in JWT API response from {url}",
                 status_code=response.status_code,
                 response_body=str(data),
                 reason=meta.get("reason", "Malformed JWT Response"),
@@ -305,7 +310,7 @@ class AlationAPI:
     def _generate_new_token(self):
 
         logger.info("Access token is invalid or expired. Attempting to generate a new one.")
-        if self.auth_method == AUTH_METHOD_REFRESH_TOKEN:
+        if self.auth_method == AUTH_METHOD_USER_ACCOUNT:
             self._generate_access_token_with_refresh_token()
         elif self.auth_method == AUTH_METHOD_SERVICE_ACCOUNT:
             self._generate_jwt_token()
@@ -409,7 +414,7 @@ class AlationAPI:
 
     def _token_is_valid_on_server(self):
         try:
-            if self.auth_method == AUTH_METHOD_REFRESH_TOKEN:
+            if self.auth_method == AUTH_METHOD_USER_ACCOUNT:
                 return self._is_access_token_valid()
             elif self.auth_method == AUTH_METHOD_SERVICE_ACCOUNT:
                 return self._is_jwt_token_valid()
