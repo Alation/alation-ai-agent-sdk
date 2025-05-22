@@ -15,7 +15,7 @@ import os
 import json
 from typing import Dict, Any
 
-from alation_ai_agent_sdk import AlationAIAgentSDK
+from alation_ai_agent_sdk import AlationAIAgentSDK, UserAccountAuthParams, ServiceAccountAuthParams
 from alation_ai_agent_sdk.api import AlationAPIError
 
 
@@ -27,28 +27,63 @@ def print_json(data: Dict[str, Any]) -> None:
 def main() -> None:
     # Load credentials from environment variables
     base_url = os.getenv("ALATION_BASE_URL")
+    auth_method = os.getenv("ALATION_AUTH_METHOD")
+
+    # For user account authentication
     user_id_str = os.getenv("ALATION_USER_ID")
     refresh_token = os.getenv("ALATION_REFRESH_TOKEN")
 
+    # For service account authentication (commented out for now)
+    # client_id = os.getenv("ALATION_CLIENT_ID")
+    # client_secret = os.getenv("ALATION_CLIENT_SECRET")
+
     # Validate environment variables
-    if not all([base_url, user_id_str, refresh_token]):
+    if not base_url or not auth_method:
         print("Error: Missing required environment variables.")
-        print("Please set ALATION_BASE_URL, ALATION_USER_ID, and ALATION_REFRESH_TOKEN.")
+        print("Please set ALATION_BASE_URL and ALATION_AUTH_METHOD.")
         return
 
-    try:
-        user_id = int(user_id_str)
-    except ValueError:
-        print(f"Error: ALATION_USER_ID must be an integer, got: {user_id_str}")
-        return
+    if auth_method == "user_account":
+        if not all([user_id_str, refresh_token]):
+            print("Error: Missing required environment variables for user account authentication.")
+            print("Please set ALATION_USER_ID and ALATION_REFRESH_TOKEN.")
+            return
 
-    # Initialize the SDK
-    print("Initializing Alation AI Agent SDK...")
-    sdk = AlationAIAgentSDK(
-        base_url=base_url,
-        user_id=user_id,
-        refresh_token=refresh_token
-    )
+        try:
+            user_id = int(user_id_str)
+        except ValueError:
+            print(f"Error: ALATION_USER_ID must be an integer, got: {user_id_str}")
+            return
+
+        # Initialize the SDK for user account authentication
+        print("Initializing Alation AI Agent SDK with user account authentication...")
+        sdk = AlationAIAgentSDK(
+            base_url=base_url,
+            auth_method=auth_method,
+            auth_params=UserAccountAuthParams(user_id=user_id, refresh_token=refresh_token),
+        )
+
+    # elif auth_method == "service_account":
+    # Uncomment the following block for service account authentication
+    # if not all([client_id, client_secret]):
+    #     print("Error: Missing required environment variables for service account authentication.")
+    #     print("Please set ALATION_CLIENT_ID and ALATION_CLIENT_SECRET.")
+    #     return
+
+    # Initialize the SDK for service account authentication
+    # print("Initializing Alation AI Agent SDK with service account authentication...")
+    # sdk = AlationAIAgentSDK(
+    #     base_url=base_url,
+    #     auth_method=auth_method,
+    #     auth_params=ServiceAccountAuthParams(
+    #         client_id=client_id,
+    #         client_secret=client_secret
+    #     )
+    # )
+
+    else:
+        print(f"Error: Unsupported ALATION_AUTH_METHOD: {auth_method}")
+        return
 
     # Example 1: Basic query without signature
     print("\n=== Example 1: Basic Query ===")
@@ -73,19 +108,12 @@ def main() -> None:
         "table": {
             "fields_required": ["name", "title", "description", "url"],
             "fields_optional": ["common_joins", "common_filters"],
-            "search_filters": {
-                "fields": {
-                    "tag_ids": [2]  # Replace with actual tag ID
-                }
-            }
+            "search_filters": {"fields": {"tag_ids": [2]}},  # Replace with actual tag ID
         }
     }
 
     try:
-        response = sdk.get_context(
-            "Can you explain transactions table?",
-            signature=table_signature
-        )
+        response = sdk.get_context("Can you explain transactions table?", signature=table_signature)
         print_json(response)
     except AlationAPIError as e:
         print(f"API Error: {e}")
@@ -99,18 +127,13 @@ def main() -> None:
     detailed_signature = {
         "table": {
             "fields_required": ["name", "title", "description", "url", "columns"],
-            "child_objects": {
-                "columns": {
-                    "fields": ["name", "title", "data_type", "description"]
-                }
-            }
+            "child_objects": {"columns": {"fields": ["name", "title", "data_type", "description"]}},
         }
     }
 
     try:
         response = sdk.get_context(
-            "Tell me about the customer_profile table",
-            signature=detailed_signature
+            "Tell me about the customer_profile table", signature=detailed_signature
         )
         print_json(response)
     except AlationAPIError as e:
@@ -122,16 +145,11 @@ def main() -> None:
     print("Query: Fetch documentation on loan term and loan type")
 
     # Define a signature for documentation
-    docs_signature = {
-        "documentation": {
-            "fields_required": ["title", "content", "url"]
-        }
-    }
+    docs_signature = {"documentation": {"fields_required": ["title", "content", "url"]}}
 
     try:
         response = sdk.get_context(
-            "What is the difference between loan type and loan term",
-            signature=docs_signature
+            "What is the difference between loan type and loan term", signature=docs_signature
         )
         print_json(response)
     except AlationAPIError as e:

@@ -29,7 +29,7 @@ import argparse
 from typing import Dict, Any, List
 
 import openai
-from alation_ai_agent_sdk import AlationAIAgentSDK
+from alation_ai_agent_sdk import AlationAIAgentSDK, UserAccountAuthParams, ServiceAccountAuthParams
 from alation_ai_agent_sdk.api import AlationAPIError
 
 
@@ -38,7 +38,7 @@ class DataCatalogQA:
 
     def __init__(self):
         """Initialize the QA system with Alation SDK and OpenAI client."""
-        
+
         # Load credentials
         self.base_url = os.getenv("ALATION_BASE_URL")
         user_id_str = os.getenv("ALATION_USER_ID")
@@ -69,17 +69,29 @@ class DataCatalogQA:
         # Initialize Alation SDK
         self.sdk = AlationAIAgentSDK(
             base_url=self.base_url,
-            user_id=self.user_id,
-            refresh_token=self.refresh_token
+            auth_method="user_account",  # or "service_account"
+            auth_params=UserAccountAuthParams(
+                user_id=self.user_id, refresh_token=self.refresh_token
+            ),
         )
-        
+
+        # Uncomment the following block for service account authentication
+        # self.sdk = AlationAIAgentSDK(
+        #     base_url=self.base_url,
+        #     auth_method="service_account",
+        #     auth_params=ServiceAccountAuthParams(
+        #         client_id=os.getenv("ALATION_CLIENT_ID"),
+        #         client_secret=os.getenv("ALATION_CLIENT_SECRET")
+        #     )
+        # )
+
         # Initialize conversation history (including context)
         self.conversation_history = []
 
     def create_comprehensive_signature(self) -> Dict[str, Any]:
         """
         Create a comprehensive signature that leverages Alation's dynamic field selection.
-        
+
         Uses fields_required for essential info and fields_optional for content
         that should be included only when relevant to the question.
         """
@@ -88,28 +100,24 @@ class DataCatalogQA:
                 "fields_required": ["name", "title", "description", "url"],
                 "fields_optional": ["common_joins", "common_filters", "columns"],
                 "child_objects": {
-                    "columns": {
-                        "fields": ["name", "data_type", "description", "sample_values"]
-                    }
-                }
+                    "columns": {"fields": ["name", "data_type", "description", "sample_values"]}
+                },
             },
             "documentation": {
                 "fields_required": ["title", "url", "content"],
             },
-            "query": {
-                "fields_required": ["title", "description", "content", "url"]
-            }
+            "query": {"fields_required": ["title", "description", "content", "url"]},
         }
 
     def get_catalog_context(self, question: str) -> Dict[str, Any]:
         """
         Retrieve relevant context from the Alation catalog.
-        
+
         Leverages Alation's internal LLM for query understanding and dynamic field selection.
         """
         # Create a comprehensive signature with required and optional fields
         signature = self.create_comprehensive_signature()
-        
+
         try:
             # Get context from Alation - the internal LLM will handle query rewriting
             # and intelligently select from optional fields based on the question
@@ -121,28 +129,24 @@ class DataCatalogQA:
     def combine_contexts(self, contexts: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Combine multiple context objects into a single unified context.
-        
+
         Args:
             contexts: List of context dictionaries from Alation
-            
+
         Returns:
             A merged context with unique tables, documentation, and queries
         """
         if not contexts:
             return {}
-            
+
         # Start with an empty combined context
-        combined = {
-            "relevant_tables": [],
-            "documentation": [],
-            "queries": []
-        }
-        
+        combined = {"relevant_tables": [], "documentation": [], "queries": []}
+
         # Track items we've seen to avoid duplicates
         seen_tables = set()
         seen_docs = set()
         seen_queries = set()
-        
+
         # Process each context object
         for context in contexts:
             # Add unique tables
@@ -151,28 +155,33 @@ class DataCatalogQA:
                 if table_name and table_name not in seen_tables:
                     combined["relevant_tables"].append(table)
                     seen_tables.add(table_name)
-            
+
             # Add unique documentation
             for doc in context.get("documentation", []):
                 doc_title = doc.get("title", "")
                 if doc_title and doc_title not in seen_docs:
                     combined["documentation"].append(doc)
                     seen_docs.add(doc_title)
-            
+
             # Add unique queries
             for query in context.get("queries", []):
                 query_title = query.get("title", "")
                 if query_title and query_title not in seen_queries:
                     combined["queries"].append(query)
                     seen_queries.add(query_title)
-        
+
         # Remove empty keys
         return {k: v for k, v in combined.items() if v}
 
-    def generate_answer(self, question: str, current_context: Dict[str, Any], conversation_history: List[Dict[str, Any]] = None) -> str:
+    def generate_answer(
+        self,
+        question: str,
+        current_context: Dict[str, Any],
+        conversation_history: List[Dict[str, Any]] = None,
+    ) -> str:
         """
         Generate an answer using the LLM based on the question, current context, and conversation history.
-        
+
         Args:
             question: The user's question
             current_context: Raw context data from Alation for the current question
@@ -205,41 +214,43 @@ class DataCatalogQA:
         
         Format your answers in a clear, structured way with headings and bullet points when appropriate.
         """
-        
+
         messages = [{"role": "system", "content": system_prompt}]
-        
+
         # Prepare contextual information
         all_contexts = []
-        
+
         # Add historical context from conversation history if available
         if conversation_history:
             historical_context_str = "HISTORICAL CONTEXT:\n"
-            
+
             for i, entry in enumerate(conversation_history, 1):
                 # Add the question and answer to messages for conversation flow
                 messages.append({"role": "user", "content": entry["question"]})
                 messages.append({"role": "assistant", "content": entry["answer"]})
-                
+
                 # Add the context to our collection for combining
                 if "context" in entry:
                     all_contexts.append(entry["context"])
-                    
+
                     # Also add a note about this context for the LLM's reference
-                    historical_context_str += f"Context {i} from question: \"{entry['question']}\"\n"
-            
+                    historical_context_str += (
+                        f"Context {i} from question: \"{entry['question']}\"\n"
+                    )
+
             # Provide a note about historical context being available
             if all_contexts:
                 messages.append({"role": "system", "content": historical_context_str})
-        
+
         # Add current context
         all_contexts.append(current_context)
-        
+
         # Combine all contexts
         combined_context = self.combine_contexts(all_contexts)
-        
+
         # Convert the context dict to a formatted JSON string
         context_json = json.dumps(combined_context, indent=2)
-        
+
         # Add current question with combined context
         user_prompt = f"""
         Question: {question}
@@ -248,21 +259,21 @@ class DataCatalogQA:
         {context_json}
         """
         messages.append({"role": "user", "content": user_prompt})
-        
+
         # Generate response
         response = self.client.chat.completions.create(
             model="gpt-4",
             messages=messages,
             temperature=0.1,  # Lower temperature for more focused answers
-            max_tokens=1000
+            max_tokens=1000,
         )
-        
+
         return response.choices[0].message.content.strip()
 
     def answer_question(self, question: str, use_conversation_history: bool = False) -> str:
         """
         Main method to answer a question about the data catalog.
-        
+
         Args:
             question: The user's question
             use_conversation_history: Whether to include previous conversation context
@@ -277,22 +288,20 @@ class DataCatalogQA:
 
         # Step 1: Get context from Alation's LLM-powered context API
         context_data = self.get_catalog_context(question)
-        
+
         # Step 2: Generate answer using the LLM with current and historical context
         history = self.conversation_history if use_conversation_history else None
         answer = self.generate_answer(question, context_data, history)
-        
+
         # Step 3: Update conversation history - now including context
-        self.conversation_history.append({
-            "question": question,
-            "context": context_data,
-            "answer": answer
-        })
-        
+        self.conversation_history.append(
+            {"question": question, "context": context_data, "answer": answer}
+        )
+
         # Keep conversation history to a reasonable size
         if len(self.conversation_history) > 5:
             self.conversation_history = self.conversation_history[-5:]
-        
+
         return answer
 
 
@@ -300,27 +309,24 @@ def main():
     """Entry point for the QA application."""
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Data Catalog QA Bot")
+    parser.add_argument("--question", "-q", type=str, help="Question to ask about the data catalog")
     parser.add_argument(
-        "--question", "-q", 
-        type=str,
-        help="Question to ask about the data catalog"
-    )
-    parser.add_argument(
-        "--conversation", "-c",
+        "--conversation",
+        "-c",
         action="store_true",
-        help="Enable conversation mode (maintain context between questions)"
+        help="Enable conversation mode (maintain context between questions)",
     )
     args = parser.parse_args()
-    
+
     try:
         # Initialize QA system
         qa_system = DataCatalogQA()
-        
+
         if args.question:
             # Answer the provided question
             question = args.question
             answer = qa_system.answer_question(question, args.conversation)
-            
+
             print(f"\nQ: {question}\n")
             print(f"A: {answer}\n")
         else:
@@ -329,24 +335,24 @@ def main():
             if args.conversation:
                 print("Conversation mode enabled - context will be maintained between questions.")
             print("Type 'exit' to quit.\n")
-            
+
             while True:
                 # Get user question
                 question = input("Ask a question: ").strip()
-                
+
                 if question.lower() in ["exit", "quit", "bye"]:
                     print("Goodbye!")
                     break
-                
+
                 if not question:
                     continue
-                
+
                 # Get answer
                 print("\nThinking...\n")
                 answer = qa_system.answer_question(question, args.conversation)
-                
+
                 print(f"Answer:\n{answer}\n")
-                
+
     except Exception as e:
         print(f"Error: {e}")
 

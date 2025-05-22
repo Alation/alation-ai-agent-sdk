@@ -7,8 +7,8 @@ This guide explains how to set up and use the Alation Model Context Protocol (MC
 - [Claude Desktop](https://claude.ai/download) application installed (macOS or Windows)
 - Python 3.10 or higher
 - Access to an Alation Data Catalog instance
-- A valid refresh token created from your user account in Alation ([instructions](https://developer.alation.com/dev/docs/authentication-into-alation-apis#create-a-refresh-token-via-the-ui))
-
+- A valid refresh token or client_id and secret. For more details, refer to the [Authentication Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md).
+in calude
 ## Quick start
 
 ### Step 1: Configure Claude Desktop
@@ -23,7 +23,7 @@ This will create or open the configuration file at:
 - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 
 ### Method 1: Using `uvx`
-> This method requires minimal setup, uvx downloads and installs the package in a isolated environment; Ensure uvx is installed in your environment
+> This method requires minimal setup, uvx downloads and installs the package in an isolated environment; Ensure uvx is installed in your environment
 
 Add the following configuration to your `claude_desktop_config.json`. See [here](https://modelcontextprotocol.io/quickstart/user) for more details.
 
@@ -33,15 +33,22 @@ Add the following configuration to your `claude_desktop_config.json`. See [here]
     "alation": {
       "command": "uvx",
       "args": [
-        "--from", "alation-ai-agent-mcp","start-mcp-server"
+        "--from", "alation-ai-agent-mcp", "start-mcp-server"
       ],
       "env": {
-        "ALATION_BASE_URL": "https://company.alationcloud.com",
-        "ALATION_USER_ID": "123",
-        "ALATION_REFRESH_TOKEN":"<token>"
+        "ALATION_BASE_URL": "https://your-alation-instance.com",
+        "ALATION_AUTH_METHOD": "user_account", // or "service_account"
+
+        // For user account authentication
+        "ALATION_USER_ID": "your-user-id",
+        "ALATION_REFRESH_TOKEN": "your-refresh-token",
+
+        // For service account authentication
+        "ALATION_CLIENT_ID": "your-client-id",
+        "ALATION_CLIENT_SECRET": "your-client-secret"
       }
     }
-}
+  }
 }
 ```
 
@@ -60,14 +67,22 @@ where start-mcp-server  # On Windows
     "alation": {
       "command": "/full/path/to/start-mcp-server",
       "env": {
-        "ALATION_BASE_URL": "https://company.alationcloud.com",
-        "ALATION_USER_ID": "123",
-        "ALATION_REFRESH_TOKEN": "<token>"
+        "ALATION_BASE_URL": "https://your-alation-instance.com",
+        "ALATION_AUTH_METHOD": "user_account", // or "service_account"
+
+        // For user account authentication
+        "ALATION_USER_ID": "your-user-id",
+        "ALATION_REFRESH_TOKEN": "your-refresh-token",
+
+        // For service account authentication
+        "ALATION_CLIENT_ID": "your-client-id",
+        "ALATION_CLIENT_SECRET": "your-client-secret"
       }
     }
   }
 }
 ```
+
 ### Method 3: Using Docker
 > This assumes you've already locally built a docker image following the instructions from [this guide](https://github.com/Alation/alation-ai-agent-sdk/tree/main/python/dist-mcp/README.md#debugging-the-server)
 ```json
@@ -76,14 +91,21 @@ where start-mcp-server  # On Windows
     "alation-context-tool": {
       "command": "docker",
       "args": [
-        "run","-i","--rm",
-        "-e", "ALATION_BASE_URL=https://company.alationcloud.com",
-        "-e", "ALATION_USER_ID=123",
-        "-e", "ALATION_REFRESH_TOKEN=<token>",
+        "run", "-i", "--rm",
+        "-e", "ALATION_BASE_URL=https://your-alation-instance.com",
+        "-e", "ALATION_AUTH_METHOD=user_account", // or "service_account",
+
+        // For user account authentication
+        "-e", "ALATION_USER_ID=your-user-id",
+        "-e", "ALATION_REFRESH_TOKEN=your-refresh-token",
+
+        // For service account authentication
+        "-e", "ALATION_CLIENT_ID=your-client-id",
+        "-e", "ALATION_CLIENT_SECRET=your-client-secret",
         "alation-mcp-server:latest"
       ]
     }
-}
+  }
 }
 ```
 

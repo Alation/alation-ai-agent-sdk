@@ -4,6 +4,7 @@ Here are a handful of guides & examples to show you how to work with the Alation
 
 ## General
 
+- [Authentication](./authentication.md)
 - [Integration Planning](./planning.md)
 - [Using Signatures](./signature.md)
 - [Supported Object Types and Fields](./supported.md)
