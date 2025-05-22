@@ -2,6 +2,7 @@ import os
 import pytest
 from unittest.mock import patch, MagicMock
 from alation_ai_agent_mcp import server
+from alation_ai_agent_sdk import UserAccountAuthParams, ServiceAccountAuthParams
 
 
 @pytest.fixture(autouse=True)
@@ -9,12 +10,16 @@ def manage_environment_variables(monkeypatch):
     """Fixture to manage environment variables for tests."""
     original_vars = {
         "ALATION_BASE_URL": os.environ.get("ALATION_BASE_URL"),
+        "ALATION_AUTH_METHOD": os.environ.get("ALATION_AUTH_METHOD"),
         "ALATION_USER_ID": os.environ.get("ALATION_USER_ID"),
         "ALATION_REFRESH_TOKEN": os.environ.get("ALATION_REFRESH_TOKEN"),
+        "ALATION_CLIENT_ID": os.environ.get("ALATION_CLIENT_ID"),
+        "ALATION_CLIENT_SECRET": os.environ.get("ALATION_CLIENT_SECRET"),
     }
-    monkeypatch.setenv("ALATION_BASE_URL", "https://fake-alation.com")
+    monkeypatch.setenv("ALATION_BASE_URL", "https://mock-alation.com")
+    monkeypatch.setenv("ALATION_AUTH_METHOD", "user_account")
     monkeypatch.setenv("ALATION_USER_ID", "12345")
-    monkeypatch.setenv("ALATION_REFRESH_TOKEN", "fake-token")
+    monkeypatch.setenv("ALATION_REFRESH_TOKEN", "mock-token")
     yield
     for key, value in original_vars.items():
         if value is None:
@@ -88,7 +93,9 @@ def test_create_server_success(manage_environment_variables, mock_alation_sdk, m
     mcp_result = server.create_server()
 
     mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version="0.1.0")
-    mock_sdk_class.assert_called_once_with("https://fake-alation.com", 12345, "fake-token")
+    mock_sdk_class.assert_called_once_with(
+        "https://mock-alation.com", "user_account", UserAccountAuthParams(12345, "mock-token")
+    )
     assert mcp_result is mock_mcp_instance
 
 
@@ -165,3 +172,24 @@ def test_run_server_calls_create_and_run(mock_create_server, mock_fastmcp):
     mock_create_server.assert_called_once()
     mock_mcp_instance.run.assert_called_once()
     assert server.mcp is mock_mcp_instance
+
+
+def test_create_server_service_account(manage_environment_variables, monkeypatch, mock_alation_sdk, mock_fastmcp):
+    """
+    Test successful creation of the server with service_account authentication.
+    """
+    # Set environment variables for service_account auth method
+    monkeypatch.setenv("ALATION_AUTH_METHOD", "service_account")
+    monkeypatch.setenv("ALATION_CLIENT_ID", "mock-client-id")
+    monkeypatch.setenv("ALATION_CLIENT_SECRET", "mock-client-secret")
+
+    mock_sdk_class, mock_sdk_instance = mock_alation_sdk
+    mock_mcp_class, mock_mcp_instance = mock_fastmcp
+
+    mcp_result = server.create_server()
+
+    mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version="0.1.0")
+    mock_sdk_class.assert_called_once_with(
+        "https://mock-alation.com", "service_account", ServiceAccountAuthParams("mock-client-id", "mock-client-secret")
+    )
+    assert mcp_result is mock_mcp_instance

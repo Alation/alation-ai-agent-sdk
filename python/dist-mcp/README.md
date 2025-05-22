@@ -26,8 +26,14 @@ Set up your environment variables:
 
 ```bash
 export ALATION_BASE_URL="https://your-alation-instance.com"
+export ALATION_AUTH_METHOD="user_account"
 export ALATION_USER_ID="12345"
 export ALATION_REFRESH_TOKEN="your-refresh-token"
+
+# Alternatively, for service account authentication
+export ALATION_AUTH_METHOD="service_account"
+export ALATION_CLIENT_ID="your-client-id"
+export ALATION_CLIENT_SECRET="your-client-secret"
 ```
 
 To run the Alation MCP Server, use [uvx](https://docs.astral.sh/uv/guides/tools/) (recommend), use the following command:

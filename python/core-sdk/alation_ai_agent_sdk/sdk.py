@@ -1,19 +1,38 @@
 from typing import Dict, Any, Optional
 
-from .api import AlationAPI, AlationAPIError
+from .api import (
+    AlationAPI,
+    AlationAPIError,
+    AuthParams,
+)
 from .tools import AlationContextTool
 
 
 class AlationAIAgentSDK:
-    def __init__(self, base_url: str, user_id: int, refresh_token: str):
+    """
+    SDK for interacting with Alation AI Agent capabilities.
+
+    Can be initialized using one of two authentication methods:
+    1. User Account Authentication:
+       sdk = AlationAIAgentSDK(base_url="https://company.alationcloud.com", auth_method="user_account", auth_params=(123, "your_refresh_token"))
+    2. Service Account Authentication:
+       sdk = AlationAIAgentSDK(base_url="https://company.alationcloud.com", auth_method="service_account", auth_params=("your_client_id", "your_client_secret"))
+    """
+
+    def __init__(
+        self,
+        base_url: str,
+        auth_method: str,
+        auth_params: AuthParams,
+    ):
         if not base_url or not isinstance(base_url, str):
             raise ValueError("base_url must be a non-empty string.")
-        if not isinstance(user_id, int):
-            raise ValueError("user_id must be an integer.")
-        if not refresh_token or not isinstance(refresh_token, str):
-            raise ValueError("refresh_token must be a non-empty string.")
 
-        self.api = AlationAPI(base_url, user_id, refresh_token)
+        if not auth_method or not isinstance(auth_method, str):
+            raise ValueError("auth_method must be a non-empty string.")
+
+        # Delegate validation of auth_params to AlationAPI
+        self.api = AlationAPI(base_url=base_url, auth_method=auth_method, auth_params=auth_params)
         self.context_tool = AlationContextTool(self.api)
 
     def get_context(
