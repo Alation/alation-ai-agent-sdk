@@ -27,17 +27,30 @@ To use the SDK, you'll need:
 ## Quick Start
 
 ```python
-from alation_ai_agent_sdk import AlationAIAgentSDK
+from alation_ai_agent_sdk import AlationAIAgentSDK, UserAccountAuthParams, ServiceAccountAuthParams
 
-# Initialize the SDK with your credentials
-sdk = AlationAIAgentSDK(
+# Initialize the SDK using user account authentication
+sdk_user_account = AlationAIAgentSDK(
     base_url="https://your-alation-instance.com",
-    user_id=12345,
-    refresh_token="your-refresh-token"
+    auth_method="user_account",
+    auth_params=UserAccountAuthParams(
+        user_id=12345,
+        refresh_token="your-refresh-token"
+    )
+)
+
+# Initialize the SDK using service account authentication
+sdk_service_account = AlationAIAgentSDK(
+    base_url="https://your-alation-instance.com",
+    auth_method="service_account",
+    auth_params=ServiceAccountAuthParams(
+        client_id="your-client-id",
+        client_secret="your-client-secret"
+    )
 )
 
 # Ask a question about your data
-response = sdk.get_context(
+response = sdk_user_account.get_context(
     "What tables contain sales information?"
 )
 print(response)
@@ -46,10 +59,10 @@ print(response)
 signature = {
     "table": {
         "fields_required": ["name", "title", "description"]
-        }
     }
+}
 
-response = sdk.get_context(
+response = sdk_user_account.get_context(
     "What are the customer tables?",
     signature
 )

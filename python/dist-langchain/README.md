@@ -30,18 +30,31 @@ from langchain_openai import ChatOpenAI
 from langchain.agents import AgentExecutor, create_openai_functions_agent
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 
-from alation_ai_agent_sdk import AlationAIAgentSDK
+from alation_ai_agent_sdk import AlationAIAgentSDK, UserAccountAuthParams, ServiceAccountAuthParams
 from alation_ai_agent_langchain import get_langchain_tools
 
-# Initialize Alation SDK
-sdk = AlationAIAgentSDK(
+# Initialize Alation SDK using user account authentication
+sdk_user_account = AlationAIAgentSDK(
     base_url=os.getenv("ALATION_BASE_URL"),
-    user_id=int(os.getenv("ALATION_USER_ID")),
-    refresh_token=os.getenv("ALATION_REFRESH_TOKEN")
+    auth_method="user_account",  # Specify the authentication method
+    auth_params=UserAccountAuthParams(
+        user_id=int(os.getenv("ALATION_USER_ID")),
+        refresh_token=os.getenv("ALATION_REFRESH_TOKEN")
+    )
+)
+
+# Initialize Alation SDK using service account authentication
+sdk_service_account = AlationAIAgentSDK(
+    base_url=os.getenv("ALATION_BASE_URL"),
+    auth_method="service_account",  # Specify the authentication method
+    auth_params=ServiceAccountAuthParams(
+        client_id=os.getenv("ALATION_CLIENT_ID"),
+        client_secret=os.getenv("ALATION_CLIENT_SECRET")
+    )
 )
 
 # Get Langchain tools
-tools = get_langchain_tools(sdk)
+tools = get_langchain_tools(sdk_user_account)
 
 # Define agent prompt
 prompt = ChatPromptTemplate.from_messages([
