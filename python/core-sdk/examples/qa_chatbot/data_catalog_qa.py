@@ -66,24 +66,20 @@ class DataCatalogQA:
         # Initialize OpenAI client
         self.client = openai.OpenAI(api_key=openai_api_key)
 
+        # Load auth method from env
+        auth_method = os.getenv("ALATION_AUTH_METHOD", "user_account")
+
         # Initialize Alation SDK
         self.sdk = AlationAIAgentSDK(
             base_url=self.base_url,
-            auth_method="user_account",  # or "service_account"
+            auth_method=auth_method,  # Use auth_method from env
             auth_params=UserAccountAuthParams(
                 user_id=self.user_id, refresh_token=self.refresh_token
-            ),
+            ) if auth_method == "user_account" else ServiceAccountAuthParams(
+                client_id=os.getenv("ALATION_CLIENT_ID"),
+                client_secret=os.getenv("ALATION_CLIENT_SECRET")
+            )
         )
-
-        # Uncomment the following block for service account authentication
-        # self.sdk = AlationAIAgentSDK(
-        #     base_url=self.base_url,
-        #     auth_method="service_account",
-        #     auth_params=ServiceAccountAuthParams(
-        #         client_id=os.getenv("ALATION_CLIENT_ID"),
-        #         client_secret=os.getenv("ALATION_CLIENT_SECRET")
-        #     )
-        # )
 
         # Initialize conversation history (including context)
         self.conversation_history = []

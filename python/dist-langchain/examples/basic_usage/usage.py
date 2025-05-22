@@ -24,11 +24,18 @@ if not all([base_url, user_id, refresh_token, openai_api_key]):
     value_error_message = "Missing one or more required environment variables."
     raise ValueError(value_error_message)
 
+# Load auth method from env
+auth_method = os.getenv("ALATION_AUTH_METHOD", "user_account")
+
 # Init Alation SDK
 sdk = AlationAIAgentSDK(
     base_url=base_url,
-    auth_method="user_account",  # or "service_account"
-    auth_params=UserAccountAuthParams(user_id=int(user_id), refresh_token=refresh_token),
+    auth_method=auth_method,  # Use auth_method from env
+    auth_params=UserAccountAuthParams(user_id=int(user_id), refresh_token=refresh_token)
+    if auth_method == "user_account" else ServiceAccountAuthParams(
+        client_id=os.getenv("ALATION_CLIENT_ID"),
+        client_secret=os.getenv("ALATION_CLIENT_SECRET")
+    )
 )
 
 # Uncomment the following block for service account authentication
