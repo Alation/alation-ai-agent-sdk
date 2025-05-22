@@ -6,7 +6,7 @@ This guide walks through the process of testing your Alation AI Agent SDK's Mode
 
 - Python 3.10 or higher
 - Access to an Alation Data Catalog instance
-- A valid refresh token created from your user account in Alation ([instructions](https://developer.alation.com/dev/docs/authentication-into-alation-apis#create-a-refresh-token-via-the-ui))
+- A valid refresh token or client_id and secret. For more details, refer to the [Authentication Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md).
 - Node.js installed (for npx)
 
 ## Step 1: Set Required Environment Variables
@@ -16,16 +16,26 @@ The Alation MCP server requires three environment variables:
 ```bash
 # Set environment variables for your Alation instance
 export ALATION_BASE_URL="https://your-alation-instance.com"
+export ALATION_AUTH_METHOD="user_account"  # or "service_account"
+
+# For user account authentication
 export ALATION_USER_ID="123456"  # Your numeric user ID
 export ALATION_REFRESH_TOKEN="your-refresh-token"
+
+# For service account authentication
+export ALATION_CLIENT_ID="your-client-id"
+export ALATION_CLIENT_SECRET="your-client-secret"
 ```
 
 Verify the variables are properly set:
 
 ```bash
 echo $ALATION_BASE_URL
+echo $ALATION_AUTH_METHOD
 echo $ALATION_USER_ID
 echo $ALATION_REFRESH_TOKEN
+echo $ALATION_CLIENT_ID
+echo $ALATION_CLIENT_SECRET
 ```
 
 ## Step 2: Run the MCP Server with Inspector

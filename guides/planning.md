@@ -17,3 +17,11 @@ Field selection ensures your agent has the right context in order to achieve the
 We recommend starting the default fields then extending them as your use case(s) warrants. For more predicable results consider limiting any optional fields.
 
 See [Using Signatures](./signature.md) for how to put these integration ideas into practice.
+
+## Authentication
+
+The Alation AI Agent SDK supports two authentication methods:
+
+1. **User Account Authentication**: Ideal for personal agents. Requires a refresh token and user ID. Refer to the [Authentication Guide](./authentication.md) for setup instructions.
+
+2. **Service Account Authentication**: Designed for shared agents. Requires a client ID and client secret. Refer to the [Authentication Guide](./authentication.md) for setup instructions.

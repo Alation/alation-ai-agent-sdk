@@ -1,4 +1,3 @@
-
 # Alation Context API Integration – LibreChat MCP Server
 
 This guide explains how to set up and use the **Alation Context API MCP server** with LibreChat. This enables LibreChat to retrieve Alation metadata (e.g., trusted tables, documentation, schema info) contextually during conversations with AI models.
@@ -10,7 +9,7 @@ This guide explains how to set up and use the **Alation Context API MCP server**
 - Installed and configured **LibreChat** client v0.7.8 or newer ([instructions](https://www.librechat.ai/docs/quick_start/local_setup))
 - Python 3.10 or higher
 - Access to an Alation Data Catalog instance
-- A valid refresh token created from your user account in Alation ([instructions](https://developer.alation.com/dev/docs/authentication-into-alation-apis#create-a-refresh-token-via-the-ui))
+- A valid refresh token or client_id and secret. For more details, refer to the [Authentication Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md).
 
 ---
 
@@ -57,9 +56,16 @@ mcpServers:
       - "alation-ai-agent-mcp"
       - "start-mcp-server"
     env:
-      ALATION_REFRESH_TOKEN: "<your-refresh-token>"
-      ALATION_USER_ID: "<user-id>"
-      ALATION_BASE_URL: "https://company.mtse.alationcloud.com"
+      ALATION_BASE_URL: "https://your-alation-instance.com"
+      ALATION_AUTH_METHOD: "user_account"  # or "service_account"
+
+      # For user account authentication
+      ALATION_USER_ID: "your-user-id"
+      ALATION_REFRESH_TOKEN: "your-refresh-token"
+
+      # For service account authentication
+      ALATION_CLIENT_ID: "your-client-id"
+      ALATION_CLIENT_SECRET: "your-client-secret"
 ```
 This command automatically pulls the [alation-agent-mcp package](https://pypi.org/project/alation-ai-agent-mcp/) from Pypi and runs it when the LLM calls it.
 

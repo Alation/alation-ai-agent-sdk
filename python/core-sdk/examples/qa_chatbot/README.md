@@ -15,7 +15,7 @@ The example shows how to:
 
 - Python 3.10 or higher
 - Access to an Alation Data Catalog instance
-- A valid refresh token created from your user account in Alation ([instructions](https://developer.alation.com/dev/docs/authentication-into-alation-apis#create-a-refresh-token-via-the-ui))
+- A valid refresh token or client_id and secret. For more details, refer to the [Authentication Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md).
 - OpenAI API key
 
 ## Setup
@@ -30,8 +30,16 @@ pip install -r requirements.txt
 
 ```bash
 export ALATION_BASE_URL="https://your-alation-instance.com"
-export ALATION_USER_ID="your_alation_user_id"
-export ALATION_REFRESH_TOKEN="your_refresh_token"
+export ALATION_AUTH_METHOD="user_account"  # or "service_account"
+
+# For user account authentication
+export ALATION_USER_ID="your-user-id"
+export ALATION_REFRESH_TOKEN="your-refresh-token"
+
+# For service account authentication
+export ALATION_CLIENT_ID="your-client-id"
+export ALATION_CLIENT_SECRET="your-client-secret"
+
 export OPENAI_API_KEY="your_openai_api_key"
 ```
 

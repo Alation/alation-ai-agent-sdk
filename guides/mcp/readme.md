@@ -26,10 +26,21 @@ The Alation MCP Server exposes the following tools:
 ## Configuration
 
 The MCP server requires the following environment variables:
+
+### For User Account Authentication
+```bash
+export ALATION_BASE_URL="https://your-alation-instance.com"
+export ALATION_AUTH_METHOD="user_account"
+export ALATION_USER_ID="your-user-id"
+export ALATION_REFRESH_TOKEN="your-refresh-token"
 ```
-ALATION_BASE_URL - The URL of your Alation instance
-ALATION_USER_ID - Your numeric user ID in Alation
-ALATION_REFRESH_TOKEN - Your refresh token for Alation authentication
+
+### For Service Account Authentication
+```bash
+export ALATION_BASE_URL="https://your-alation-instance.com"
+export ALATION_AUTH_METHOD="service_account"
+export ALATION_CLIENT_ID="your-client-id"
+export ALATION_CLIENT_SECRET="your-client-secret"
 ```
 
 See the specific client guides for detailed configuration steps.

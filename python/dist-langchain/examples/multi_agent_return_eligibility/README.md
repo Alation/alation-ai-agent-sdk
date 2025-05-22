@@ -55,7 +55,7 @@ Each agent accesses specific information from the Alation catalog to make inform
 ### Prerequisites
 - Python 3.10 or higher
 - Access to an Alation Data Catalog instance
-- A valid refresh token created from your user account in Alation ([instructions](https://developer.alation.com/dev/docs/authentication-into-alation-apis#create-a-refresh-token-via-the-ui))
+- A valid refresh token or client_id and secret. For more details, refer to the [Authentication Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md).
 - OpenAI API key
 
 ### Installation Steps
@@ -84,6 +84,19 @@ Each agent accesses specific information from the Alation catalog to make inform
 
 4. Configure environment variables:
    Duplicate `.env.example` file to `.env` in the root directory and update it.
+
+   ```bash
+   export ALATION_BASE_URL="https://your-alation-instance.com"
+   export ALATION_AUTH_METHOD="user_account"  # or "service_account"
+
+   # For user account authentication
+   export ALATION_USER_ID="your-user-id"
+   export ALATION_REFRESH_TOKEN="your-refresh-token"
+
+   # For service account authentication
+   export ALATION_CLIENT_ID="your-client-id"
+   export ALATION_CLIENT_SECRET="your-client-secret"
+   ```
 
 ## Running the Example
 
