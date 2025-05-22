@@ -8,7 +8,7 @@ This guide explains how to set up and use the Alation Model Context Protocol (MC
 - Python 3.10 or higher
 - Access to an Alation Data Catalog instance
 - A valid refresh token or client_id and secret. For more details, refer to the [Authentication Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md).
-in calude
+
 ## Quick start
 
 ### Step 1: Configure Claude Desktop
