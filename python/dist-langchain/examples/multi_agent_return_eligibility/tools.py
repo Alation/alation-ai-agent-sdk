@@ -2,18 +2,45 @@ from typing import List
 import json
 import sqlite3
 
-from alation_ai_agent_langchain import AlationAIAgentSDK, get_langchain_tools
-from config import ALATION_BASE_URL, ALATION_USER_ID, ALATION_REFRESH_TOKEN
+from alation_ai_agent_langchain import (
+    AlationAIAgentSDK,
+    UserAccountAuthParams,
+    ServiceAccountAuthParams,
+    get_langchain_tools,
+)
+from config import (
+    ALATION_BASE_URL,
+    ALATION_USER_ID,
+    ALATION_REFRESH_TOKEN,
+    ALATION_AUTH_METHOD,
+    ALATION_CLIENT_ID,
+    ALATION_CLIENT_SECRET,
+)
 from database import DB_PATH, init_database
 
 
 def initialize_alation_sdk() -> AlationAIAgentSDK:
     """Initialize and return the Alation SDK instance."""
-    sdk = AlationAIAgentSDK(
-        base_url=ALATION_BASE_URL,
-        user_id=ALATION_USER_ID,
-        refresh_token=ALATION_REFRESH_TOKEN
-    )
+    if ALATION_AUTH_METHOD == "user_account":
+        sdk = AlationAIAgentSDK(
+            base_url=ALATION_BASE_URL,
+            auth_method=ALATION_AUTH_METHOD,
+            auth_params=UserAccountAuthParams(
+                user_id=ALATION_USER_ID, refresh_token=ALATION_REFRESH_TOKEN
+            ),
+        )
+    elif ALATION_AUTH_METHOD == "service_account":
+        sdk = AlationAIAgentSDK(
+            base_url=ALATION_BASE_URL,
+            auth_method=ALATION_AUTH_METHOD,
+            auth_params=ServiceAccountAuthParams(
+                client_id=ALATION_CLIENT_ID, client_secret=ALATION_CLIENT_SECRET
+            ),
+        )
+    else:
+        raise ValueError(
+            "Invalid ALATION_AUTH_METHOD. Must be 'user_account' or 'service_account'."
+        )
 
     return sdk
 
@@ -35,12 +62,12 @@ def execute_sql(query: str) -> str:
         JSON string with query results
     """
     # Check if query is safe - in production, implement proper SQL injection protection
-    unsafe_keywords = ['DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'TRUNCATE']
+    unsafe_keywords = ["DROP", "DELETE", "UPDATE", "INSERT", "ALTER", "TRUNCATE"]
     for keyword in unsafe_keywords:
-        if keyword in query.upper() and keyword not in ['UPDATE'] and 'WHERE' not in query.upper():
-            return json.dumps({
-                "error": f"Unsafe SQL operation: {keyword} without WHERE clause is not allowed"
-            })
+        if keyword in query.upper() and keyword not in ["UPDATE"] and "WHERE" not in query.upper():
+            return json.dumps(
+                {"error": f"Unsafe SQL operation: {keyword} without WHERE clause is not allowed"}
+            )
 
     try:
         # Ensure database exists and has schema
@@ -61,14 +88,7 @@ def execute_sql(query: str) -> str:
         conn.close()
 
         # Return results as JSON
-        return json.dumps({
-            "success": True,
-            "results": results,
-            "count": len(results)
-        })
+        return json.dumps({"success": True, "results": results, "count": len(results)})
 
     except Exception as e:
-        return json.dumps({
-            "success": False,
-            "error": str(e)
-        })
+        return json.dumps({"success": False, "error": str(e)})

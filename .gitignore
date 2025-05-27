@@ -140,4 +140,4 @@ logs/allie-sdk-*
 /tests/models/logs/
 /tests/logs/
 example.py
-
+customer_service.db
