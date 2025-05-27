@@ -41,27 +41,18 @@ class DataCatalogQA:
 
         # Load credentials
         self.base_url = os.getenv("ALATION_BASE_URL")
-        user_id_str = os.getenv("ALATION_USER_ID")
-        self.refresh_token = os.getenv("ALATION_REFRESH_TOKEN")
         openai_api_key = os.getenv("OPENAI_API_KEY")
 
         # Validate environment variables
-        if not all([self.base_url, user_id_str, self.refresh_token]):
+        if not self.base_url:
             raise ValueError(
-                "Missing Alation credentials. Please set ALATION_BASE_URL, "
-                "ALATION_USER_ID, and ALATION_REFRESH_TOKEN environment variables."
+                "Missing Alation credentials. Please set ALATION_BASE_URL environment variable."
             )
 
         if not openai_api_key:
             raise ValueError(
                 "Missing OpenAI API key. Please set OPENAI_API_KEY environment variable."
             )
-
-        # Convert user_id to int
-        try:
-            self.user_id = int(user_id_str)
-        except ValueError:
-            raise ValueError(f"ALATION_USER_ID must be an integer, got: {user_id_str}")
 
         # Initialize OpenAI client
         self.client = openai.OpenAI(api_key=openai_api_key)
@@ -70,19 +61,52 @@ class DataCatalogQA:
         auth_method = os.getenv("ALATION_AUTH_METHOD", "user_account")
 
         # Initialize Alation SDK
-        self.sdk = AlationAIAgentSDK(
-            base_url=self.base_url,
-            auth_method=auth_method,  # Use auth_method from env
-            auth_params=UserAccountAuthParams(
-                user_id=self.user_id, refresh_token=self.refresh_token
-            ) if auth_method == "user_account" else ServiceAccountAuthParams(
-                client_id=os.getenv("ALATION_CLIENT_ID"),
-                client_secret=os.getenv("ALATION_CLIENT_SECRET")
-            )
-        )
+        self.sdk = self.initialize_sdk(auth_method)
 
         # Initialize conversation history (including context)
         self.conversation_history = []
+
+    def initialize_sdk(self, auth_method: str) -> AlationAIAgentSDK:
+        """Initialize the Alation SDK based on the authentication method."""
+        if auth_method == "user_account":
+            user_id_str = os.getenv("ALATION_USER_ID")
+            refresh_token = os.getenv("ALATION_REFRESH_TOKEN")
+
+            if not all([user_id_str, refresh_token]):
+                raise ValueError(
+                    "Missing required environment variables for user account authentication. Please set ALATION_USER_ID and ALATION_REFRESH_TOKEN."
+                )
+
+            try:
+                user_id = int(user_id_str)
+            except ValueError:
+                raise ValueError(f"ALATION_USER_ID must be an integer, got: {user_id_str}")
+
+            return AlationAIAgentSDK(
+                base_url=self.base_url,
+                auth_method=auth_method,
+                auth_params=UserAccountAuthParams(user_id=user_id, refresh_token=refresh_token),
+            )
+
+        elif auth_method == "service_account":
+            client_id = os.getenv("ALATION_CLIENT_ID")
+            client_secret = os.getenv("ALATION_CLIENT_SECRET")
+
+            if not all([client_id, client_secret]):
+                raise ValueError(
+                    "Missing required environment variables for service account authentication. Please set ALATION_CLIENT_ID and ALATION_CLIENT_SECRET."
+                )
+
+            return AlationAIAgentSDK(
+                base_url=self.base_url,
+                auth_method=auth_method,
+                auth_params=ServiceAccountAuthParams(
+                    client_id=client_id, client_secret=client_secret
+                ),
+            )
+
+        else:
+            raise ValueError(f"Unsupported ALATION_AUTH_METHOD: {auth_method}")
 
     def create_comprehensive_signature(self) -> Dict[str, Any]:
         """

@@ -24,18 +24,47 @@ def print_json(data: Dict[str, Any]) -> None:
     print(json.dumps(data, indent=2))
 
 
+def initialize_sdk(base_url: str, auth_method: str) -> AlationAIAgentSDK:
+    """Initialize the Alation AI Agent SDK based on the authentication method."""
+    if auth_method == "user_account":
+        user_id_str = os.getenv("ALATION_USER_ID")
+        refresh_token = os.getenv("ALATION_REFRESH_TOKEN")
+
+        if not all([user_id_str, refresh_token]):
+            raise ValueError("Missing required environment variables for user account authentication. Please set ALATION_USER_ID and ALATION_REFRESH_TOKEN.")
+
+        try:
+            user_id = int(user_id_str)
+        except ValueError:
+            raise ValueError(f"ALATION_USER_ID must be an integer, got: {user_id_str}")
+
+        return AlationAIAgentSDK(
+            base_url=base_url,
+            auth_method=auth_method,
+            auth_params=UserAccountAuthParams(user_id=user_id, refresh_token=refresh_token),
+        )
+
+    elif auth_method == "service_account":
+        client_id = os.getenv("ALATION_CLIENT_ID")
+        client_secret = os.getenv("ALATION_CLIENT_SECRET")
+
+        if not all([client_id, client_secret]):
+            raise ValueError("Missing required environment variables for service account authentication. Please set ALATION_CLIENT_ID and ALATION_CLIENT_SECRET.")
+
+        return AlationAIAgentSDK(
+            base_url=base_url,
+            auth_method=auth_method,
+            auth_params=ServiceAccountAuthParams(client_id=client_id, client_secret=client_secret),
+        )
+
+    else:
+        raise ValueError(f"Unsupported ALATION_AUTH_METHOD: {auth_method}")
+
+
 def main() -> None:
     # Load credentials from environment variables
     base_url = os.getenv("ALATION_BASE_URL")
     auth_method = os.getenv("ALATION_AUTH_METHOD")
-
-    # For user account authentication
-    user_id_str = os.getenv("ALATION_USER_ID")
-    refresh_token = os.getenv("ALATION_REFRESH_TOKEN")
-
-    # For service account authentication (commented out for now)
-    # client_id = os.getenv("ALATION_CLIENT_ID")
-    # client_secret = os.getenv("ALATION_CLIENT_SECRET")
 
     # Validate environment variables
     if not base_url or not auth_method:
@@ -43,46 +72,11 @@ def main() -> None:
         print("Please set ALATION_BASE_URL and ALATION_AUTH_METHOD.")
         return
 
-    if auth_method == "user_account":
-        if not all([user_id_str, refresh_token]):
-            print("Error: Missing required environment variables for user account authentication.")
-            print("Please set ALATION_USER_ID and ALATION_REFRESH_TOKEN.")
-            return
-
-        try:
-            user_id = int(user_id_str)
-        except ValueError:
-            print(f"Error: ALATION_USER_ID must be an integer, got: {user_id_str}")
-            return
-
-        # Initialize the SDK for user account authentication
-        print("Initializing Alation AI Agent SDK with user account authentication...")
-        sdk = AlationAIAgentSDK(
-            base_url=base_url,
-            auth_method=auth_method,
-            auth_params=UserAccountAuthParams(user_id=user_id, refresh_token=refresh_token),
-        )
-
-    # elif auth_method == "service_account":
-    # Uncomment the following block for service account authentication
-    # if not all([client_id, client_secret]):
-    #     print("Error: Missing required environment variables for service account authentication.")
-    #     print("Please set ALATION_CLIENT_ID and ALATION_CLIENT_SECRET.")
-    #     return
-
-    # Initialize the SDK for service account authentication
-    # print("Initializing Alation AI Agent SDK with service account authentication...")
-    # sdk = AlationAIAgentSDK(
-    #     base_url=base_url,
-    #     auth_method=auth_method,
-    #     auth_params=ServiceAccountAuthParams(
-    #         client_id=client_id,
-    #         client_secret=client_secret
-    #     )
-    # )
-
-    else:
-        print(f"Error: Unsupported ALATION_AUTH_METHOD: {auth_method}")
+    try:
+        print(f"Initializing Alation AI Agent SDK with {auth_method} authentication...")
+        sdk = initialize_sdk(base_url, auth_method)
+    except ValueError as e:
+        print(f"Error: {e}")
         return
 
     # Example 1: Basic query without signature

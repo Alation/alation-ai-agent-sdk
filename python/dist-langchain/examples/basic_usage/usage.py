@@ -19,34 +19,55 @@ base_url = os.getenv("ALATION_BASE_URL")
 user_id = os.getenv("ALATION_USER_ID")
 refresh_token = os.getenv("ALATION_REFRESH_TOKEN")
 openai_api_key = os.getenv("OPENAI_API_KEY")
+auth_method = os.getenv("ALATION_AUTH_METHOD", "user_account")
 
-if not all([base_url, user_id, refresh_token, openai_api_key]):
+if not all([base_url, user_id, refresh_token, openai_api_key, auth_method]):
     value_error_message = "Missing one or more required environment variables."
     raise ValueError(value_error_message)
 
-# Load auth method from env
-auth_method = os.getenv("ALATION_AUTH_METHOD", "user_account")
 
-# Init Alation SDK
-sdk = AlationAIAgentSDK(
-    base_url=base_url,
-    auth_method=auth_method,  # Use auth_method from env
-    auth_params=UserAccountAuthParams(user_id=int(user_id), refresh_token=refresh_token)
-    if auth_method == "user_account" else ServiceAccountAuthParams(
-        client_id=os.getenv("ALATION_CLIENT_ID"),
-        client_secret=os.getenv("ALATION_CLIENT_SECRET")
-    )
-)
+def initialize_sdk(base_url: str, auth_method: str) -> AlationAIAgentSDK:
+    """Initialize the Alation AI Agent SDK based on the authentication method."""
+    if auth_method == "user_account":
+        user_id_str = os.getenv("ALATION_USER_ID")
+        refresh_token = os.getenv("ALATION_REFRESH_TOKEN")
 
-# Uncomment the following block for service account authentication
-# sdk = AlationAIAgentSDK(
-#     base_url=base_url,
-#     auth_method="service_account",
-#     auth_params=ServiceAccountAuthParams(
-#         client_id=os.getenv("ALATION_CLIENT_ID"),
-#         client_secret=os.getenv("ALATION_CLIENT_SECRET")
-#     )
-# )
+        if not all([user_id_str, refresh_token]):
+            raise ValueError(
+                "Missing required environment variables for user account authentication. Please set ALATION_USER_ID and ALATION_REFRESH_TOKEN."
+            )
+
+        try:
+            user_id = int(user_id_str)
+        except ValueError:
+            raise ValueError(f"ALATION_USER_ID must be an integer, got: {user_id_str}")
+
+        return AlationAIAgentSDK(
+            base_url=base_url,
+            auth_method=auth_method,
+            auth_params=UserAccountAuthParams(user_id=user_id, refresh_token=refresh_token),
+        )
+
+    elif auth_method == "service_account":
+        client_id = os.getenv("ALATION_CLIENT_ID")
+        client_secret = os.getenv("ALATION_CLIENT_SECRET")
+
+        if not all([client_id, client_secret]):
+            raise ValueError(
+                "Missing required environment variables for service account authentication. Please set ALATION_CLIENT_ID and ALATION_CLIENT_SECRET."
+            )
+
+        return AlationAIAgentSDK(
+            base_url=base_url,
+            auth_method=auth_method,
+            auth_params=ServiceAccountAuthParams(client_id=client_id, client_secret=client_secret),
+        )
+
+    else:
+        raise ValueError(f"Unsupported ALATION_AUTH_METHOD: {auth_method}")
+
+
+sdk = initialize_sdk(base_url, auth_method)
 
 # LangChain tools
 tools = get_langchain_tools(sdk)
