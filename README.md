@@ -59,16 +59,18 @@ pip install alation-ai-agent-mcp
 ```
 
 ## Usage
-
-The library needs to be configured with your Alation instance credentials:
+The library must be configured with your Alation instance credentials. The SDK supports both `user_account` and `service_account` authentication methods. To learn how to set up each method, refer to the [Authentication Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md).
 
 ```python
 from alation_ai_agent_sdk import AlationAIAgentSDK
 
 alation_ai_sdk = AlationAIAgentSDK(
     base_url="https://your-alation-instance.com",
-    user_id=12345,  # Your numeric user ID
-    refresh_token="your_refresh_token"
+    auth_method="user_account",
+    auth_params=UserAccountAuthParams(
+        user_id=12345,
+        refresh_token="your-refresh-token"
+    )
 )
 ```
 
@@ -155,3 +157,13 @@ Harness the SDK to build complex agents and workflows.
 The number of published agent frameworks and toolkits appears to be increasing every day. If you don't happen to see the framework or toolkit you're using here, it's still possible to adapt `alation-ai-agent-sdk` to your needs. It may be as simple as writing a wrapping function where a decorator is applied.
 
 While we want to reach as many developers as possible and make it as convenient as possible, we anticipate a long tail distribution of toolkits and won't be able to write adapters for every case. If you'd like support for a specific toolkit, please [create an issue](https://github.com/Alation/alation-ai-agent-sdk/issues) to discuss.
+
+## Security
+
+Using tools with stochastic behavior always carries some risk, especially when dealing with sensitive data. Developers should review any tool before adding it to their applications.
+
+That said, we’ve built strong safeguards into the Alation AI Agent SDK. These include automated tests and strict controls to ensure tools only access data based on the configured token. We’ve also verified that jailbreak attempts aren’t possible.
+
+If you're using other tools alongside the SDK, make sure they're safe—run security scans like Invariant Labs’ [mcp-scan](https://invariantlabs.ai/blog/introducing-mcp-scan).
+
+This scan may flag the `alation-context` tool for potential prompt injection. The part that triggers it is `Always pass the exact, unmodified user question to this tool.` You can safely ignore this. The APIs it uses are designed so the LLM can only return a fixed set of objects. It cannot override permissions or retrieve unauthorized data.
