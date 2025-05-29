@@ -53,6 +53,11 @@ def create_server():
         result = alation_sdk.get_context(question, signature)
         return str(result)
 
+    @mcp.tool(name=alation_sdk.data_product_tool.name, description=alation_sdk.data_product_tool.description)
+    def get_data_product(user_query: str) -> str:
+        result = alation_sdk.get_data_products(user_query)
+        return str(result)
+
     return mcp
 
 

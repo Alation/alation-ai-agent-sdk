@@ -70,3 +70,37 @@ class AlationContextTool:
             return self.api.get_context_from_catalog(question, signature)
         except AlationAPIError as e:
             return {"error": e.to_dict()}
+
+
+class GetDataProductTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "get_data_product"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
+        Retrieve one or more data products that matches the user query.
+
+        This tool allows users to search for data products using natural language queries. It interacts with the 
+        /integration/data-products/v1/search-globally/ endpoint to fetch relevant data products.
+
+        Example:
+        - "Which data products contain recent sales information?"
+
+        Parameters:
+        - user_query (string): The exact user query, unmodified and uninterpreted.
+
+        The tool returns JSON-formatted metadata about the matching data products.
+        """
+
+    def run(self, user_query: str):
+        try:
+            return self.api.get_data_products(user_query)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}

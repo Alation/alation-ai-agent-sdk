@@ -475,3 +475,42 @@ class AlationAPI:
                 resolution_hint="The server returned a non-JSON response. Contact support if this persists.",
                 help_links=["https://developer.alation.com/"],
             )
+
+    def get_data_products(self, user_query: str):
+        """
+        Retrieve data products matching the user query.
+
+        Args:
+            user_query (str): The query string to search for data products.
+
+        Returns:
+            List[Dict[str, Any]]: A list of data products matching the query.
+        """
+        self._with_valid_token()
+
+        headers = {
+            "Token": self.access_token,
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
+
+        payload = {"user_query": user_query}
+        url = f"{self.base_url}/integration/data-products/v1/search-globally/"
+
+        try:
+            response = requests.post(url, json=payload, headers=headers, timeout=60)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            self._handle_request_error(e, "data product search")
+
+        try:
+            return response.json()
+        except ValueError:
+            raise AlationAPIError(
+                message="Invalid JSON in data product response",
+                status_code=response.status_code,
+                response_body=response.text,
+                reason="Malformed Response",
+                resolution_hint="The server returned a non-JSON response. Contact support if this persists.",
+                help_links=["https://developer.alation.com/"],
+            )

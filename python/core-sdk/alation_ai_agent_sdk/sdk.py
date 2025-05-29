@@ -5,7 +5,7 @@ from .api import (
     AlationAPIError,
     AuthParams,
 )
-from .tools import AlationContextTool
+from .tools import AlationContextTool, GetDataProductTool
 
 
 class AlationAIAgentSDK:
@@ -34,6 +34,7 @@ class AlationAIAgentSDK:
         # Delegate validation of auth_params to AlationAPI
         self.api = AlationAPI(base_url=base_url, auth_method=auth_method, auth_params=auth_params)
         self.context_tool = AlationContextTool(self.api)
+        self.data_product_tool = GetDataProductTool(self.api)
 
     def get_context(
         self, question: str, signature: Optional[Dict[str, Any]] = None
@@ -50,5 +51,18 @@ class AlationAIAgentSDK:
         except AlationAPIError as e:
             return {"error": e.to_dict()}
 
+    def get_data_products(self, user_query: str):
+        """
+        Fetch data products from Alation's catalog for a given user query.
+
+        Returns either:
+        - JSON result (list of dicts)
+        - Error object with keys: message, reason, resolution_hint, response_body
+        """
+        try:
+            return self.api.get_data_products(user_query)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
     def get_tools(self):
-        return [self.context_tool]
+        return [self.context_tool, self.data_product_tool]
