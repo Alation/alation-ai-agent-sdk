@@ -108,14 +108,24 @@ def test_tool_registration(manage_environment_variables, mock_alation_sdk, mock_
 
     server.create_server()
 
-    expected_tool_name = mock_sdk_instance.context_tool.name
-    expected_description = mock_sdk_instance.context_tool.description
-    mock_mcp_instance.tool.assert_called_once_with(
-        name=expected_tool_name, description=expected_description
-    )
-    assert expected_tool_name in mock_mcp_instance.tools
-    assert isinstance(mock_mcp_instance.tools[expected_tool_name], MagicMock)
-    assert hasattr(mock_mcp_instance.tools[expected_tool_name], "__wrapped__")
+    # Check that both tools are registered
+    expected_tool_names = [
+        mock_sdk_instance.context_tool.name,
+        mock_sdk_instance.data_product_tool.name,
+    ]
+    expected_descriptions = [
+        mock_sdk_instance.context_tool.description,
+        mock_sdk_instance.data_product_tool.description,
+    ]
+    actual_calls = mock_mcp_instance.tool.call_args_list
+    actual_names = [call.kwargs["name"] for call in actual_calls]
+    actual_descriptions = [call.kwargs["description"] for call in actual_calls]
+    for name, desc in zip(expected_tool_names, expected_descriptions):
+        assert name in actual_names
+        assert desc in actual_descriptions
+        assert name in mock_mcp_instance.tools
+        assert isinstance(mock_mcp_instance.tools[name], MagicMock)
+        assert hasattr(mock_mcp_instance.tools[name], "__wrapped__")
 
 
 def test_alation_context_tool_logic(manage_environment_variables, mock_alation_sdk, mock_fastmcp):

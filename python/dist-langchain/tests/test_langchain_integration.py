@@ -17,7 +17,18 @@ def mock_sdk_with_context_tool():
     mock_sdk.context_tool.name = "AlationContextToolFromSDK"
     mock_sdk.context_tool.description = "Provides context from Alation. Sourced from SDK's context_tool."
     mock_sdk.context_tool.run = MagicMock(return_value="Expected context data via SDK run")
-
+    # Add mock for data_product_tool to support new toolkit
+    mock_sdk.data_product_tool = MagicMock()
+    mock_sdk.data_product_tool.name = "AlationDataProductsToolFromSDK"
+    mock_sdk.data_product_tool.description = "Provides data products from Alation. Sourced from SDK's data_product_tool."
+    mock_sdk.data_product_tool.run = MagicMock(return_value="Expected data products via SDK run")
+    # Patch .run for StructuredTool.func compatibility
+    def run_with_signature(*args, **kwargs):
+        return mock_sdk.context_tool.run(*args, **kwargs)
+    def run_with_query_or_product_id(*args, **kwargs):
+        return mock_sdk.data_product_tool.run(*args, **kwargs)
+    mock_sdk.context_tool.run_with_signature = run_with_signature
+    mock_sdk.data_product_tool.run_with_query_or_product_id = run_with_query_or_product_id
     return mock_sdk
 
 

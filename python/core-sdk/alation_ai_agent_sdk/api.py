@@ -1,7 +1,7 @@
 import logging
 import urllib.parse
 import json
-from typing import Dict, Any, Optional, Union, Tuple, NamedTuple
+from typing import Dict, Any, Optional, Union, NamedTuple
 from http import HTTPStatus
 import requests
 import requests.exceptions
@@ -10,8 +10,6 @@ AUTH_METHOD_USER_ACCOUNT = "user_account"
 AUTH_METHOD_SERVICE_ACCOUNT = "service_account"
 
 logger = logging.getLogger(__name__)
-log_level = os.getenv("LOG_LEVEL", "INFO").upper()
-logger.setLevel(getattr(logging, log_level, logging.INFO))
 
 
 class AlationAPIError(Exception):
@@ -501,6 +499,7 @@ class AlationAPI:
         """
         # Try productId lookup first; if it fails (404 or error), fall back to search
         import re
+
         self._with_valid_token()
         headers = {
             "Token": self.access_token,
@@ -508,9 +507,11 @@ class AlationAPI:
         }
 
         # Try productId lookup first
-        product_id_pattern = r'^[.\w:-]+$'
+        product_id_pattern = r"^[.\w:-]+$"
         if re.fullmatch(product_id_pattern, query_or_product_id):
-            url = f"{self.base_url}/integration/data-products/v1/data-product/{query_or_product_id}/"
+            url = (
+                f"{self.base_url}/integration/data-products/v1/data-product/{query_or_product_id}/"
+            )
             try:
                 response = requests.get(url, headers=headers, timeout=60)
                 response.raise_for_status()
@@ -520,7 +521,9 @@ class AlationAPI:
                 if getattr(e.response, "status_code", None) == 404:
                     pass  # Try search below
                 else:
-                    self._handle_request_error(e, f"fetching data product by id: {query_or_product_id}")
+                    self._handle_request_error(
+                        e, f"fetching data product by id: {query_or_product_id}"
+                    )
             except requests.RequestException as e:
                 self._handle_request_error(e, f"fetching data product by id: {query_or_product_id}")
             except ValueError:
@@ -578,11 +581,13 @@ class AlationAPI:
                 spec_json = product.get("spec_json", {})
                 product_info = spec_json.get("product", {})
                 en = product_info.get("en", {})
-                result_list.append({
-                    "name": en.get("name"),
-                    "id": product.get("product_id"),
-                    "description": en.get("description"),
-                })
+                result_list.append(
+                    {
+                        "name": en.get("name"),
+                        "id": product.get("product_id"),
+                        "description": en.get("description"),
+                    }
+                )
             return result_list
         except ValueError:
             raise AlationAPIError(
