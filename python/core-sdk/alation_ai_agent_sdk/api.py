@@ -10,7 +10,8 @@ AUTH_METHOD_USER_ACCOUNT = "user_account"
 AUTH_METHOD_SERVICE_ACCOUNT = "service_account"
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+logger.setLevel(getattr(logging, log_level, logging.INFO))
 
 
 class AlationAPIError(Exception):
