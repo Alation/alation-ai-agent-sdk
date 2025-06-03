@@ -478,26 +478,23 @@ class AlationAPI:
 
     def get_data_products(self, query_or_product_id: str) -> Any:
         """
-        Search and retrieve Alation Data Products by free-text query or direct product ID lookup.
+        Retrieve Alation Data Products by free-text search or direct product ID lookup.
 
-        This method supports two modes:
-        1. If the input matches the productId pattern (from product.yaml: '^[.\\w:-]+$'), it is treated as a direct product ID lookup and fetches the data product using the direct API endpoint.
-        2. Otherwise, it performs a free-text search within the default marketplace and returns matching data products.
+        If the input matches the productId pattern ('^[.\\w:-]+$'), a direct lookup is attempted first. If not found, or if the input does not match the pattern, a free-text search is performed in the default marketplace.
 
         Args:
             query_or_product_id (str):
-                - A free-text search query (e.g., "customer churn") to find relevant data products, OR
-                - A productId string (matching the pattern '^[.\\w:-]+$') for direct lookup. The productId pattern allows only alphanumerics, dot, underscore, colon, and hyphen (no spaces).
+                - Free-text search query (e.g., "customer churn")
+                - Or a productId string (e.g., "sales.product:2024")
 
         Returns:
-            - If nothing is found: the string "Nothing found".
-            - If exactly one result: the full data product object (dict).
-            - If multiple results: a list of dicts with summary info (name, id, description) for each product.
+            - "Nothing found" if no results
+            - The full data product object if one result
+            - A summary list (name, id, description) if multiple results
 
         Raises:
             AlationAPIError: On network, API, or response errors.
         """
-        # Try productId lookup first; if it fails (404 or error), fall back to search
         import re
 
         self._with_valid_token()
@@ -505,8 +502,6 @@ class AlationAPI:
             "Token": self.access_token,
             "Accept": "application/json",
         }
-
-        # Try productId lookup first
         product_id_pattern = r"^[.\w:-]+$"
         if re.fullmatch(product_id_pattern, query_or_product_id):
             url = (
@@ -517,9 +512,8 @@ class AlationAPI:
                 response.raise_for_status()
                 return response.json()
             except requests.HTTPError as e:
-                # If 404, fall through to search
                 if getattr(e.response, "status_code", None) == 404:
-                    pass  # Try search below
+                    pass
                 else:
                     self._handle_request_error(
                         e, f"fetching data product by id: {query_or_product_id}"
@@ -534,7 +528,6 @@ class AlationAPI:
                     help_links=["https://developer.alation.com/"],
                 )
 
-        # Step 1: Fetch the default marketplace ID
         marketplace_url = f"{self.base_url}/api/v1/setting/marketplace/"
         try:
             marketplace_response = requests.get(marketplace_url, headers=headers, timeout=60)
@@ -553,28 +546,22 @@ class AlationAPI:
         except requests.RequestException as e:
             self._handle_request_error(e, "fetching default marketplace ID")
 
-        # Step 2: Search for data products within the marketplace
         search_url = (
             f"{self.base_url}/integration/data-products/v1/search-internally/{marketplace_id}/"
         )
         payload = {"user_query": query_or_product_id}
-
         try:
             search_response = requests.post(search_url, json=payload, headers=headers, timeout=60)
             search_response.raise_for_status()
         except requests.RequestException as e:
             self._handle_request_error(e, "data product search within marketplace")
 
-        # Step 3: Process and return the search results
         try:
             search_results = search_response.json()
-            if not search_results:  # No data products found
+            if not search_results:
                 return "Nothing found"
-
-            if len(search_results) == 1:  # Exactly one data product found
+            if len(search_results) == 1:
                 return search_results[0]
-
-            # More than one data product found, extract name, ID, and description from nested structure
             result_list = []
             for dp in search_results:
                 product = dp.get("product", {})
