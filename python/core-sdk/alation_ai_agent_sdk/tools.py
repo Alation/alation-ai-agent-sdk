@@ -80,27 +80,27 @@ class GetDataProductTool:
 
     @staticmethod
     def _get_name() -> str:
-        return "get_data_product"
+        return "get_data_products"
 
     @staticmethod
     def _get_description() -> str:
         return """
-        Retrieve one or more data products that matches the user query.
+        Retrieve one or more data products that match the user query or product ID.
 
-        This tool allows users to search for data products using natural language queries. It interacts with the 
-        /integration/data-products/v1/search-globally/ endpoint to fetch relevant data products.
+        This tool allows users to search for data products using natural language queries or directly retrieve a data product by its productId. It interacts with the appropriate Alation Data Products API endpoints.
 
         Example:
         - "Which data products contain recent sales information?"
+        - "Get data product with ID sales.product:2024"
 
         Parameters:
-        - user_query (string): The exact user query, unmodified and uninterpreted.
+        - query_or_product_id (string): The user query (free text) or a productId string (matching the pattern '^[.\\w:-]+$').
 
-        The tool returns JSON-formatted metadata about the matching data products.
+        The tool returns JSON-formatted metadata about the matching data products, or a single data product if a productId is provided.
         """
 
-    def run(self, user_query: str):
+    def run(self, query_or_product_id: str):
         try:
-            return self.api.get_data_products(user_query)
+            return self.api.get_data_products(query_or_product_id)
         except AlationAPIError as e:
             return {"error": e.to_dict()}

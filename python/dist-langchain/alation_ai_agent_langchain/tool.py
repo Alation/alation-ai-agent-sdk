@@ -16,3 +16,17 @@ def get_alation_context_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
         func=run_with_signature,
         args_schema=None,
     )
+
+
+def get_alation_data_products_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
+    data_products_tool = sdk.data_product_tool
+
+    def run_with_query_or_product_id(query_or_product_id: str):
+        return data_products_tool.run(query_or_product_id)
+
+    return StructuredTool.from_function(
+        name=data_products_tool.name,
+        description=data_products_tool.description,
+        func=run_with_query_or_product_id,
+        args_schema=None,
+    )

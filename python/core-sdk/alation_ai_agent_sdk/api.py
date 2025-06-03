@@ -10,6 +10,7 @@ AUTH_METHOD_USER_ACCOUNT = "user_account"
 AUTH_METHOD_SERVICE_ACCOUNT = "service_account"
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class AlationAPIError(Exception):
@@ -476,40 +477,117 @@ class AlationAPI:
                 help_links=["https://developer.alation.com/"],
             )
 
-    def get_data_products(self, user_query: str):
+    def get_data_products(self, query_or_product_id: str) -> Any:
         """
-        Retrieve data products matching the user query.
+        Search and retrieve Alation Data Products by free-text query or direct product ID lookup.
+
+        This method supports two modes:
+        1. If the input matches the productId pattern (from product.yaml: '^[.\\w:-]+$'), it is treated as a direct product ID lookup and fetches the data product using the direct API endpoint.
+        2. Otherwise, it performs a free-text search within the default marketplace and returns matching data products.
 
         Args:
-            user_query (str): The query string to search for data products.
+            query_or_product_id (str):
+                - A free-text search query (e.g., "customer churn") to find relevant data products, OR
+                - A productId string (matching the pattern '^[.\\w:-]+$') for direct lookup. The productId pattern allows only alphanumerics, dot, underscore, colon, and hyphen (no spaces).
 
         Returns:
-            List[Dict[str, Any]]: A list of data products matching the query.
-        """
-        self._with_valid_token()
+            - If nothing is found: the string "Nothing found".
+            - If exactly one result: the full data product object (dict).
+            - If multiple results: a list of dicts with summary info (name, id, description) for each product.
 
+        Raises:
+            AlationAPIError: On network, API, or response errors.
+        """
+        # Try productId lookup first; if it fails (404 or error), fall back to search
+        import re
+        self._with_valid_token()
         headers = {
             "Token": self.access_token,
             "Accept": "application/json",
-            "Content-Type": "application/json",
         }
 
-        payload = {"user_query": user_query}
-        url = f"{self.base_url}/integration/data-products/v1/search-globally/"
+        # Try productId lookup first
+        product_id_pattern = r'^[.\w:-]+$'
+        if re.fullmatch(product_id_pattern, query_or_product_id):
+            url = f"{self.base_url}/integration/data-products/v1/data-product/{query_or_product_id}/"
+            try:
+                response = requests.get(url, headers=headers, timeout=60)
+                response.raise_for_status()
+                return response.json()
+            except requests.HTTPError as e:
+                # If 404, fall through to search
+                if getattr(e.response, "status_code", None) == 404:
+                    pass  # Try search below
+                else:
+                    self._handle_request_error(e, f"fetching data product by id: {query_or_product_id}")
+            except requests.RequestException as e:
+                self._handle_request_error(e, f"fetching data product by id: {query_or_product_id}")
+            except ValueError:
+                raise AlationAPIError(
+                    message="Invalid JSON in data product response",
+                    reason="Malformed Response",
+                    resolution_hint="The server returned a non-JSON response. Contact support if this persists.",
+                    help_links=["https://developer.alation.com/"],
+                )
 
+        # Step 1: Fetch the default marketplace ID
+        marketplace_url = f"{self.base_url}/api/v1/setting/marketplace/"
         try:
-            response = requests.post(url, json=payload, headers=headers, timeout=60)
-            response.raise_for_status()
+            marketplace_response = requests.get(marketplace_url, headers=headers, timeout=60)
+            marketplace_response.raise_for_status()
+            marketplace_data = marketplace_response.json()
+            marketplace_id = marketplace_data.get("default_marketplace")
+            if not marketplace_id:
+                raise AlationAPIError(
+                    message="Marketplace ID not found in response",
+                    status_code=marketplace_response.status_code,
+                    response_body=marketplace_response.text,
+                    reason="Missing Marketplace ID",
+                    resolution_hint="Ensure the marketplace API is returning the correct data.",
+                    help_links=["https://developer.alation.com/"],
+                )
         except requests.RequestException as e:
-            self._handle_request_error(e, "data product search")
+            self._handle_request_error(e, "fetching default marketplace ID")
+
+        # Step 2: Search for data products within the marketplace
+        search_url = (
+            f"{self.base_url}/integration/data-products/v1/search-internally/{marketplace_id}/"
+        )
+        payload = {"user_query": query_or_product_id}
 
         try:
-            return response.json()
+            search_response = requests.post(search_url, json=payload, headers=headers, timeout=60)
+            search_response.raise_for_status()
+        except requests.RequestException as e:
+            self._handle_request_error(e, "data product search within marketplace")
+
+        # Step 3: Process and return the search results
+        try:
+            search_results = search_response.json()
+            if not search_results:  # No data products found
+                return "Nothing found"
+
+            if len(search_results) == 1:  # Exactly one data product found
+                return search_results[0]
+
+            # More than one data product found, extract name, ID, and description from nested structure
+            result_list = []
+            for dp in search_results:
+                product = dp.get("product", {})
+                spec_json = product.get("spec_json", {})
+                product_info = spec_json.get("product", {})
+                en = product_info.get("en", {})
+                result_list.append({
+                    "name": en.get("name"),
+                    "id": product.get("product_id"),
+                    "description": en.get("description"),
+                })
+            return result_list
         except ValueError:
             raise AlationAPIError(
-                message="Invalid JSON in data product response",
-                status_code=response.status_code,
-                response_body=response.text,
+                message="Invalid JSON in data product search response",
+                status_code=search_response.status_code,
+                response_body=search_response.text,
                 reason="Malformed Response",
                 resolution_hint="The server returned a non-JSON response. Contact support if this persists.",
                 help_links=["https://developer.alation.com/"],
