@@ -488,9 +488,9 @@ class AlationAPI:
                 - Or a productId string (e.g., "sales.product:2024")
 
         Returns:
-            - "Nothing found" if no results
-            - The full data product object if one result
-            - A summary list (name, id, description) if multiple results
+            - [] if no results
+            - [dict] if one result
+            - [dict, ...] if multiple results
 
         Raises:
             AlationAPIError: On network, API, or response errors.
@@ -510,7 +510,7 @@ class AlationAPI:
             try:
                 response = requests.get(url, headers=headers, timeout=60)
                 response.raise_for_status()
-                return response.json()
+                return [response.json()]
             except requests.HTTPError as e:
                 if getattr(e.response, "status_code", None) == 404:
                     pass
@@ -559,9 +559,9 @@ class AlationAPI:
         try:
             search_results = search_response.json()
             if not search_results:
-                return "Nothing found"
+                return []
             if len(search_results) == 1:
-                return search_results[0]
+                return [search_results[0]]
             result_list = []
             for dp in search_results:
                 product = dp.get("product", {})
