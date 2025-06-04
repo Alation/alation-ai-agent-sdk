@@ -51,21 +51,21 @@ class AlationAIAgentSDK:
         except AlationAPIError as e:
             return {"error": e.to_dict()}
 
-    def get_data_products(self, query_or_product_id: str):
+    def get_data_products(self, product_id: Optional[str] = None, query: Optional[str] = None):
         """
-        Fetch data products from Alation's catalog for a given user query or productId.
+        Fetch data products from Alation's catalog for a given product_id or user query.
 
         Args:
-            query_or_product_id (str):
-                - A free-text search query (e.g., "customer churn") to find relevant data products, OR
-                - A productId string (matching the pattern '^[.\\w:-]+$') for direct lookup.
+            product_id (str, optional): A productId string for direct lookup.
+            query (str, optional): A free-text search query (e.g., "customer churn") to find relevant data products.
+            At least one must be provided.
 
         Returns either:
-        - JSON result (list of dicts, single dict, or "Nothing found")
+        - JSON result (list of dicts, or empty list if nothing found)
         - Error object with keys: message, reason, resolution_hint, response_body
         """
         try:
-            return self.api.get_data_products(query_or_product_id)
+            return self.api.get_data_products(product_id, query)
         except AlationAPIError as e:
             return {"error": e.to_dict()}
 
