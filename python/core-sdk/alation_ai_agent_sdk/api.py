@@ -1,6 +1,7 @@
 import logging
 import urllib.parse
 import json
+import re
 from typing import Dict, Any, Optional, Union, NamedTuple
 from http import HTTPStatus
 import requests
@@ -495,7 +496,6 @@ class AlationAPI:
         Raises:
             AlationAPIError: On network, API, or response errors.
         """
-        import re
 
         self._with_valid_token()
         headers = {
