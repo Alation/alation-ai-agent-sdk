@@ -505,7 +505,10 @@ class AlationAPI:
             try:
                 response = requests.get(url, headers=headers, timeout=60)
                 response.raise_for_status()
-                return [response.json()], None
+                response_data = response.json()
+                if response_data == [] or response_data.get("detail") == "Not found.":
+                    return [], None
+                return [response_data], None
             except requests.HTTPError as e:
                 if getattr(e.response, "status_code", None) == 404:
                     return [], None
@@ -533,7 +536,7 @@ class AlationAPI:
                         status_code=marketplace_response.status_code,
                         response_body=marketplace_response.text,
                         reason="Missing Marketplace ID",
-                        resolution_hint="Ensure the marketplace API is returning the correct data.",
+                        resolution_hint="Ensure a default marketplace is set",
                         help_links=["https://developer.alation.com/"],
                     )
             except requests.RequestException as e:
@@ -557,7 +560,7 @@ class AlationAPI:
                     return [], None
                 if len(search_results) == 1:
                     # Return the full object if exactly one result
-                    return [search_results[0]], None
+                    return search_results, None
                 result_list = []
                 for dp in search_results:
                     product = dp.get("product", {})
