@@ -112,11 +112,14 @@ def test_get_data_products_by_id(alation_api, mock_requests_get, mock_token_meth
         status_code=200,
     )
 
-    result, instructions = alation_api.get_data_products(product_id="product_123")
+    response = alation_api.get_data_products(product_id="product_123")
 
-    assert len(result) == 1
-    assert result[0]["id"] == "product_123"
-    assert instructions is None
+    assert len(response["results"]) == 1
+    assert response["results"][0]["id"] == "product_123"
+    assert (
+        response["instructions"]
+        == "The following is the complete specification for data product 'product_123'."
+    )
 
 
 def test_get_data_products_by_id_not_found(alation_api, mock_requests_get, mock_token_methods):
@@ -127,10 +130,10 @@ def test_get_data_products_by_id_not_found(alation_api, mock_requests_get, mock_
         status_code=200,
     )
 
-    result, instructions = alation_api.get_data_products(product_id="non_existent")
+    response = alation_api.get_data_products(product_id="non_existent")
 
-    assert len(result) == 0
-    assert instructions is None
+    assert len(response["results"]) == 0
+    assert response["instructions"] == "No data products found for the given product ID."
 
 
 def test_get_data_products_query_multiple_results(
@@ -175,14 +178,15 @@ def test_get_data_products_query_multiple_results(
         status_code=200,
     )
 
-    result, instructions = alation_api.get_data_products(query="mock query")
+    response = alation_api.get_data_products(query="mock query")
 
-    assert len(result) == 2
-    assert result[0]["id"] == "product_123"
-    assert result[1]["id"] == "product_456"
-    assert instructions == (
-        "This is a partial result containing only metadata (name, id, description) for each Data Product. "
-        "To get the full Data Product details, please select one of the IDs and call this method again with the exact product_id."
+    assert len(response["results"]) == 2
+    assert response["results"][0]["id"] == "product_123"
+    assert response["results"][1]["id"] == "product_456"
+    assert response["instructions"] == (
+        "Found 2 data products matching your query. "
+        "The following contains summary information (name, id, description, url) for each product. "
+        "To get complete specifications, call this tool again with a specific product_id."
     )
 
 
@@ -215,13 +219,15 @@ def test_get_data_products_query_single_result(
         status_code=200,
     )
 
-    result, instructions = alation_api.get_data_products(query="mock query")
+    response = alation_api.get_data_products(query="mock query")
 
-    assert len(result) == 1
-    assert (
-        result[0]["product"]["product_id"] == "product_123"
-    )  # Corrected to navigate the nested structure
-    assert instructions is None
+    assert len(response["results"]) == 1
+    assert response["results"][0]["id"] == "product_123"
+    assert response["instructions"] == (
+        "Found 1 data products matching your query. "
+        "The following contains summary information (name, id, description, url) for each product. "
+        "To get complete specifications, call this tool again with a specific product_id."
+    )
 
 
 def test_get_data_products_query_marketplace_not_found(
@@ -253,10 +259,10 @@ def test_get_data_products_query_no_results(
         status_code=200,
     )
 
-    result, instructions = alation_api.get_data_products(query="mock query")
+    response = alation_api.get_data_products(query="mock query")
 
-    assert len(result) == 0
-    assert instructions is None
+    assert len(response["results"]) == 0
+    assert response["instructions"] == "No data products found for the given query."
 
 
 def test_get_data_products_no_id_or_query(alation_api, mock_token_methods):

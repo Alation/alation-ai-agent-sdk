@@ -85,19 +85,32 @@ class GetDataProductTool:
     @staticmethod
     def _get_description() -> str:
         return """
-          Retrieve data products using direct lookup or search (comprehensive).
+          Retrieve data products from Alation using direct lookup or search.
 
-          Parameters (provide exactly one):
-          - product_id: Exact product ID for fast direct lookup
-          - query: Natural language search for discovery
+          Parameters (provide exactly ONE):
 
-          Examples:
-          - get_data_products(product_id="finance:loan_performance_analytics")
-          - get_data_products(query="customer analytics products")
+          product_id (optional): Exact product identifier for fast direct retrieval
+          query (optional): Natural language search query for discovery and exploration
+          IMPORTANT: You must provide either product_id OR query, never both.
 
-          Returns complete product details including URLs. For multiple results,
-          returns summary format - call again with specific product_id for full details.
-        """
+          Usage Examples:
+
+          get_data_products(product_id="finance:loan_performance_analytics")
+          get_data_products(product_id="sg01")
+          get_data_products(product_id="d9e2be09-9b36-4052-8c22-91d1cc7faa53")
+          get_data_products(query="customer analytics dashboards")
+          get_data_products(query="fraud detection models")
+          Returns:
+          {
+          "instructions": "Context about the results and next steps",
+          "results": list of data products
+          }
+
+          Response Behavior:
+
+          Single result: Complete product specification with all metadata
+          Multiple results: Summary format (name, id, description, url)
+          """
 
     def run(self, product_id: Optional[str] = None, query: Optional[str] = None):
         try:
