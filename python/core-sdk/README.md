@@ -6,8 +6,8 @@ The Alation AI Agent SDK is a Python library that enables AI agents to access an
 
 This SDK provides a simple, programmatic way for AI applications to:
 
-- Retrieve contextual information from the Alation catalog
-- Use natural language questions to search for relevant metadata
+- Retrieve contextual information from the Alation catalog using natural language questions
+- Search for and retrieve data products by product ID or natural language queries
 - Customize response formats using signature specifications
 
 ## Installation
@@ -67,6 +67,14 @@ response = sdk_user_account.get_context(
     signature
 )
 print(response)
+
+# Retrieve a data product by ID
+data_product_by_id = sdk_user_account.get_data_products(product_id="finance:loan_performance_analytics")
+print(data_product_by_id)
+
+# Search for data products using a natural language query
+data_products_by_query = sdk_user_account.get_data_products(query="customer analytics dashboards")
+print(data_products_by_query)
 ```
 
 
