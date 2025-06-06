@@ -120,21 +120,20 @@ where start-mcp-server  # On Windows
 After restarting Claude Desktop, you should see a hammer icon (🔨) in the bottom right corner of the input box. This indicates MCP tools are available.
 
 1. Click on the hammer icon to see available tools
-2. You should see the "alation_context" tool listed
+2. You should see the "alation_context" and "get_data_products" tools listed
 
 If you don't see this icon, check Claude Desktop logs for errors and verify your configuration.
 
 ## Using the Alation Tools in Claude
 
-You can now ask Claude questions about your Alation catalog. Examples:
+You can now ask Claude questions about your Alation catalog or retrieve data products. Examples:
 
 - "What are the commonly joined tables with customer_profile?"
 - "Find recent documentation about our data warehouse"
-- "Can you explain the difference between loan type and loan term?"
-- "What certified data set is used to make decisions on providing credit for customers?"
-- "Show me financial reporting datasets and related queries"
+- "Retrieve data product with ID finance:loan_performance_analytics"
+- "Search for data products related to customer analytics dashboards"
 
-When needed, Claude will use the Alation MCP tools to retrieve contextual information and will request your permission before executing tool calls.
+When needed, Claude will use the Alation MCP tools to retrieve contextual information or data products and will request your permission before executing tool calls.
 
 ## Using Signatures with Claude Desktop
 

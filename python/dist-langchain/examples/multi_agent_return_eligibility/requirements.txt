@@ -1,5 +1,5 @@
-alation-ai-agent-sdk~=0.2.2
-alation-ai-agent-langchain~=0.2.2
+alation-ai-agent-sdk~=
+alation-ai-agent-langchain~=
 langchain>=0.1.0
 langchain-openai>=0.0.2
 langgraph>=0.0.20
