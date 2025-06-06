@@ -130,6 +130,9 @@ You can now ask Claude questions about your Alation catalog or retrieve data pro
 
 - "What are the commonly joined tables with customer_profile?"
 - "Find recent documentation about our data warehouse"
+- "Can you explain the difference between loan type and loan term?"
+- "What certified data set is used to make decisions on providing credit for customers?"
+- "Show me financial reporting datasets and related queries"
 - "Retrieve data product with ID finance:loan_performance_analytics"
 - "Search for data products related to customer analytics dashboards"
 
