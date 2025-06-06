@@ -70,3 +70,50 @@ class AlationContextTool:
             return self.api.get_context_from_catalog(question, signature)
         except AlationAPIError as e:
             return {"error": e.to_dict()}
+
+
+class GetDataProductTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "get_data_products"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
+          Retrieve data products from Alation using direct lookup or search.
+
+          Parameters (provide exactly ONE):
+
+          product_id (optional): Exact product identifier for fast direct retrieval
+          query (optional): Natural language search query for discovery and exploration
+          IMPORTANT: You must provide either product_id OR query, never both.
+
+          Usage Examples:
+
+          get_data_products(product_id="finance:loan_performance_analytics")
+          get_data_products(product_id="sg01")
+          get_data_products(product_id="d9e2be09-9b36-4052-8c22-91d1cc7faa53")
+          get_data_products(query="customer analytics dashboards")
+          get_data_products(query="fraud detection models")
+          Returns:
+          {
+          "instructions": "Context about the results and next steps",
+          "results": list of data products
+          }
+
+          Response Behavior:
+
+          Single result: Complete product specification with all metadata
+          Multiple results: Summary format (name, id, description, url)
+          """
+
+    def run(self, product_id: Optional[str] = None, query: Optional[str] = None):
+        try:
+            return self.api.get_data_products(product_id=product_id, query=query)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}

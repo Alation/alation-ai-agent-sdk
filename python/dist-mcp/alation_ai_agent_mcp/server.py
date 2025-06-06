@@ -1,5 +1,5 @@
 import os
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from mcp.server.fastmcp import FastMCP
 from alation_ai_agent_sdk import AlationAIAgentSDK, UserAccountAuthParams, ServiceAccountAuthParams
@@ -51,6 +51,14 @@ def create_server():
     @mcp.tool(name=alation_sdk.context_tool.name, description=alation_sdk.context_tool.description)
     def alation_context(question: str, signature: Dict[str, Any] | None = None) -> str:
         result = alation_sdk.get_context(question, signature)
+        return str(result)
+
+    @mcp.tool(
+        name=alation_sdk.data_product_tool.name,
+        description=alation_sdk.data_product_tool.description,
+    )
+    def get_data_products(product_id: Optional[str] = None, query: Optional[str] = None) -> str:
+        result = alation_sdk.get_data_products(product_id, query)
         return str(result)
 
     return mcp

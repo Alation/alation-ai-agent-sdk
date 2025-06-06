@@ -142,5 +142,5 @@ logs/allie-sdk-*
 example.py
 customer_service.db
 
-# VS Code stuff
+# VSCode stuff
 .vscode

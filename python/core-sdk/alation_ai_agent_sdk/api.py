@@ -1,7 +1,8 @@
 import logging
 import urllib.parse
 import json
-from typing import Dict, Any, Optional, Union, Tuple, NamedTuple
+import re
+from typing import Dict, Any, Optional, Union, NamedTuple
 from http import HTTPStatus
 import requests
 import requests.exceptions
@@ -474,4 +475,109 @@ class AlationAPI:
                 reason="Malformed Response",
                 resolution_hint="The server returned a non-JSON response. Contact support if this persists.",
                 help_links=["https://developer.alation.com/"],
+            )
+
+    def _fetch_marketplace_id(self, headers: Dict[str, str]) -> str:
+        """Fetch and return the marketplace ID."""
+        marketplace_url = f"{self.base_url}/api/v1/setting/marketplace/"
+        try:
+            response = requests.get(marketplace_url, headers=headers, timeout=30)
+            response.raise_for_status()
+            marketplace_data = response.json()
+            marketplace_id = marketplace_data.get("default_marketplace")
+            if not marketplace_id:
+                raise AlationAPIError(
+                    message="Marketplace ID not found in response",
+                    reason="Missing Marketplace ID",
+                )
+            return marketplace_id
+        except requests.RequestException as e:
+            self._handle_request_error(e, "fetching marketplace ID")
+
+    def get_data_products(
+        self, product_id: Optional[str] = None, query: Optional[str] = None
+    ) -> dict:
+        """
+        Retrieve Alation Data Products by product id or free-text search.
+
+        Args:
+            product_id (str, optional): product id for direct lookup.
+            query (str, optional): Free-text search query.
+
+        Returns:
+            dict: Contains 'instructions' (string) and 'results' (list of data product dicts).
+
+        Raises:
+            ValueError: If neither product_id nor query is provided.
+            AlationAPIError: On network, API, or response errors.
+        """
+        self._with_valid_token()
+        headers = {
+            "Token": self.access_token,
+            "Accept": "application/json",
+        }
+
+        if product_id:
+            # Fetch data product by ID
+            url = f"{self.base_url}/integration/data-products/v1/data-product/{product_id}/"
+            try:
+                response = requests.get(url, headers=headers, timeout=30)
+                if response.status_code == HTTPStatus.NOT_FOUND:
+                    return {
+                        "instructions": "The product ID provided does not exist. Please verify the ID and try again.",
+                        "results": [],
+                    }
+                response.raise_for_status()
+                response_data = response.json()
+                if isinstance(response_data, dict):
+                    instructions = f"The following is the complete specification for data product '{product_id}'."
+                    return {"instructions": instructions, "results": [response_data]}
+                return {
+                    "instructions": "No data products found for the given product ID.",
+                    "results": [],
+                }
+            except requests.RequestException as e:
+                self._handle_request_error(e, f"fetching data product by id: {product_id}")
+
+        elif query:
+            # Fetch marketplace ID if not cached
+            if not hasattr(self, "marketplace_id"):
+                self.marketplace_id = self._fetch_marketplace_id(headers)
+
+            # Search data products by query
+            url = f"{self.base_url}/integration/data-products/v1/search-internally/{self.marketplace_id}/"
+            try:
+                response = requests.post(
+                    url, headers=headers, json={"user_query": query}, timeout=30
+                )
+                response.raise_for_status()
+                response_data = response.json()
+                if isinstance(response_data, list) and response_data:
+                    instructions = (
+                        f"Found {len(response_data)} data products matching your query. "
+                        "The following contains summary information (name, id, description, url) for each product. "
+                        "To get complete specifications, call this tool again with a specific product_id."
+                    )
+                    results = [
+                        {
+                            "id": product["product"]["product_id"],
+                            "name": product["product"]["spec_json"]["product"]["en"]["name"],
+                            "description": product["product"]["spec_json"]["product"]["en"][
+                                "description"
+                            ],
+                            "url": f"{self.base_url}/app/marketplace/{self.marketplace_id}/data-product/{product['product']['product_id']}/",
+                        }
+                        for product in response_data
+                    ]
+                    return {"instructions": instructions, "results": results}
+                return {
+                    "instructions": "No data products found for the given query.",
+                    "results": [],
+                }
+            except requests.RequestException as e:
+                self._handle_request_error(e, f"searching data products with query: {query}")
+
+        else:
+            raise ValueError(
+                "You must provide either a product_id or a query to search for data products."
             )
