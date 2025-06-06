@@ -1,6 +1,6 @@
 [project]
 name = "alation-ai-agent-langchain"
-version = ""
+version = "0.3.0"
 description = "Alation Agent SDK for Langchain"
 dependencies = [
   "alation-ai-agent-sdk>=",
