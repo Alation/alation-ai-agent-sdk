@@ -53,7 +53,7 @@ Add the following configuration to your `claude_desktop_config.json`. See [here]
 ```
 
 ### Method 2: Using `pip`
-1. Install the package: ```pip install alation-ai-agent-mcp```
+1. Install the package: ```pip install alation-ai-agent-mcp``
 
 2. After installation, you can use the start-mcp-server command. Find the installation paths.
 ```
@@ -117,10 +117,7 @@ where start-mcp-server  # On Windows
 
 ## Verifying the Connection
 
-After restarting Claude Desktop, you should see a hammer icon (🔨) in the bottom right corner of the input box. This indicates MCP tools are available.
-
-1. Click on the hammer icon to see available tools
-2. You should see the "alation_context" tool listed
+After restarting Claude Desktop, you should see a hammer icon (🔨) in the bottom right corner of the input box. This indicates MCP tools are available. Clicking on the hammer icon will display the list of available tools.
 
 If you don't see this icon, check Claude Desktop logs for errors and verify your configuration.
 
@@ -133,8 +130,10 @@ You can now ask Claude questions about your Alation catalog. Examples:
 - "Can you explain the difference between loan type and loan term?"
 - "What certified data set is used to make decisions on providing credit for customers?"
 - "Show me financial reporting datasets and related queries"
+- "Retrieve data product with ID finance:loan_performance_analytics"
+- "Search for data products related to customer analytics dashboards"
 
-When needed, Claude will use the Alation MCP tools to retrieve contextual information and will request your permission before executing tool calls.
+When needed, Claude will use the Alation MCP tools to retrieve contextual information or data products and will request your permission before executing tool calls.
 
 ## Using Signatures with Claude Desktop
 

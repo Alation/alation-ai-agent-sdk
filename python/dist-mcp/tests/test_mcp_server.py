@@ -92,7 +92,7 @@ def test_create_server_success(manage_environment_variables, mock_alation_sdk, m
 
     mcp_result = server.create_server()
 
-    mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version="0.1.0")
+    mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version="0.3.0")
     mock_sdk_class.assert_called_once_with(
         "https://mock-alation.com", "user_account", UserAccountAuthParams(12345, "mock-token")
     )
@@ -184,7 +184,9 @@ def test_run_server_calls_create_and_run(mock_create_server, mock_fastmcp):
     assert server.mcp is mock_mcp_instance
 
 
-def test_create_server_service_account(manage_environment_variables, monkeypatch, mock_alation_sdk, mock_fastmcp):
+def test_create_server_service_account(
+    manage_environment_variables, monkeypatch, mock_alation_sdk, mock_fastmcp
+):
     """
     Test successful creation of the server with service_account authentication.
     """
@@ -198,8 +200,10 @@ def test_create_server_service_account(manage_environment_variables, monkeypatch
 
     mcp_result = server.create_server()
 
-    mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version="0.1.0")
+    mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version="0.3.0")
     mock_sdk_class.assert_called_once_with(
-        "https://mock-alation.com", "service_account", ServiceAccountAuthParams("mock-client-id", "mock-client-secret")
+        "https://mock-alation.com",
+        "service_account",
+        ServiceAccountAuthParams("mock-client-id", "mock-client-secret"),
     )
     assert mcp_result is mock_mcp_instance

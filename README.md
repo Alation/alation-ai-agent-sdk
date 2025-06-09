@@ -120,6 +120,34 @@ response = alation_ai_sdk.get_context(
 **Returns**
 - JSON-formatted response of relevant catalog objects
 
+### get_data_products
+
+A retrieval tool that pulls data products from the Alation catalog based on product ID or natural language queries.
+
+**Functionality**
+- Accepts product IDs for direct lookup
+- Accepts user queries in natural language for discovery
+- Returns relevant data products in JSON format
+- Can return single or multiple results
+
+**Usage**
+```python
+response = alation_ai_sdk.get_data_products(
+    "12345"  # Example product ID
+)
+
+response = alation_ai_sdk.get_data_products(
+    "Show me all data products related to sales"
+)
+```
+
+**Input Parameters**
+- `product_id` (string, optional): The ID of the product for direct lookup
+- `query` (string, optional): A natural language query to discover data products
+
+**Returns**
+- JSON-formatted response of relevant data products
+
 ## Shape the SDK to your needs
 
 The SDK's `alation-context` tool supports customizing response content using signatures. This powerful feature allows you to specify which fields to include and how to filter the catalog results. For instance:
@@ -161,6 +189,7 @@ Direct usage examples for the Alation AI Agent SDK:
 Enable agentic experiences with the Alation Data Catalog.
 
 - [MCP Integration](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/mcp/) - Getting the Alation MCP server up and running.
+- [Integration with Code Editors](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/mcp/code_editors.md)
 - [Testing with MCP Inspector](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/mcp/testing_with_mcp_inspector.md) - Steps for debugging and verification.
 - [Claude Desktop Integration](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/mcp/claude_desktop.md) - Leverage the Alation MCP server within Claude Desktop.
 - [LibreChat Integration](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/mcp/librechat.md) - Create assistants and agents alike.
