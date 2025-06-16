@@ -581,3 +581,56 @@ class AlationAPI:
             raise ValueError(
                 "You must provide either a product_id or a query to search for data products."
             )
+
+    def check_sql_query_tables(
+        self,
+        table_ids: Optional[list] = None,
+        sql_query: Optional[str] = None,
+        db_uri: Optional[str] = None,
+        ds_id: Optional[int] = None,
+        bypassed_dq_sources: Optional[list] = None,
+        default_schema_name: Optional[str] = "public",
+        output_format: Optional[str] = "JSON",
+        dq_score_threshold: Optional[int] = None,
+    ) -> dict:
+        """
+        Check SQL query tables for data quality using the integration/v1/dq/check_sql_query_tables endpoint.
+        """
+        self._with_valid_token()
+        headers = {
+            "Token": self.access_token,
+            "Accept": "application/json",
+        }
+        url = f"{self.base_url}/integration/v1/dq/check_sql_query_tables/"
+        payload = {}
+        if table_ids is not None:
+            payload["table_ids"] = table_ids
+        if sql_query is not None:
+            payload["sql_query"] = sql_query
+        if db_uri is not None:
+            payload["db_uri"] = db_uri
+        if ds_id is not None:
+            payload["ds_id"] = ds_id
+        if bypassed_dq_sources is not None:
+            payload["bypassed_dq_sources"] = bypassed_dq_sources
+        if default_schema_name is not None:
+            payload["default_schema_name"] = default_schema_name
+        if output_format is not None:
+            payload["output_format"] = output_format
+        if dq_score_threshold is not None:
+            payload["dq_score_threshold"] = dq_score_threshold
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=60)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            self._handle_request_error(e, "check_sql_query_tables")
+        except ValueError:
+            raise AlationAPIError(
+                message="Invalid JSON in data quality check response",
+                status_code=None,
+                response_body=None,
+                reason="Malformed Response",
+                resolution_hint="The server returned a non-JSON response. Contact support if this persists.",
+                help_links=["https://developer.alation.com/"],
+            )

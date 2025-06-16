@@ -30,3 +30,35 @@ def get_alation_data_products_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
         func=run_with_args,
         args_schema=None,
     )
+
+
+def get_check_data_quality_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
+    check_data_quality_tool = sdk.check_data_quality_tool
+
+    def run_with_args(
+        table_ids: Optional[list] = None,
+        sql_query: Optional[str] = None,
+        db_uri: Optional[str] = None,
+        ds_id: Optional[int] = None,
+        bypassed_dq_sources: Optional[list] = None,
+        default_schema_name: Optional[str] = "public",
+        output_format: Optional[str] = "JSON",
+        dq_score_threshold: Optional[int] = None,
+    ):
+        return check_data_quality_tool.run(
+            table_ids=table_ids,
+            sql_query=sql_query,
+            db_uri=db_uri,
+            ds_id=ds_id,
+            bypassed_dq_sources=bypassed_dq_sources,
+            default_schema_name=default_schema_name,
+            output_format=output_format,
+            dq_score_threshold=dq_score_threshold,
+        )
+
+    return StructuredTool.from_function(
+        name=check_data_quality_tool.name,
+        description=check_data_quality_tool.description,
+        func=run_with_args,
+        args_schema=None,
+    )

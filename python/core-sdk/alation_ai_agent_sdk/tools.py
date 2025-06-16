@@ -117,3 +117,49 @@ class GetDataProductTool:
             return self.api.get_data_products(product_id=product_id, query=query)
         except AlationAPIError as e:
             return {"error": e.to_dict()}
+
+
+class CheckDataQualityTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "check_data_quality"
+
+    @staticmethod
+    def _get_description() -> str:
+        return (
+            "Check SQL Query or tables for quality using Alation's Data Quality API. "
+            "Parameters: table_ids (list, optional), sql_query (str, optional), db_uri (str, optional), "
+            "ds_id (int, optional), bypassed_dq_sources (list, optional), default_schema_name (str, optional), "
+            "output_format (str, optional), dq_score_threshold (int, optional). "
+            "Returns: dict with data quality check results or error details."
+        )
+
+    def run(
+        self,
+        table_ids: Optional[list] = None,
+        sql_query: Optional[str] = None,
+        db_uri: Optional[str] = None,
+        ds_id: Optional[int] = None,
+        bypassed_dq_sources: Optional[list] = None,
+        default_schema_name: Optional[str] = "public",
+        output_format: Optional[str] = "JSON",
+        dq_score_threshold: Optional[int] = None,
+    ):
+        try:
+            return self.api.check_sql_query_tables(
+                table_ids=table_ids,
+                sql_query=sql_query,
+                db_uri=db_uri,
+                ds_id=ds_id,
+                bypassed_dq_sources=bypassed_dq_sources,
+                default_schema_name=default_schema_name,
+                output_format=output_format,
+                dq_score_threshold=dq_score_threshold,
+            )
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}

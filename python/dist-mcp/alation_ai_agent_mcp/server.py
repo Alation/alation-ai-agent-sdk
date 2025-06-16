@@ -61,6 +61,32 @@ def create_server():
         result = alation_sdk.get_data_products(product_id, query)
         return str(result)
 
+    @mcp.tool(
+        name=alation_sdk.check_data_quality_tool.name,
+        description=alation_sdk.check_data_quality_tool.description,
+    )
+    def check_data_quality(
+        table_ids: Optional[list] = None,
+        sql_query: Optional[str] = None,
+        db_uri: Optional[str] = None,
+        ds_id: Optional[int] = None,
+        bypassed_dq_sources: Optional[list] = None,
+        default_schema_name: Optional[str] = "public",
+        output_format: Optional[str] = "JSON",
+        dq_score_threshold: Optional[int] = None,
+    ) -> str:
+        result = alation_sdk.check_data_quality(
+            table_ids=table_ids,
+            sql_query=sql_query,
+            db_uri=db_uri,
+            ds_id=ds_id,
+            bypassed_dq_sources=bypassed_dq_sources,
+            default_schema_name=default_schema_name,
+            output_format=output_format,
+            dq_score_threshold=dq_score_threshold,
+        )
+        return str(result)
+
     return mcp
 
 

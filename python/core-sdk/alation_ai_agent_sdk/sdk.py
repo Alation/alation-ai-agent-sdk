@@ -5,7 +5,7 @@ from .api import (
     AlationAPIError,
     AuthParams,
 )
-from .tools import AlationContextTool, GetDataProductTool
+from .tools import AlationContextTool, GetDataProductTool, CheckDataQualityTool
 
 
 class AlationAIAgentSDK:
@@ -35,6 +35,7 @@ class AlationAIAgentSDK:
         self.api = AlationAPI(base_url=base_url, auth_method=auth_method, auth_params=auth_params)
         self.context_tool = AlationContextTool(self.api)
         self.data_product_tool = GetDataProductTool(self.api)
+        self.check_data_quality_tool = CheckDataQualityTool(self.api)
 
     def get_context(
         self, question: str, signature: Optional[Dict[str, Any]] = None
@@ -51,7 +52,9 @@ class AlationAIAgentSDK:
         except AlationAPIError as e:
             return {"error": e.to_dict()}
 
-    def get_data_products(self, product_id: Optional[str] = None, query: Optional[str] = None) -> Dict[str, Any]:
+    def get_data_products(
+        self, product_id: Optional[str] = None, query: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Fetch data products from Alation's catalog for a given product_id or user query.
 
@@ -69,6 +72,34 @@ class AlationAIAgentSDK:
         """
         try:
             return self.api.get_data_products(product_id, query)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
+    def check_data_quality(
+        self,
+        table_ids: Optional[list] = None,
+        sql_query: Optional[str] = None,
+        db_uri: Optional[str] = None,
+        ds_id: Optional[int] = None,
+        bypassed_dq_sources: Optional[list] = None,
+        default_schema_name: Optional[str] = "public",
+        output_format: Optional[str] = "JSON",
+        dq_score_threshold: Optional[int] = None,
+    ) -> dict:
+        """
+        Check SQL Query or tables for quality using Alation's Data Quality API.
+        """
+        try:
+            return self.check_data_quality_tool.run(
+                table_ids=table_ids,
+                sql_query=sql_query,
+                db_uri=db_uri,
+                ds_id=ds_id,
+                bypassed_dq_sources=bypassed_dq_sources,
+                default_schema_name=default_schema_name,
+                output_format=output_format,
+                dq_score_threshold=dq_score_threshold,
+            )
         except AlationAPIError as e:
             return {"error": e.to_dict()}
 
