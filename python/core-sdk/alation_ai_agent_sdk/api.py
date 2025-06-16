@@ -187,8 +187,6 @@ class AlationAPI:
         else:
             raise ValueError("auth_method must be either 'user_account' or 'service_account'.")
 
-        logger.debug(f"AlationAPI initialized with auth method: {self.auth_method}")
-
     def _handle_request_error(self, exception: requests.RequestException, context: str):
         """Utility function to handle request exceptions."""
         if isinstance(exception, requests.exceptions.Timeout):
@@ -198,11 +196,17 @@ class AlationAPI:
                 resolution_hint="Ensure the server is reachable and try again later.",
                 help_links=["https://developer.alation.com/"],
             )
-
         status_code = getattr(exception.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR)
         response_text = getattr(exception.response, "text", "No response received from server")
-        parsed = {"error": response_text}
-        meta = AlationErrorClassifier.classify_token_error(status_code, parsed)
+        try:
+            parsed = (
+                exception.response.json()
+                if exception.response is not None
+                else {"error": response_text}
+            )
+        except Exception as parse_exc:
+            parsed = {"error": response_text}
+        meta = AlationErrorClassifier.classify_catalog_error(status_code, parsed)
 
         raise AlationAPIError(
             f"HTTP error during {context}",
@@ -224,7 +228,6 @@ class AlationAPI:
             "user_id": self.user_id,
             "refresh_token": self.refresh_token,
         }
-        logger.debug(f"Generating access token using refresh token for user_id: {self.user_id}")
 
         try:
             response = requests.post(url, json=payload, timeout=60)
@@ -256,7 +259,6 @@ class AlationAPI:
             )
 
         self.access_token = data["api_access_token"]
-        logger.debug(f"Access token generated from refresh token")
 
     def _generate_jwt_token(self):
         """
@@ -589,8 +591,8 @@ class AlationAPI:
         db_uri: Optional[str] = None,
         ds_id: Optional[int] = None,
         bypassed_dq_sources: Optional[list] = None,
-        default_schema_name: Optional[str] = "public",
-        output_format: Optional[str] = "JSON",
+        default_schema_name: Optional[str] = None,
+        output_format: Optional[str] = None,
         dq_score_threshold: Optional[int] = None,
     ) -> dict:
         """

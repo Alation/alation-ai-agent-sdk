@@ -66,13 +66,13 @@ def create_server():
         description=alation_sdk.check_data_quality_tool.description,
     )
     def check_data_quality(
+        sql_query: str,
         table_ids: Optional[list] = None,
-        sql_query: Optional[str] = None,
         db_uri: Optional[str] = None,
         ds_id: Optional[int] = None,
         bypassed_dq_sources: Optional[list] = None,
-        default_schema_name: Optional[str] = "public",
-        output_format: Optional[str] = "JSON",
+        default_schema_name: Optional[str] = None,
+        output_format: Optional[str] = None,
         dq_score_threshold: Optional[int] = None,
     ) -> str:
         result = alation_sdk.check_data_quality(

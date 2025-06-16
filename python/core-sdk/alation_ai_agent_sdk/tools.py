@@ -146,8 +146,8 @@ class CheckDataQualityTool:
         db_uri: Optional[str] = None,
         ds_id: Optional[int] = None,
         bypassed_dq_sources: Optional[list] = None,
-        default_schema_name: Optional[str] = "public",
-        output_format: Optional[str] = "JSON",
+        default_schema_name: Optional[str] = None,
+        output_format: Optional[str] = None,
         dq_score_threshold: Optional[int] = None,
     ):
         try:
