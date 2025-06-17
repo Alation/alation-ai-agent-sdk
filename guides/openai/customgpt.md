@@ -1,6 +1,6 @@
-# Connect a Custom GPT to Your Alation Catalog via the Aggregated Context API
+# Connect a Custom GPT to Your Alation Catalog via the Aggregated Context API <!-- omit from toc -->
 
-## Overview
+## Overview <!-- omit from toc -->
 If you're using OpenAI's ChatGPT, you can configure a custom GPT to access and query your Alation data catalog via the Aggregated Context API (Beta). This setup enables natural language interaction with your organization's catalog assets, making the catalog’s information more accessible through the GPT interface.
 
 In practical terms, this means you can quickly configure a custom GPT to experiment with the Aggregated Context API (Beta) and help users derive immediate value from it.  
@@ -14,21 +14,18 @@ The GPT will return relevant context directly from your Alation catalog, enablin
 > Since the Aggregated Context API is beta, certain aspects of this configuration may not be fully production-ready. However, we encourage you to explore it as a way to identify and validate AI-driven use cases for your Alation catalog.
 
 ### In this guide
-- [Connect a Custom GPT to Your Alation Catalog via the Aggregated Context API](#connect-a-custom-gpt-to-your-alation-catalog-via-the-aggregated-context-api)
-  - [Overview](#overview)
-    - [In this guide](#in-this-guide)
-  - [Prerequisites](#prerequisites)
-  - [Step 1: Create a Custom GPT](#step-1-create-a-custom-gpt)
-  - [Step 2: Engineer a Prompt for Your Custom GPT](#step-2-engineer-a-prompt-for-your-custom-gpt)
-  - [Step 3: Create an Authentication Token](#step-3-create-an-authentication-token)
-    - [Create an API Access Token](#create-an-api-access-token)
-    - [Create an OAuth Client and Generate a Bearer Token](#create-an-oauth-client-and-generate-a-bearer-token)
-  - [Step 4: Conﬁgure the Action in the Custom GPT](#step-4-conﬁgure-the-action-in-the-custom-gpt)
-  - [Step 5: Test Your GPT](#step-5-test-your-gpt)
-  - [Step 6: Share Your GPT](#step-6-share-your-gpt)
-  - [Step 7: Advance Usage with Signatures](#step-7-advance-usage-with-signatures)
-    - [Using a Single Signature](#using-a-single-signature)
-    - [Using Multiple Signatures](#using-multiple-signatures)
+- [Prerequisites](#prerequisites)
+- [Step 1: Create a Custom GPT](#step-1-create-a-custom-gpt)
+- [Step 2: Engineer a Prompt for Your Custom GPT](#step-2-engineer-a-prompt-for-your-custom-gpt)
+- [Step 3: Create an Authentication Token](#step-3-create-an-authentication-token)
+  - [Create an API Access Token](#create-an-api-access-token)
+  - [Create an OAuth Client and Generate a Bearer Token](#create-an-oauth-client-and-generate-a-bearer-token)
+- [Step 4: Conﬁgure the Action in the Custom GPT](#step-4-conﬁgure-the-action-in-the-custom-gpt)
+- [Step 5: Test Your GPT](#step-5-test-your-gpt)
+- [Step 6: Share Your GPT](#step-6-share-your-gpt)
+- [Step 7: Advance Usage with Signatures](#step-7-advance-usage-with-signatures)
+  - [Using a Single Signature](#using-a-single-signature)
+  - [Using Multiple Signatures](#using-multiple-signatures)
 
 ---
 
@@ -61,12 +58,8 @@ This step may take some time, as you’ll need to design an effective prompt for
 3. In the **Instructions** field, provide the prompt that defines your GPT’s behavior. The prompt should be tailored to your specific use case for the Aggregated Context API. Refer to the example below, which illustrates a prompt designed for a question-and-answer–style GPT.  
 
 > **Note:**  
-> You can include one or more *signatures* in your prompt to narrow the context returned by the Aggregated Context API. Using signatures is recommended for more precise and relevant results, especially in advanced configurations.  
-> For details on how to construct and apply signatures, refer to the [Signature Guide](https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature).  
-> In the example below, the signature section begins after `#### Signature Parameter` and ends before `#### Error Handling`.  
-> You can also find examples of [using multiple signatures](#step7) later in this guide.   
+> The example below does not use a signature, and the API will default to retrieving full relevant context.
 
-If not using a signature, the API will default to retrieving full context.
 
 ````markdown
 ## Primary Objective
