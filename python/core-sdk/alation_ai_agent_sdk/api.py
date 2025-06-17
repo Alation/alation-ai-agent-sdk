@@ -54,15 +54,26 @@ class AlationAPIError(Exception):
 class AlationErrorClassifier:
     @staticmethod
     def classify_catalog_error(status_code: int, response_body: dict) -> Dict[str, Any]:
+        # If the response body has 'error' and 'message', use them directly
+        if isinstance(response_body, dict):
+            error_code = response_body.get("error")
+            error_message = response_body.get("message")
+            if error_code and error_message:
+                return {
+                    "reason": error_code,
+                    "resolution_hint": error_message,
+                    "help_links": [],
+                }
+
+        # Fallback: use generic error handling by status code
         reason = "Unexpected Error"
         resolution_hint = "An unknown error occurred."
         help_links = []
-
         if status_code == HTTPStatus.BAD_REQUEST:
             reason = "Bad Request"
             resolution_hint = (
-                response_body.get("error")
-                or response_body.get("message")
+                response_body.get("message")
+                or response_body.get("error")
                 or "Request was malformed. Check the query and signature structure."
             )
             help_links = [
@@ -106,7 +117,6 @@ class AlationErrorClassifier:
             help_links = [
                 "https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta"
             ]
-
         return {"reason": reason, "resolution_hint": resolution_hint, "help_links": help_links}
 
     @staticmethod
@@ -594,9 +604,10 @@ class AlationAPI:
         default_schema_name: Optional[str] = None,
         output_format: Optional[str] = None,
         dq_score_threshold: Optional[int] = None,
-    ) -> dict:
+    ) -> Any:
         """
         Check SQL query tables for data quality using the integration/v1/dq/check_sql_query_tables endpoint.
+        Returns JSON (dict) or YAML Markdown (str) depending on output_format.
         """
         self._with_valid_token()
         headers = {
@@ -624,6 +635,8 @@ class AlationAPI:
         try:
             response = requests.post(url, headers=headers, json=payload, timeout=60)
             response.raise_for_status()
+            if output_format and output_format.lower() == "yaml_markdown":
+                return response.text
             return response.json()
         except requests.RequestException as e:
             self._handle_request_error(e, "check_sql_query_tables")

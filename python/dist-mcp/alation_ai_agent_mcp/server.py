@@ -1,5 +1,6 @@
 import os
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Annotated, Literal
+from pydantic import Field
 
 from mcp.server.fastmcp import FastMCP
 from alation_ai_agent_sdk import AlationAIAgentSDK, UserAccountAuthParams, ServiceAccountAuthParams
@@ -49,7 +50,17 @@ def create_server():
     alation_sdk = AlationAIAgentSDK(base_url, auth_method, auth_params)
 
     @mcp.tool(name=alation_sdk.context_tool.name, description=alation_sdk.context_tool.description)
-    def alation_context(question: str, signature: Dict[str, Any] | None = None) -> str:
+    def alation_context(
+        question: Annotated[
+            str, Field(description="The exact user question, unmodified and uninterpreted.")
+        ],
+        signature: Annotated[
+            Dict[str, Any] | None,
+            Field(
+                description="A JSON specification of which fields to include in the response. Allows customizing the response format and content."
+            ),
+        ] = None,
+    ) -> str:
         result = alation_sdk.get_context(question, signature)
         return str(result)
 
@@ -57,7 +68,15 @@ def create_server():
         name=alation_sdk.data_product_tool.name,
         description=alation_sdk.data_product_tool.description,
     )
-    def get_data_products(product_id: Optional[str] = None, query: Optional[str] = None) -> str:
+    def get_data_products(
+        product_id: Annotated[
+            str | None, Field(description="Exact product identifier for fast direct retrieval.")
+        ] = None,
+        query: Annotated[
+            str | None,
+            Field(description="Natural language search query for discovery and exploration."),
+        ] = None,
+    ) -> str:
         result = alation_sdk.get_data_products(product_id, query)
         return str(result)
 
@@ -66,14 +85,41 @@ def create_server():
         description=alation_sdk.check_data_quality_tool.description,
     )
     def check_data_quality(
-        sql_query: str,
-        table_ids: Optional[list] = None,
-        db_uri: Optional[str] = None,
-        ds_id: Optional[int] = None,
-        bypassed_dq_sources: Optional[list] = None,
-        default_schema_name: Optional[str] = None,
-        output_format: Optional[str] = None,
-        dq_score_threshold: Optional[int] = None,
+        sql_query: Annotated[
+            str | None, Field(description="SQL query to analyze for data quality checks.")
+        ] = None,
+        output_format: Annotated[
+            Literal["json", "yaml_markdown"] | None,
+            Field(description="Output format for results: 'json' or 'yaml_markdown'."),
+        ] = None,
+        table_ids: Annotated[
+            list[int] | None,
+            Field(
+                description="List of table IDs to check (max 30). Use context tool to look up IDs."
+            ),
+        ] = None,
+        db_uri: Annotated[
+            str | None,
+            Field(
+                description="Database URI for the query, e.g., 'postgresql://user:pass@host/db'."
+            ),
+        ] = None,
+        ds_id: Annotated[
+            int | None, Field(description="Datasource ID for the query or tables.")
+        ] = None,
+        bypassed_dq_sources: Annotated[
+            list[Literal["trust_flags", "open_data_quality", "native_data_quality"]] | None,
+            Field(
+                description="List of data quality sources to bypass. Allowed values: 'trust_flags', 'open_data_quality', 'native_data_quality'."
+            ),
+        ] = None,
+        default_schema_name: Annotated[
+            str | None,
+            Field(description="Default schema name to use if not specified in the query."),
+        ] = None,
+        dq_score_threshold: Annotated[
+            int | None, Field(description="Data quality score threshold for passing results.")
+        ] = None,
     ) -> str:
         result = alation_sdk.check_data_quality(
             table_ids=table_ids,

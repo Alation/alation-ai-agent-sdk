@@ -85,9 +85,10 @@ class AlationAIAgentSDK:
         default_schema_name: Optional[str] = None,
         output_format: Optional[str] = None,
         dq_score_threshold: Optional[int] = None,
-    ) -> dict:
+    ) -> Any:
         """
         Check SQL Query or tables for quality using Alation's Data Quality API.
+        Returns dict (JSON) or str (YAML Markdown) depending on output_format.
         """
         try:
             return self.check_data_quality_tool.run(

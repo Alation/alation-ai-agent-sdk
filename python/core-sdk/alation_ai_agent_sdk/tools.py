@@ -133,10 +133,32 @@ class CheckDataQualityTool:
     def _get_description() -> str:
         return (
             "Check SQL Query or tables for quality using Alation's Data Quality API. "
-            "Parameters: table_ids (list, optional), sql_query (str, optional), db_uri (str, optional), "
-            "ds_id (int, optional), bypassed_dq_sources (list, optional), default_schema_name (str, optional), "
-            "output_format (str, optional), dq_score_threshold (int, optional). "
-            "Returns: dict with data quality check results or error details."
+            "This tool can be used as a pre-flight SQL query execution check or as a guardrail after executing a query, "
+            "to ensure data quality is not compromised. It is recommended to trigger this tool if you are about to execute a SQL query, "
+            "or if you have just executed one and want to validate the result set's quality.\n"
+            "\n"
+            "Parameters (all optional, but at least one of table_ids or sql_query is required):\n"
+            "- table_ids (list[int]): List of table IDs to check (max 30).\n"
+            "- sql_query (str): SQL query to analyze.\n"
+            "- db_uri (str): Database URI for the query.\n"
+            "- ds_id (int): Datasource ID.\n"
+            "- bypassed_dq_sources (list[str]): Data quality sources to bypass.\n"
+            "- default_schema_name (str): Default schema name.\n"
+            "- output_format (str): Output format ('JSON' or 'YAML_MARKDOWN').\n"
+            "- dq_score_threshold (int): Data quality score threshold.\n"
+            "\n"
+            "Usage Examples:\n"
+            "1. Check quality for specific tables (table_ids):\n"
+            "   # First, use the aggregated context tool to get table IDs for your tables.\n"
+            "   table_ids = [123, 456]\n"
+            "   result = check_data_quality(table_ids=table_ids, ds_id=42)\n"
+            "\n"
+            "2. Check quality for a SQL query (pre-flight or guardrail):\n"
+            "   result = check_data_quality(sql_query='SELECT * FROM sales', db_uri='postgresql://user:pass@host/db', output_format='JSON')\n"
+            "\n"
+            "Returns: dict (JSON) or str (YAML Markdown) with data quality check results or error details.\n"
+            "\n"
+            "Note: The maximum number of table_ids supported is 30. If you need table IDs, use the aggregated context tool to look them up first."
         )
 
     def run(
@@ -149,7 +171,7 @@ class CheckDataQualityTool:
         default_schema_name: Optional[str] = None,
         output_format: Optional[str] = None,
         dq_score_threshold: Optional[int] = None,
-    ):
+    ) -> Any:
         try:
             return self.api.check_sql_query_tables(
                 table_ids=table_ids,
