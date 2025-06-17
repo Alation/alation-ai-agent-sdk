@@ -58,7 +58,7 @@ This step may take some time, as you’ll need to design an effective prompt for
 3. In the **Instructions** field, provide the prompt that defines your GPT’s behavior. The prompt should be tailored to your specific use case for the Aggregated Context API. Refer to the example below, which illustrates a prompt designed for a question-and-answer–style GPT.  
 
 > **Note:**  
-> The example below does not use a signature, and the API will default to retrieving full relevant context.
+> The example below does not use a signature, and the API will default to retrieving full relevant context. To use signatures in the prompt, refer to [Step 7: Advance Usage With Signatures](#step-7-advance-usage-with-signatures) later in this guide.
 
 
 ````markdown
