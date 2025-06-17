@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/alation-alation-ai-agent-sdk-badge.png)](https://mseep.ai/app/alation-alation-ai-agent-sdk)
+
 # Alation AI Agent SDK
 
 The Alation AI Agent SDK enables AI agents to access and leverage metadata from the Alation Data Catalog.
