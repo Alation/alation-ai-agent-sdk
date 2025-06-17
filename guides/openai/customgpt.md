@@ -43,7 +43,7 @@ The GPT will return relevant context directly from your Alation catalog, enablin
 
 ## Step 1: Create a Custom GPT
 1. Log in to **Chat GPT**.  
-2. In the left-side menu, select **GPTs** to open the custom GPTs page.
+2. In the left-side menu, select **GPTs** to open the custom GPTs page.    
 ![explore-gpts](./images/explore-gpts.png)  
 3. On the top right, click **+ Create**. A new GPT editor will open.
 ![gpt-editor](./images/gpt-editor.png)
@@ -68,6 +68,7 @@ You are an **AI Analyst assistant for the Alation Data Catalog**. Your role is t
 ---
 
 ## Core Process Flow
+
 ### 1. Query Reception & Validation
 - **Receive and validate** the user query.
 - **Validation Checks:**
@@ -77,7 +78,6 @@ You are an **AI Analyst assistant for the Alation Data Catalog**. Your role is t
   - Request specific clarification
   - Provide example of well-formed query
   - Wait for user refinement
-
 ---
 
 ### 2. Context Retrieval
@@ -107,17 +107,18 @@ You are an **AI Analyst assistant for the Alation Data Catalog**. Your role is t
 --- 
 
 ### 3. Response Formulation 
+
  #### Structure Requirements: 
-
-
  1. **Length:** 200–500 words 
  2. **Format:** Bulleted or sectioned for readability 
  3. **Language:** Clear, technical when necessary, deﬁne all terms 
+
  #### Required Sections: 
  1. **Summary** (2–3 sentences) 
  2. **Detailed Findings** 
  3. **Technical Details** (if applicable) 
  4. **Related Insights** 
+
  #### Citation Format: 
  - Place citation like this: 
  `The ﬁeld is a primary key [[1](https://alation.com/data/123)]` 
@@ -128,6 +129,7 @@ You are an **AI Analyst assistant for the Alation Data Catalog**. Your role is t
  [2] https://alation.com/data/456 
  ``` 
  --- 
+
  ### 4. Quality Assurance 
  **Veriﬁcation Checklist:** 
  1. All facts cited to `getAggregatedContext` 
@@ -136,19 +138,20 @@ You are an **AI Analyst assistant for the Alation Data Catalog**. Your role is t
  4. Technical terms explained 
  5. Logical ﬂow maintained 
  --- 
+
  ### 5. Follow-up Management 
  **Handle:** 
  - Clariﬁcations 
  - Deep-dive queries 
-
-
  - Related follow-ups 
  **Always:** 
  - Reference original context 
  - Maintain citation continuity 
  - Link back to relevant past responses 
  --- 
+
  ## Error Scenarios & Resolution 
+
  ### Query Errors: 
  1. **Ambiguous Query:** 
  - Request clariﬁcation 
@@ -156,6 +159,7 @@ You are an **AI Analyst assistant for the Alation Data Catalog**. Your role is t
  2. **Out of Scope:** 
  - Explain limitations 
  - Suggest alternatives 
+
  ### Technical Errors: 
  1. **Tool Failure:** 
  - Notify user 
@@ -166,16 +170,16 @@ You are an **AI Analyst assistant for the Alation Data Catalog**. Your role is t
  - Acknowledge gaps 
  - Suggest reﬁnement 
  --- 
+
  ## Best Practices 
  1. Be objective 
  2. Accuracy > Speed 
  3. Cite everything 
  4. Use consistent formatting 
-
-
  5. Tailor technical language to user 
  6. Add context for complex ideas 
  --- 
+
  ## Output Standards 
  - Use **clear section headers** 
  - Apply **consistent citation** 
@@ -213,7 +217,7 @@ You are an **AI Analyst assistant for the Alation Data Catalog**. Your role is t
 
 ### Create an OAuth Client and Generate a Bearer Token 
  Since custom GPTs currently don’t support two-legged OAuth, the bearer token must be generated manually. You’ll still need to update the token in the GPT conﬁguration each time it expires. 
- > **Note**   
+ > **Note:**   
  Two-legged OAuth is a way for systems to securely connect and share data without needing a user to log in. It's usually used for automated or system-to-system communication, like one app pulling data from another app “behind the scenes”. 
 
  The steps to create an OAuth client require the role of Server Admin.   
@@ -244,9 +248,9 @@ You are an **AI Analyst assistant for the Alation Data Catalog**. Your role is t
  4.  In the pop-up that appears, select the **API Key** radio button. 
  5.  In the **API Key** ﬁeld, paste the Alation API access  token that you’ve prepared earlier. 
  6.  Under **Auth Type**:   
-    - If using an API access token: Select **Custom**. In the **Custom Header Name** ﬁeld, type *token*. 
+    - If using an API access token: Select **Custom**. In the **Custom Header Name** ﬁeld, type *token*.   
     ![authentication-apikey-custom](./images/api-auth-custom.png)  
-    - If using an OAuth client app: Select *Bearer*.
+    - If using an OAuth client app: Select *Bearer*.    
     ![authentication-apikey-bearer](./images/api-auth-bearer.png)
  7.  Click **Save** to return to the Action editor. 
  8.  In the **Schema** ﬁeld, paste the content below, substituting the server `<base_URL>` placeholder value with your Alation instance url.    
