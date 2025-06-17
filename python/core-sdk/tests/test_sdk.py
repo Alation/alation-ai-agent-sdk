@@ -290,13 +290,24 @@ def test_check_data_quality(monkeypatch):
 
     def mock_post(url, headers=None, json=None, timeout=None):
         class MockResponse:
+            def __init__(self, data, status_code=200):
+                self._data = data
+                self.status_code = status_code
+                self.text = str(data)
+
             def raise_for_status(self):
                 pass
 
             def json(self):
-                return mock_response
+                return self._data
 
-        return MockResponse()
+        if url.endswith("/integration/v1/createAPIAccessToken/"):
+            # Simulate a valid token response
+            return MockResponse({"api_access_token": "mock-token"})
+        elif url.endswith("/integration/v1/dq/check_sql_query_tables/"):
+            return MockResponse(mock_response)
+        else:
+            return MockResponse({}, status_code=404)
 
     monkeypatch.setattr("requests.post", mock_post)
     result = sdk.check_data_quality(sql_query="SELECT * FROM test_table;", ds_id=1)
