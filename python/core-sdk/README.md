@@ -75,6 +75,8 @@ print(data_product_by_id)
 # Search for data products using a natural language query
 data_products_by_query = sdk_user_account.get_data_products(query="customer analytics dashboards")
 print(data_products_by_query)
+```
+
 
 ## Core Features
 
