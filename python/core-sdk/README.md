@@ -76,16 +76,6 @@ print(data_product_by_id)
 data_products_by_query = sdk_user_account.get_data_products(query="customer analytics dashboards")
 print(data_products_by_query)
 
-# Check SQL Query or tables for data quality
-quality_result = sdk_user_account.check_data_quality(
-    sql_query="SELECT * FROM sales_data;",
-    ds_id=1234,
-    output_format="JSON"
-)
-print(quality_result)
-```
-
-
 ## Core Features
 
 ### Response Customization with Signatures

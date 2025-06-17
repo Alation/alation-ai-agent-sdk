@@ -1,4 +1,4 @@
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
 
 from .api import (
     AlationAPI,
@@ -85,11 +85,14 @@ class AlationAIAgentSDK:
         default_schema_name: Optional[str] = None,
         output_format: Optional[str] = None,
         dq_score_threshold: Optional[int] = None,
-    ) -> Any:
+    ) -> Union[Dict[str, Any], str]:
         """
         Check SQL Query or tables for quality using Alation's Data Quality API.
         Returns dict (JSON) or str (YAML Markdown) depending on output_format.
         """
+        if not table_ids and not sql_query:
+            raise ValueError("At least one of 'table_ids' or 'sql_query' must be provided.")
+
         try:
             return self.check_data_quality_tool.run(
                 table_ids=table_ids,
@@ -105,4 +108,4 @@ class AlationAIAgentSDK:
             return {"error": e.to_dict()}
 
     def get_tools(self):
-        return [self.context_tool, self.data_product_tool]
+        return [self.context_tool, self.data_product_tool, self.check_data_quality_tool]

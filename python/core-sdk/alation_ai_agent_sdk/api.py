@@ -604,10 +604,10 @@ class AlationAPI:
         default_schema_name: Optional[str] = None,
         output_format: Optional[str] = None,
         dq_score_threshold: Optional[int] = None,
-    ) -> Any:
+    ) -> Union[Dict[str, Any], str]:
         """
         Check SQL query tables for data quality using the integration/v1/dq/check_sql_query_tables endpoint.
-        Returns JSON (dict) or YAML Markdown (str) depending on output_format.
+        Returns dict (JSON) or str (YAML Markdown) depending on output_format.
         """
         self._with_valid_token()
         headers = {
