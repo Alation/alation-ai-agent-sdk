@@ -6,6 +6,7 @@ from typing import Dict, Any, Optional, Union, NamedTuple
 from http import HTTPStatus
 import requests
 import requests.exceptions
+import datetime
 
 AUTH_METHOD_USER_ACCOUNT = "user_account"
 AUTH_METHOD_SERVICE_ACCOUNT = "service_account"
@@ -626,11 +627,15 @@ class AlationAPI:
             payload["ds_id"] = ds_id
 
         # Temporary patch until AL-196499 lands in core container
-        # Ensure 'native_data_quality' is always included in bypassed_dq_sources
-        if bypassed_dq_sources is None:
-            bypassed_dq_sources = ["native_data_quality"]
-        elif "native_data_quality" not in bypassed_dq_sources:
-            bypassed_dq_sources = list(bypassed_dq_sources) + ["native_data_quality"]
+        # Auto-expire after July 2025
+        now = datetime.datetime.now()
+        patch_expiry = datetime.datetime(2025, 8, 1)  # August 1, 2025
+        if now < patch_expiry:
+            # Ensure 'native_data_quality' is always included in bypassed_dq_sources
+            if bypassed_dq_sources is None:
+                bypassed_dq_sources = ["native_data_quality"]
+            elif "native_data_quality" not in bypassed_dq_sources:
+                bypassed_dq_sources = list(bypassed_dq_sources) + ["native_data_quality"]
 
         if bypassed_dq_sources is not None:
             payload["bypassed_dq_sources"] = bypassed_dq_sources
