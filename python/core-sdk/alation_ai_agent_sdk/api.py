@@ -624,6 +624,14 @@ class AlationAPI:
             payload["db_uri"] = db_uri
         if ds_id is not None:
             payload["ds_id"] = ds_id
+
+        # Temporary patch until AL-196499 lands in core container
+        # Ensure 'native_data_quality' is always included in bypassed_dq_sources
+        if bypassed_dq_sources is None:
+            bypassed_dq_sources = ["native_data_quality"]
+        elif "native_data_quality" not in bypassed_dq_sources:
+            bypassed_dq_sources = list(bypassed_dq_sources) + ["native_data_quality"]
+
         if bypassed_dq_sources is not None:
             payload["bypassed_dq_sources"] = bypassed_dq_sources
         if default_schema_name is not None:
