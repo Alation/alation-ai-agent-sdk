@@ -226,3 +226,19 @@ For questions about documentation or policies:
 First question: What fields are available in our customer table?
 
 In this example, you've provided two different signatures for different types of queries. Claude will analyze your question and apply the most appropriate signature based on the context.
+
+
+###  Example 4: Bulk Retrieval - Get all Endorsed Tables in a data source
+```json
+{
+  "table": {
+    "fields_required": ["name", "title", "description", "url"],
+    "search_filters": {"flags": ["Endorsement"], "fields": {"ds": [1]}},
+    "limit": 20
+  }
+}
+```
+
+Question: Use the above signature to fetch endorsed tables
+
+Note: In bulk retrieval mode, the question is ignored. Results are based solely on the signature parameters. The question is shown only as an example of how to phrase such requests to ensure we call the right tool.

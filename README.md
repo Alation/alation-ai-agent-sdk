@@ -8,6 +8,7 @@ This SDK empowers AI agents to:
 
 - Retrieve contextual information from Alation's Data Catalog
 - Use natural language to search for relevant metadata
+- Fetch bulk objects from catalog
 - Customize response formats using flexible signature specifications
 - Integrate seamlessly with AI frameworks like LangChain and MCP
 
@@ -147,6 +148,30 @@ response = alation_ai_sdk.get_data_products(
 
 **Returns**
 - JSON-formatted response of relevant data products
+
+### Bulk Object Retrieval
+
+Retrieve large datasets of catalog objects without conversational queries:
+
+```python
+# Get all tables in a specific datasource
+bulk_signature = {
+    "table": {
+        "fields_required": ["name", "description", "columns"],
+        "search_filters": {
+            "fields": {"ds": [123]}  # Specific datasource
+        },
+        "limit": 100,
+        "child_objects": {
+            "columns": {
+                "fields": ["name", "data_type", "description"]
+            }
+        }
+    }
+}
+
+response = sdk.bulk_retrieval(signature=bulk_signature)
+```
 
 ## Shape the SDK to your needs
 

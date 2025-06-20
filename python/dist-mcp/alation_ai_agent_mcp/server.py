@@ -53,6 +53,11 @@ def create_server():
         result = alation_sdk.get_context(question, signature)
         return str(result)
 
+    @mcp.tool(name=alation_sdk.bulk_retrieval_tool.name, description=alation_sdk.bulk_retrieval_tool.description)
+    def alation_bulk_retrieval(signature: Dict[str, Any]) -> str:
+        result = alation_sdk.get_bulk_objects(signature)
+        return str(result)
+
     @mcp.tool(
         name=alation_sdk.data_product_tool.name,
         description=alation_sdk.data_product_tool.description,
