@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 from alation_ai_agent_sdk import UserAccountAuthParams, AlationAPI, AlationAPIError
 
 MOCK_BASE_URL = "https://mock-alation-instance.com"

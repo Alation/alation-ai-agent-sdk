@@ -1,5 +1,4 @@
 from typing import Any, Optional
-from pydantic import BaseModel, Field
 
 from alation_ai_agent_sdk import AlationAIAgentSDK
 from langchain.tools import StructuredTool

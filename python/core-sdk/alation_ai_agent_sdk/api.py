@@ -1,7 +1,6 @@
 import logging
 import urllib.parse
 import json
-import re
 from typing import Dict, Any, Optional, Union, NamedTuple
 from http import HTTPStatus
 import requests
@@ -256,7 +255,7 @@ class AlationAPI:
             )
 
         self.access_token = data["api_access_token"]
-        logger.debug(f"Access token generated from refresh token")
+        logger.debug("Access token generated from refresh token")
 
     def _generate_jwt_token(self):
         """
@@ -273,7 +272,7 @@ class AlationAPI:
             "accept": "application/json",
             "content-type": "application/x-www-form-urlencoded",
         }
-        logger.debug(f"Generating JWT token")
+        logger.debug("Generating JWT token")
         try:
             response = requests.post(url, data=payload, headers=headers, timeout=60)
             response.raise_for_status()
@@ -306,7 +305,7 @@ class AlationAPI:
             )
 
         self.access_token = data["access_token"]
-        logger.debug(f"JWT token generated from client ID and secret")
+        logger.debug("JWT token generated from client ID and secret")
 
     def _generate_new_token(self):
 
