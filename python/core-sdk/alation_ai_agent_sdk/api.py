@@ -626,7 +626,6 @@ class AlationAPI:
         if ds_id is not None:
             payload["ds_id"] = ds_id
 
-        # Temporary patch until AL-196499 lands in core container
         # Auto-expire after July 2025
         now = datetime.datetime.now()
         patch_expiry = datetime.datetime(2025, 8, 1)  # August 1, 2025
