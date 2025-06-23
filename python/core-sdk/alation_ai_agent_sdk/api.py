@@ -6,6 +6,7 @@ from typing import Dict, Any, Optional, Union, NamedTuple
 from http import HTTPStatus
 import requests
 import requests.exceptions
+import datetime
 
 AUTH_METHOD_USER_ACCOUNT = "user_account"
 AUTH_METHOD_SERVICE_ACCOUNT = "service_account"
@@ -54,15 +55,26 @@ class AlationAPIError(Exception):
 class AlationErrorClassifier:
     @staticmethod
     def classify_catalog_error(status_code: int, response_body: dict) -> Dict[str, Any]:
+        # If the response body has 'error' and 'message', use them directly
+        if isinstance(response_body, dict):
+            error_code = response_body.get("error")
+            error_message = response_body.get("message")
+            if error_code and error_message:
+                return {
+                    "reason": error_code,
+                    "resolution_hint": error_message,
+                    "help_links": [],
+                }
+
+        # Fallback: use generic error handling by status code
         reason = "Unexpected Error"
         resolution_hint = "An unknown error occurred."
         help_links = []
-
         if status_code == HTTPStatus.BAD_REQUEST:
             reason = "Bad Request"
             resolution_hint = (
-                response_body.get("error")
-                or response_body.get("message")
+                response_body.get("message")
+                or response_body.get("error")
                 or "Request was malformed. Check the query and signature structure."
             )
             help_links = [
@@ -106,7 +118,6 @@ class AlationErrorClassifier:
             help_links = [
                 "https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta"
             ]
-
         return {"reason": reason, "resolution_hint": resolution_hint, "help_links": help_links}
 
     @staticmethod
@@ -187,8 +198,6 @@ class AlationAPI:
         else:
             raise ValueError("auth_method must be either 'user_account' or 'service_account'.")
 
-        logger.debug(f"AlationAPI initialized with auth method: {self.auth_method}")
-
     def _handle_request_error(self, exception: requests.RequestException, context: str):
         """Utility function to handle request exceptions."""
         if isinstance(exception, requests.exceptions.Timeout):
@@ -198,11 +207,17 @@ class AlationAPI:
                 resolution_hint="Ensure the server is reachable and try again later.",
                 help_links=["https://developer.alation.com/"],
             )
-
         status_code = getattr(exception.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR)
         response_text = getattr(exception.response, "text", "No response received from server")
-        parsed = {"error": response_text}
-        meta = AlationErrorClassifier.classify_token_error(status_code, parsed)
+        try:
+            parsed = (
+                exception.response.json()
+                if exception.response is not None
+                else {"error": response_text}
+            )
+        except Exception as parse_exc:
+            parsed = {"error": response_text}
+        meta = AlationErrorClassifier.classify_catalog_error(status_code, parsed)
 
         raise AlationAPIError(
             f"HTTP error during {context}",
@@ -224,7 +239,6 @@ class AlationAPI:
             "user_id": self.user_id,
             "refresh_token": self.refresh_token,
         }
-        logger.debug(f"Generating access token using refresh token for user_id: {self.user_id}")
 
         try:
             response = requests.post(url, json=payload, timeout=60)
@@ -256,7 +270,6 @@ class AlationAPI:
             )
 
         self.access_token = data["api_access_token"]
-        logger.debug(f"Access token generated from refresh token")
 
     def _generate_jwt_token(self):
         """
@@ -580,4 +593,71 @@ class AlationAPI:
         else:
             raise ValueError(
                 "You must provide either a product_id or a query to search for data products."
+            )
+
+    def check_sql_query_tables(
+        self,
+        table_ids: Optional[list] = None,
+        sql_query: Optional[str] = None,
+        db_uri: Optional[str] = None,
+        ds_id: Optional[int] = None,
+        bypassed_dq_sources: Optional[list] = None,
+        default_schema_name: Optional[str] = None,
+        output_format: Optional[str] = None,
+        dq_score_threshold: Optional[int] = None,
+    ) -> Union[Dict[str, Any], str]:
+        """
+        Check SQL query tables for data quality using the integration/v1/dq/check_sql_query_tables endpoint.
+        Returns dict (JSON) or str (YAML Markdown) depending on output_format.
+        """
+        self._with_valid_token()
+        headers = {
+            "Token": self.access_token,
+            "Accept": "application/json",
+        }
+        url = f"{self.base_url}/integration/v1/dq/check_sql_query_tables/"
+        payload = {}
+        if table_ids is not None:
+            payload["table_ids"] = table_ids
+        if sql_query is not None:
+            payload["sql_query"] = sql_query
+        if db_uri is not None:
+            payload["db_uri"] = db_uri
+        if ds_id is not None:
+            payload["ds_id"] = ds_id
+
+        # Auto-expire after July 2025
+        now = datetime.datetime.now()
+        patch_expiry = datetime.datetime(2025, 8, 1)  # August 1, 2025
+        if now < patch_expiry:
+            # Ensure 'native_data_quality' is always included in bypassed_dq_sources
+            if bypassed_dq_sources is None:
+                bypassed_dq_sources = ["native_data_quality"]
+            elif "native_data_quality" not in bypassed_dq_sources:
+                bypassed_dq_sources = list(bypassed_dq_sources) + ["native_data_quality"]
+
+        if bypassed_dq_sources is not None:
+            payload["bypassed_dq_sources"] = bypassed_dq_sources
+        if default_schema_name is not None:
+            payload["default_schema_name"] = default_schema_name
+        if output_format is not None:
+            payload["output_format"] = output_format
+        if dq_score_threshold is not None:
+            payload["dq_score_threshold"] = dq_score_threshold
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=60)
+            response.raise_for_status()
+            if output_format and output_format.lower() == "yaml_markdown":
+                return response.text
+            return response.json()
+        except requests.RequestException as e:
+            self._handle_request_error(e, "check_sql_query_tables")
+        except ValueError:
+            raise AlationAPIError(
+                message="Invalid JSON in data quality check response",
+                status_code=None,
+                response_body=None,
+                reason="Malformed Response",
+                resolution_hint="The server returned a non-JSON response. Contact support if this persists.",
+                help_links=["https://developer.alation.com/"],
             )

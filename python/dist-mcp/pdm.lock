@@ -5,14 +5,14 @@
 groups = ["default"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:db7151b5d353751c5419390c905af2ec503753c2be7760213ab907553efdfbb5"
+content_hash = "sha256:fdf4938f85a563719fd936a2b3be61de8ab56bd3e6203f9172ec36dc53e38fcd"
 
 [[metadata.targets]]
 requires_python = ">=3.10"
 
 [[package]]
 name = "alation-ai-agent-sdk"
-version = "0.2.2"
+version = "0.3.0"
 requires_python = ">=3.10"
 summary = "Alation Agent SDK"
 groups = ["default"]
@@ -20,8 +20,8 @@ dependencies = [
     "requests~=2.32.0",
 ]
 files = [
-    {file = "alation_ai_agent_sdk-0.2.2-py3-none-any.whl", hash = "sha256:3835f680dfbde3ddecd80e4ddcdd3860dcac0a20e398fd31c663c581b16bcdb9"},
-    {file = "alation_ai_agent_sdk-0.2.2.tar.gz", hash = "sha256:fb069c8e200dc57debe3b72c2373510a283afd9973136a81378c814833bb5f4f"},
+    {file = "alation_ai_agent_sdk-0.3.0-py3-none-any.whl", hash = "sha256:85f12f6f5915666819500f87eabaf5b4cec244c82b4e3f3cda98a8a94669dcd3"},
+    {file = "alation_ai_agent_sdk-0.3.0.tar.gz", hash = "sha256:15e083816b47b662b10d9294af75a591a7e6fdd5ab249e2fe32191ab3200be37"},
 ]
 
 [[package]]
