@@ -515,7 +515,7 @@ class AlationAPI:
                 response_body=response.text,
                 reason="Malformed Response",
                 resolution_hint="The server returned a non-JSON response. Contact support if this persists.",
-                help_links=["https://developer.alation.com/"],
+                help_links=["https://developer.alation.com/dev/reference/getaggregatedcontext"],
             )
 
     def _fetch_marketplace_id(self, headers: Dict[str, str]) -> str:

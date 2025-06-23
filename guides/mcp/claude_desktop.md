@@ -228,7 +228,7 @@ First question: What fields are available in our customer table?
 In this example, you've provided two different signatures for different types of queries. Claude will analyze your question and apply the most appropriate signature based on the context.
 
 
-###  Example 4: Bulk Retrieval - Get all Endorsed Tables in a data source
+###  Example 4: Bulk Retrieval - Get Endorsed Tables in a data source
 ```json
 {
   "table": {

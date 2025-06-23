@@ -151,10 +151,10 @@ response = alation_ai_sdk.get_data_products(
 
 ### Bulk Object Retrieval
 
-Retrieve large datasets of catalog objects without conversational queries:
+Retrieve catalog objects without conversational queries:
 
 ```python
-# Get all tables in a specific datasource
+# Get tables from a specific datasource
 bulk_signature = {
     "table": {
         "fields_required": ["name", "description", "columns"],
