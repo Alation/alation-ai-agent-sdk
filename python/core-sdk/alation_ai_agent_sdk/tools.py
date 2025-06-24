@@ -117,3 +117,65 @@ class GetDataProductTool:
             return self.api.get_data_products(product_id=product_id, query=query)
         except AlationAPIError as e:
             return {"error": e.to_dict()}
+
+
+class AlationBulkRetrievalTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "bulk_retrieval"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """Fetches bulk sets of data catalog objects without requiring questions.
+    
+    Parameters:
+    - signature (required): A dictionary containing object type configurations
+    
+    USE THIS TOOL FOR:
+    - Getting bulk objects based on signature (e.g. "fetch objects based on this signature", "get objects matching these criteria")
+
+    DON'T USE FOR:
+    - Answering specific questions about data (use alation_context instead)
+    - Exploratory "what" or "how" questions
+    - When you need conversational context
+    
+    REQUIRES: Signature parameter defining object types, fields, and filters
+    
+    CAPABILITIES:
+    - SUPPORTS MULTIPLE OBJECT TYPES: table, column, schema, query
+    - Documentation objects not supported.
+    
+    USAGE EXAMPLES:
+     - Single type: bulk_retrieval(signature = {"table": {"fields_required": ["name", "url"], "search_filters": {"flags": ["Endorsement"]}, "limit": 10}})
+     - Multiple types: bulk_retrieval(signature = {"table": {"fields_required": ["name", "url"], "limit": 10}, "column": {"fields_required": ["name", "data_type"], "limit": 50}})
+     - With relationships: bulk_retrieval(signature = {"table": {"fields_required": ["name", "columns"], "child_objects": {"columns": {"fields": ["name", "data_type"]}}, "limit": 10}})
+    """
+
+    def run(self, signature: Optional[Dict[str, Any]] = None):
+        if not signature:
+            return {
+                "error": {
+                    "message": "Signature parameter is required for bulk retrieval",
+                    "reason": "Missing Required Parameter",
+                    "resolution_hint": "Provide a signature specifying object types, fields, and optional filters. See tool description for examples.",
+                    "example_signature": {
+                        "table": {
+                            "fields_required": ["name", "title", "description", "url"],
+                            "search_filters": {
+                                "flags": ["Endorsement"]
+                            },
+                            "limit": 10
+                        }
+                    }
+                }
+            }
+
+        try:
+            return self.api.get_bulk_objects_from_catalog(signature)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
