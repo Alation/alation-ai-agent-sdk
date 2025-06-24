@@ -23,7 +23,7 @@ The GPT will return relevant context directly from your Alation catalog, enablin
 - [Step 4: Conﬁgure the Action in the Custom GPT](#step-4-conﬁgure-the-action-in-the-custom-gpt)
 - [Step 5: Test Your GPT](#step-5-test-your-gpt)
 - [Step 6: Share Your GPT](#step-6-share-your-gpt)
-- [Step 7: Advance Usage with Signatures](#step-7-advance-usage-with-signatures)
+- [Step 7: Advanced Usage with Signatures](#step-7-advanced-usage-with-signatures)
   - [Using a Single Signature](#using-a-single-signature)
   - [Using Multiple Signatures](#using-multiple-signatures)
 
@@ -37,7 +37,7 @@ The GPT will return relevant context directly from your Alation catalog, enablin
 - You’ve familiarized yourself with documentation about the Aggregated Context API:  
   - [*Guide to the Aggregated Context API (Beta)*](https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta)  
   - [*API Reference*](https://developer.alation.com/dev/reference/getaggregatedcontext)
-  - [*Guide to Aggregated Signatures*](https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature)  
+  - [*Guide to Using Signatures with the Aggregated Context API*](https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature)  
 
 ---
 
@@ -58,7 +58,7 @@ This step may take some time, as you’ll need to design an effective prompt for
 3. In the **Instructions** field, provide the prompt that defines your GPT’s behavior. The prompt should be tailored to your specific use case for the Aggregated Context API. Refer to the example below, which illustrates a prompt designed for a question-and-answer–style GPT.  
 
 > **Note:**  
-> The example below does not use a signature, and the API will default to retrieving full relevant context. To use signatures in the prompt, refer to [Step 7: Advance Usage With Signatures](#step-7-advance-usage-with-signatures) later in this guide.
+> The example below does not use a signature, and the API will default to retrieving full relevant context. To use signatures in the prompt, refer to [Step 7: Advanced Usage With Signatures](#step-7-advance-usage-with-signatures) later in this guide.
 
 
 ````markdown
@@ -243,17 +243,17 @@ You are an **AI Analyst assistant for the Alation Data Catalog**. Your role is t
 
 ## Step 4: Conﬁgure the Action in the Custom GPT 
  1.  Return to the custom GPT you’re conﬁguring. 
- 2.  Scroll to the bottom of the editor and click **Create  new action**. This opens the Add actions  editor. 
- 3.  In the Authentication ﬁeld, click the gear icon. 
+ 2.  Scroll to the bottom of the editor and click **Create new action**. This opens the **Add actions** editor. 
+ 3.  In the **Authentication** ﬁeld, click the gear icon. 
  4.  In the pop-up that appears, select the **API Key** radio button. 
- 5.  In the **API Key** ﬁeld, paste the Alation API access  token that you’ve prepared earlier. 
+ 5.  In the **API Key** ﬁeld, paste the Alation API access token that you’ve prepared earlier. 
  6.  Under **Auth Type**:   
     - If using an API access token: Select **Custom**. In the **Custom Header Name** ﬁeld, type *token*.   
     ![authentication-apikey-custom](./images/api-auth-custom.png)  
     - If using an OAuth client app: Select *Bearer*.    
     ![authentication-apikey-bearer](./images/api-auth-bearer.png)
  7.  Click **Save** to return to the Action editor. 
- 8.  In the **Schema** ﬁeld, paste the content below, substituting the server `<base_URL>` placeholder value with your Alation instance url.    
+ 8.  In the **Schema** ﬁeld, paste the content below.    
 
 ```yaml
 info:
@@ -497,9 +497,22 @@ components:
             The URL to the query in Alation.
           type: string
 ```
- 9.  Click **Format** in the bottom-right corner of the Schema  ﬁeld to automatically format the schema. 
- 10. Leave the **Privacy policy** ﬁeld empty. 
- 11. At this point, the **Create** button should be enabled.  Click it to ﬁnalize and create your custom GPT. 
+ 9. In the content you pasted, substitute the placeholder base URL value with the actual value by locating the following block and replacing the placeholder `<base_URL>`:
+```yaml
+security:
+- ApiKeyAuth: []
+--this key should be modified with the actual URL:
+servers:
+- url: '<base_URL>/integration/v2'
+```
+In this block, the placeholder `<base_URL>` in the value `url: '<base_URL>/integration/v2'` should be replaced with your base URL, for example:
+```yaml
+servers:
+- url: 'https://my_actual_base_url.com/integration/v2'
+```
+ 10. Click **Format** in the bottom-right corner of the **Schema** ﬁeld to automatically format the schema. 
+ 11. Leave the **Privacy policy** ﬁeld empty. 
+ 12. At this point, the **Create** button should become enabled. Click it to ﬁnalize and create your custom GPT. 
  
 ## Step 5: Test Your GPT 
 Start interacting with your newly created GPT: 
@@ -512,12 +525,12 @@ Start interacting with your newly created GPT:
 
  > **Important**: 
  >
- > In this beta release of the Context API,  API access  tokens  must be updated manually. 
+ > In this beta release of the Context API, API access tokens must be updated manually. 
  Ensure you have a process in place to refresh and reconﬁgure the token when it expires.   
  >
  > The shared GPT will access the Alation instance using the provided authentication method. For shared GPTs, we advise using service account bearer tokens.
 
- ## Step 7: Advance Usage with Signatures
+ ## Step 7: Advanced Usage with Signatures
  You can include one or more signatures in your prompt to narrow the context returned by the Aggregated Context API. Using signatures is recommended for more precise and relevant results, especially in advanced configurations.   
 For details on how to construct and apply signatures, refer to the [Signature Guide](https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature).   
 Below examples illustrate how the `#### Signature Parameter` section from the example prompt, provided in [Step 2: Engineer a Prompt For Your Custom GPT](#step-2-engineer-a-prompt-for-your-custom-gpt), can be modified to include signatures.
