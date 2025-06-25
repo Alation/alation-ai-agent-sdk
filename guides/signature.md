@@ -27,6 +27,7 @@ Signatures use a JSON format with this structure:
         ...
       }
     },
+    "limit": 10, // Maximum number of objects to return
     "child_objects": {
       "{child_type}": {
         "fields": ["field1", "field2"] //List of fields
@@ -44,13 +45,21 @@ Signatures use a JSON format with this structure:
 - **search_filters**: Criteria to narrow down results
 - **child_objects**: Configuration for related child objects
 
+## Default Limits
+
+- alation_context tool: 2 objects per object type
+- bulk_retrieval tool: 50 objects per object type
+- Maximum limit: 1000 objects per object type
+
+
 ## Examples
 
 ### Tables Only
 ```json
 {
   "table": {
-    "fields_required": ["name", "title", "description", "url"]
+    "fields_required": ["name", "title", "description", "url"],
+    "limit": 10
   }
 }
 ```
@@ -59,6 +68,7 @@ This signature:
 - Returns only table objects
 - No `fields_optional` fields, so every response will only include name, title, description and url.
 - Searches entire catalog (no filters)
+- Returns maximum of 10 table objects
 
 ### Tables with dynamic field selection
 ```json

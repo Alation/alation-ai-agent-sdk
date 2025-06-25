@@ -1,4 +1,5 @@
 import os
+import json
 
 from langchain.agents import AgentExecutor, create_openai_functions_agent
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -116,4 +117,24 @@ qa_response = executor.invoke(
     }
 )
 print("\nAgent Response (With Signature):")
+print(qa_response)
+
+
+# Example 3: Bulk retrieval tool
+print("\n=== Example 3: Bulk retrieval tool ===")
+bulk_table_signature = {
+  "table": {
+    "fields_required": ["name", "title", "description", "url"],
+    "search_filters": {"flags": ["Endorsement"], "fields": {"ds": [1]}},
+    "limit": 5
+  }
+}
+qa_question = f"""Use the bulk_retrieval tool with this exact signature: {json.dumps(bulk_table_signature)}"""
+
+qa_response = executor.invoke(
+    {
+        "input": qa_question
+    }
+)
+print("\nAgent Response (Bulk retrieval tool):")
 print(qa_response)
