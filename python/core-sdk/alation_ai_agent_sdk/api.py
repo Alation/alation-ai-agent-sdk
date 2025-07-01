@@ -5,6 +5,7 @@ from typing import Dict, Any, Optional, Union, NamedTuple
 from http import HTTPStatus
 import requests
 import requests.exceptions
+from typing_extensions import TypedDict
 
 AUTH_METHOD_USER_ACCOUNT = "user_account"
 AUTH_METHOD_SERVICE_ACCOUNT = "service_account"
@@ -146,6 +147,59 @@ class ServiceAccountAuthParams(NamedTuple):
 AuthParams = Union[UserAccountAuthParams, ServiceAccountAuthParams]
 
 
+class CatalogAssetMetadataPayloadItem(TypedDict):
+    oid: str
+    otype: str  # Only 'glossary_v3' or 'glossary_term'
+    field_id: int  # Only 3 (TEXT) or 4 (RICH_TEXT)
+    value: Any  # Accept any type, validated by field_id -> type mapping
+
+
+class CatalogAssetMetadataPayloadBuilder:
+    """
+    Builder class for constructing and validating payloads for update_catalog_asset_metadata.
+    Ensures all required fields are present and valid for each object in the payload.
+    """
+
+    REQUIRED_FIELDS = {"oid", "otype", "field_id", "value"}
+    ALLOWED_OTYPES = {"glossary_v3", "glossary_term"}
+    FIELD_ID_TYPE_MAP = {
+        3: str,  # TEXT
+        4: str,  # RICH_TEXT
+    }
+
+    @classmethod
+    def validate(cls, obj: CatalogAssetMetadataPayloadItem) -> None:
+        missing = cls.REQUIRED_FIELDS - obj.keys()
+        if missing:
+            raise ValueError(f"Missing required fields: {missing}")
+        if obj["otype"] not in cls.ALLOWED_OTYPES:
+            raise ValueError(f"Invalid otype: {obj['otype']}. Allowed: {cls.ALLOWED_OTYPES}")
+        if obj["field_id"] not in cls.FIELD_ID_TYPE_MAP:
+            raise ValueError(
+                f"Invalid field_id: {obj['field_id']}. Allowed: {list(cls.FIELD_ID_TYPE_MAP.keys())}"
+            )
+        expected_type = cls.FIELD_ID_TYPE_MAP[obj["field_id"]]
+        if not isinstance(obj["value"], expected_type):
+            raise ValueError(
+                f"field_id {obj['field_id']} requires a value of type {expected_type.__name__}"
+            )
+
+    @classmethod
+    def build(
+        cls, items: list[CatalogAssetMetadataPayloadItem]
+    ) -> list[CatalogAssetMetadataPayloadItem]:
+        if not isinstance(items, list):
+            raise ValueError("Payload must be a list of objects")
+        validated = []
+        for i, obj in enumerate(items):
+            try:
+                cls.validate(obj)
+            except Exception as e:
+                raise ValueError(f"Validation failed for item {i}: {e}")
+            validated.append(obj)
+        return validated
+
+
 class AlationAPI:
     """
     Client for interacting with the Alation API.
@@ -201,10 +255,10 @@ class AlationAPI:
         status_code = getattr(exception.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR)
         response_text = getattr(exception.response, "text", "No response received from server")
         parsed = {"error": response_text}
-        meta = AlationErrorClassifier.classify_token_error(status_code, parsed)
+        meta = AlationErrorClassifier.classify_catalog_error(status_code, parsed)
 
         raise AlationAPIError(
-            f"HTTP error during {context}",
+            f"""HTTP error during {context}: {meta["reason"]}""",
             original_exception=exception,
             status_code=status_code,
             response_body=parsed,
@@ -491,10 +545,7 @@ class AlationAPI:
             "Accept": "application/json",
         }
 
-        params = {
-            "mode": "bulk",
-            "signature": json.dumps(signature, separators=(",", ":"))
-        }
+        params = {"mode": "bulk", "signature": json.dumps(signature, separators=(",", ":"))}
 
         encoded_params = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
         url = f"{self.base_url}/integration/v2/context/?{encoded_params}"
@@ -622,3 +673,25 @@ class AlationAPI:
             raise ValueError(
                 "You must provide either a product_id or a query to search for data products."
             )
+
+    def update_catalog_asset_metadata(
+        self, custom_field_values: list[CatalogAssetMetadataPayloadItem]
+    ) -> dict:
+        """
+        Updates metadata for one or more Alation catalog assets via custom field values.
+        Validates payload before sending to API.
+        """
+        validated_payload = CatalogAssetMetadataPayloadBuilder.build(custom_field_values)
+        self._with_valid_token()
+        headers = {
+            "Token": self.access_token,
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
+        url = f"{self.base_url}/integration/v2/custom_field_value/async/"
+        try:
+            response = requests.put(url, headers=headers, json=validated_payload, timeout=60)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            self._handle_request_error(e, "update_catalog_asset_metadata")

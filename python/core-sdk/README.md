@@ -106,3 +106,35 @@ For detailed documentation on signature format and capabilities, see [Using Sign
 # Get all available tools
 tools = sdk.get_tools()
 ```
+
+## Using the UpdateCatalogAssetMetadata Tool
+
+The `UpdateCatalogAssetMetadata` tool allows you to update metadata for one or more Alation catalog assets using custom field values.
+
+### Example
+
+```python
+from alation_ai_agent_sdk import AlationAIAgentSDK, ServiceAccountAuthParams
+
+sdk = AlationAIAgentSDK(
+    base_url="https://your-alation-instance.com",
+    auth_method="service_account",
+    auth_params=ServiceAccountAuthParams(
+        client_id="your-client-id",
+        client_secret="your-client-secret"
+    )
+)
+
+custom_field_values = [
+    {
+        "oid": "123",
+        "otype": "table",
+        "field_id": 8,
+        "value": "Updated value"
+    },
+    # ... more objects ...
+]
+
+result = sdk.update_catalog_asset_metadata(custom_field_values)
+print(result)
+```

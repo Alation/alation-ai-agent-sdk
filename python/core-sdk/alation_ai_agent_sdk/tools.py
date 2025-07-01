@@ -1,6 +1,6 @@
 from typing import Dict, Any, Optional
 
-from alation_ai_agent_sdk.api import AlationAPI, AlationAPIError
+from alation_ai_agent_sdk.api import AlationAPI, AlationAPIError, CatalogAssetMetadataPayloadItem
 
 
 class AlationContextTool:
@@ -166,12 +166,10 @@ class AlationBulkRetrievalTool:
                     "example_signature": {
                         "table": {
                             "fields_required": ["name", "title", "description", "url"],
-                            "search_filters": {
-                                "flags": ["Endorsement"]
-                            },
-                            "limit": 10
+                            "search_filters": {"flags": ["Endorsement"]},
+                            "limit": 10,
                         }
-                    }
+                    },
                 }
             }
 
@@ -179,3 +177,58 @@ class AlationBulkRetrievalTool:
             return self.api.get_bulk_objects_from_catalog(signature)
         except AlationAPIError as e:
             return {"error": e.to_dict()}
+
+
+class UpdateCatalogAssetMetadataTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = "update_catalog_asset_metadata"
+        self.description = """
+            Updates metadata for one or more Alation catalog assets.
+
+            Parameters:
+            - oid (required, integer): The Alation object's unique identifier.
+            - otype (required, string): Type of object to update. Allowed types: glossary_term, glossary_v3.
+            - field_id (required, integer): Field ID to update. Allowed values:
+                3: title
+                4: description
+            - value (required, Any): The value to set for the field. Type is validated by field_id -> type mapping.
+
+            Use this tool to:
+            - Update titles or descriptions of glossary terms in Alation.
+
+            Don't use this tool for:
+            - Creating new objects.
+            - Fetching object details or data retrieval.
+
+            Usage examples:
+
+            Single asset:
+
+            update_catalog_asset_metadata([
+                {"oid": 219, "otype": "glossary_term", "field_id": 3, "value": "New Title"}
+            ])
+
+            Multiple assets:
+
+            update_catalog_asset_metadata([
+                {"oid": 219, "otype": "glossary_v3", "field_id": 4, "value": "Sample Description"},
+                {"oid": 220, "otype": "glossary_term", "field_id": 3, "value": "Another Title"}
+            ])
+
+            Response Behavior:
+
+            Returns one of the following:
+                - On success: {"job_id": <int>} (job is queued, use get_job_status to track progress)
+                - On error: {
+                      "title": "Invalid Payload",
+                      "detail": "Please check the API documentation for more details on the spec.",
+                      "errors": [ ... ],
+                      "code": "400000"
+                  }
+
+            Also prompt the user to navigate to https://<company>.alationcloud.com/monitor/completed_tasks/ to track status.
+            """
+
+    def run(self, custom_field_values: list[CatalogAssetMetadataPayloadItem]) -> dict:
+        return self.api.update_catalog_asset_metadata(custom_field_values)

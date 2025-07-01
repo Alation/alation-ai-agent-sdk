@@ -1,6 +1,6 @@
 from typing import Any, Optional
-
 from alation_ai_agent_sdk import AlationAIAgentSDK
+from alation_ai_agent_sdk.api import CatalogAssetMetadataPayloadItem
 from langchain.tools import StructuredTool
 
 
@@ -16,6 +16,7 @@ def get_alation_context_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
         func=run_with_signature,
         args_schema=None,
     )
+
 
 def get_alation_bulk_retrieval_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     bulk_retrieval_tool = sdk.bulk_retrieval_tool
@@ -36,12 +37,12 @@ def get_alation_bulk_retrieval_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
         signature = None
 
         # Pattern 1: Called with signature parameter
-        if 'signature' in kwargs:
-            signature = kwargs['signature']
+        if "signature" in kwargs:
+            signature = kwargs["signature"]
 
         # Pattern 2: direct dict without signature keyword
-        elif 'args' in kwargs and kwargs['args']:
-            signature = kwargs['args'][0]
+        elif "args" in kwargs and kwargs["args"]:
+            signature = kwargs["args"][0]
 
         # Pattern 3: Positional argument
         elif args and len(args) > 0:
@@ -61,6 +62,7 @@ def get_alation_bulk_retrieval_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
         args_schema=None,
     )
 
+
 def get_alation_data_products_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     data_products_tool = sdk.data_product_tool
 
@@ -70,6 +72,20 @@ def get_alation_data_products_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     return StructuredTool.from_function(
         name=data_products_tool.name,
         description=data_products_tool.description,
+        func=run_with_args,
+        args_schema=None,
+    )
+
+
+def get_update_catalog_asset_metadata_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
+    update_tool = sdk.update_catalog_asset_metadata_tool
+
+    def run_with_args(custom_field_values: list[CatalogAssetMetadataPayloadItem]):
+        return update_tool.run(custom_field_values)
+
+    return StructuredTool.from_function(
+        name=update_tool.name,
+        description=update_tool.description,
         func=run_with_args,
         args_schema=None,
     )
