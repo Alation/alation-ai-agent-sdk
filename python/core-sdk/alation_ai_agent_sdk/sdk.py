@@ -140,4 +140,9 @@ class AlationAIAgentSDK:
         return self.update_catalog_asset_metadata_tool.run(custom_field_values)
 
     def get_tools(self):
-        return [self.context_tool, self.bulk_retrieval_tool, self.data_product_tool]
+        return [
+            self.context_tool,
+            self.bulk_retrieval_tool,
+            self.data_product_tool,
+            self.update_catalog_asset_metadata_tool,
+        ]
