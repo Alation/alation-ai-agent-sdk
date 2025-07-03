@@ -1,7 +1,6 @@
 import logging
 import urllib.parse
 import json
-import re
 from typing import Dict, Any, Optional, Union, NamedTuple
 from http import HTTPStatus
 import requests
@@ -286,7 +285,7 @@ class AlationAPI:
             "accept": "application/json",
             "content-type": "application/x-www-form-urlencoded",
         }
-        logger.debug(f"Generating JWT token")
+        logger.debug("Generating JWT token")
         try:
             response = requests.post(url, data=payload, headers=headers, timeout=60)
             response.raise_for_status()
@@ -319,7 +318,7 @@ class AlationAPI:
             )
 
         self.access_token = data["access_token"]
-        logger.debug(f"JWT token generated from client ID and secret")
+        logger.debug("JWT token generated from client ID and secret")
 
     def _generate_new_token(self):
 
@@ -464,7 +463,7 @@ class AlationAPI:
             "Accept": "application/json",
         }
 
-        params = {"question": query}
+        params = {"question": query, "mode": "search"}
         if signature:
             params["signature"] = json.dumps(signature, separators=(",", ":"))
 
@@ -488,6 +487,48 @@ class AlationAPI:
                 reason="Malformed Response",
                 resolution_hint="The server returned a non-JSON response. Contact support if this persists.",
                 help_links=["https://developer.alation.com/"],
+            )
+
+    def get_bulk_objects_from_catalog(self, signature: Dict[str, Any]):
+        """
+        Retrieve bulk objects from the Alation catalog based on signature specifications.
+        Uses the context API in bulk mode without requiring a natural language question.
+        """
+        if not signature:
+            raise ValueError("Signature cannot be empty for bulk retrieval")
+
+        self._with_valid_token()
+
+        headers = {
+            "Token": self.access_token,
+            "Accept": "application/json",
+        }
+
+        params = {
+            "mode": "bulk",
+            "signature": json.dumps(signature, separators=(",", ":"))
+        }
+
+        encoded_params = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
+        url = f"{self.base_url}/integration/v2/context/?{encoded_params}"
+
+        try:
+            response = requests.get(url, headers=headers, timeout=60)
+            response.raise_for_status()
+
+        except requests.RequestException as e:
+            self._handle_request_error(e, "bulk catalog retrieval")
+
+        try:
+            return response.json()
+        except ValueError:
+            raise AlationAPIError(
+                message="Invalid JSON in bulk catalog response",
+                status_code=response.status_code,
+                response_body=response.text,
+                reason="Malformed Response",
+                resolution_hint="The server returned a non-JSON response. Contact support if this persists.",
+                help_links=["https://developer.alation.com/dev/reference/getaggregatedcontext"],
             )
 
     def _fetch_marketplace_id(self, headers: Dict[str, str]) -> str:

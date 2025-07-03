@@ -44,7 +44,7 @@ def create_server():
         )
 
     # Initialize FastMCP server
-    mcp = FastMCP(name="Alation MCP Server", version="0.3.0")
+    mcp = FastMCP(name="Alation MCP Server", version="0.4.0")
 
     # Initialize Alation SDK
     alation_sdk = AlationAIAgentSDK(base_url, auth_method, auth_params)
@@ -62,6 +62,11 @@ def create_server():
         ] = None,
     ) -> str:
         result = alation_sdk.get_context(question, signature)
+        return str(result)
+
+    @mcp.tool(name=alation_sdk.bulk_retrieval_tool.name, description=alation_sdk.bulk_retrieval_tool.description)
+    def alation_bulk_retrieval(signature: Dict[str, Any]) -> str:
+        result = alation_sdk.get_bulk_objects(signature)
         return str(result)
 
     @mcp.tool(

@@ -27,13 +27,23 @@ def mock_sdk_with_context_tool():
     mock_sdk.check_data_quality_tool.name = "AlationCheckDataQualityToolFromSDK"
     mock_sdk.check_data_quality_tool.description = "Checks data quality from Alation. Sourced from SDK's check_data_quality_tool."
     mock_sdk.check_data_quality_tool.run = MagicMock(return_value="Expected data quality via SDK run")
+
+    # Add mock for AlationBulkRetrievalTool
+    mock_sdk.bulk_retrieval_tool = MagicMock()
+    mock_sdk.bulk_retrieval_tool.name = "AlationBulkRetrievalToolFromSDK"
+    mock_sdk.bulk_retrieval_tool.description = "Provides bulk retrieval from Alation. Sourced from SDK's bulk_retrieval."
+    mock_sdk.bulk_retrieval_tool.run = MagicMock(return_value="Expected bulk retrieval data via SDK run")
+
     # Patch .run for StructuredTool.func compatibility
     def run_with_signature(*args, **kwargs):
         return mock_sdk.context_tool.run(*args, **kwargs)
     def run_with_query_or_product_id(*args, **kwargs):
         return mock_sdk.data_product_tool.run(*args, **kwargs)
+    def run_with_bulk_signature(*args, **kwargs):
+        return mock_sdk.bulk_retrieval_tool.run(*args, **kwargs)
     mock_sdk.context_tool.run_with_signature = run_with_signature
     mock_sdk.data_product_tool.run_with_query_or_product_id = run_with_query_or_product_id
+    mock_sdk.bulk_retrieval_tool.run_with_bulk_signature = run_with_bulk_signature
     return mock_sdk
 
 

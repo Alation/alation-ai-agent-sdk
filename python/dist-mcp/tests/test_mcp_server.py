@@ -92,7 +92,7 @@ def test_create_server_success(manage_environment_variables, mock_alation_sdk, m
 
     mcp_result = server.create_server()
 
-    mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version="0.3.0")
+    mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version="0.4.0")
     mock_sdk_class.assert_called_once_with(
         "https://mock-alation.com", "user_account", UserAccountAuthParams(12345, "mock-token")
     )
@@ -200,7 +200,7 @@ def test_create_server_service_account(
 
     mcp_result = server.create_server()
 
-    mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version="0.3.0")
+    mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version="0.4.0")
     mock_sdk_class.assert_called_once_with(
         "https://mock-alation.com",
         "service_account",

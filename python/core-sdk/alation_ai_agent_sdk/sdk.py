@@ -5,7 +5,8 @@ from .api import (
     AlationAPIError,
     AuthParams,
 )
-from .tools import AlationContextTool, GetDataProductTool, CheckDataQualityTool
+
+from .tools import AlationContextTool, AlationBulkRetrievalTool,CheckDataQualityTool, GetDataProductTool
 
 
 class AlationAIAgentSDK:
@@ -34,6 +35,7 @@ class AlationAIAgentSDK:
         # Delegate validation of auth_params to AlationAPI
         self.api = AlationAPI(base_url=base_url, auth_method=auth_method, auth_params=auth_params)
         self.context_tool = AlationContextTool(self.api)
+        self.bulk_retrieval_tool = AlationBulkRetrievalTool(self.api)
         self.data_product_tool = GetDataProductTool(self.api)
         self.check_data_quality_tool = CheckDataQualityTool(self.api)
 
@@ -52,9 +54,33 @@ class AlationAIAgentSDK:
         except AlationAPIError as e:
             return {"error": e.to_dict()}
 
-    def get_data_products(
-        self, product_id: Optional[str] = None, query: Optional[str] = None
-    ) -> Dict[str, Any]:
+    def get_bulk_objects(self, signature: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Fetch bulk objects from Alation's catalog based on signature specifications.
+
+        Args:
+            signature (Dict[str, Any]): A signature defining object types, fields, and filters.
+
+        Returns:
+            Dict[str, Any]: Contains the catalog objects matching the signature criteria.
+
+        Example signature:
+            {
+                "table": {
+                    "fields_required": ["name", "title", "description", "url"],
+                    "search_filters": {
+                        "flags": ["Endorsement"]
+                    },
+                    "limit": 100
+                }
+            }
+        """
+        try:
+            return self.api.get_bulk_objects_from_catalog(signature)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
+    def get_data_products(self, product_id: Optional[str] = None, query: Optional[str] = None) -> Dict[str, Any]:
         """
         Fetch data products from Alation's catalog for a given product_id or user query.
 
@@ -108,4 +134,5 @@ class AlationAIAgentSDK:
             return {"error": e.to_dict()}
 
     def get_tools(self):
-        return [self.context_tool, self.data_product_tool, self.check_data_quality_tool]
+        return [self.context_tool, self.data_product_tool, self.check_data_quality_tool,self.bulk_retrieval_tool]
+

@@ -150,6 +150,25 @@ def main() -> None:
         print(f"API Error: {e}")
         return
 
+    # Example 5: Bulk retrieval of objects
+    print("\n=== Example 5: Bulk retrieval of objects ===")
+    print("Query: Get all Endorsed Tables in a data source")
+
+    # Define a signature that includes column information
+    detailed_signature = {
+      "table": {
+        "fields_required": ["name", "title", "description", "url"],
+        "search_filters": {"flags": ["Endorsement"], "fields": {"ds": [1]}},
+        "limit": 20
+      }
+    }
+    try:
+        response = sdk.get_bulk_objects(signature=detailed_signature)
+        print_json(response)
+    except AlationAPIError as e:
+        print(f"API Error: {e}")
+        return
+
     print("\nAll examples completed successfully!")
 
 
