@@ -187,8 +187,12 @@ class UpdateCatalogAssetMetadataTool:
             Updates metadata for Alation catalog assets by modifying existing objects.
 
             Supported object types:
-            - 'glossary_term': Individual glossary terms
-            - 'glossary_v3': Glossary collections
+            - 'glossary_term': Individual glossary terms (corresponds to document objects)
+            - 'glossary_v3': Glossary collections (corresponds to doc-folder objects, i.e., Document Hubs)
+
+            NOTE: If you receive object types as 'document' or 'doc-folder', you must map them as follows:
+            - 'document' → 'glossary_term'
+            - 'doc-folder' → 'glossary_v3'
 
             Available fields:
             - field_id 3: Title (plain text)
