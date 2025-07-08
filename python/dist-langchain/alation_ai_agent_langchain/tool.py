@@ -80,7 +80,14 @@ def get_alation_data_products_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
 def get_update_catalog_asset_metadata_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     update_tool = sdk.update_catalog_asset_metadata_tool
 
-    def run_with_args(custom_field_values: list[CatalogAssetMetadataPayloadItem]):
+    def run_with_args(*args, **kwargs):
+        # Accepts either custom_field_values as a keyword or as the first positional argument
+        if "custom_field_values" in kwargs:
+            custom_field_values = kwargs["custom_field_values"]
+        elif args:
+            custom_field_values = args[0]
+        else:
+            raise TypeError("custom_field_values argument is required")
         return update_tool.run(custom_field_values)
 
     return StructuredTool.from_function(
