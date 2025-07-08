@@ -695,3 +695,27 @@ class AlationAPI:
             return response.json()
         except requests.RequestException as e:
             self._handle_request_error(e, "update_catalog_asset_metadata")
+
+    def check_job_status(self, job_id: int) -> dict:
+        """
+        Check the status of a bulk metadata job in Alation by job ID.
+
+        Args:
+            job_id (int): The integer job identifier returned by a previous bulk operation.
+
+        Returns:
+            dict: The API response containing job status and details.
+        """
+        self._with_valid_token()
+        headers = {
+            "Token": self.access_token,
+            "Accept": "application/json",
+        }
+        params = {"id": job_id}
+        url = f"{self.base_url}/api/v1/bulk_metadata/job/"
+        try:
+            response = requests.get(url, headers=headers, params=params, timeout=30)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            self._handle_request_error(e, "check_job_status")

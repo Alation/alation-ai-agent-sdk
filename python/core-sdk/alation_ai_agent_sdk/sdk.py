@@ -6,6 +6,7 @@ from .tools import (
     AlationBulkRetrievalTool,
     GetDataProductTool,
     UpdateCatalogAssetMetadataTool,
+    CheckJobStatusTool,
 )
 
 
@@ -38,6 +39,7 @@ class AlationAIAgentSDK:
         self.bulk_retrieval_tool = AlationBulkRetrievalTool(self.api)
         self.data_product_tool = GetDataProductTool(self.api)
         self.update_catalog_asset_metadata_tool = UpdateCatalogAssetMetadataTool(self.api)
+        self.check_job_status_tool = CheckJobStatusTool(self.api)
 
     def get_context(
         self, question: str, signature: Optional[Dict[str, Any]] = None
@@ -139,10 +141,23 @@ class AlationAIAgentSDK:
         """
         return self.update_catalog_asset_metadata_tool.run(custom_field_values)
 
+    def check_job_status(self, job_id: int) -> dict:
+        """
+        Check the status of a bulk metadata job in Alation by job ID.
+
+        Args:
+            job_id (int): The integer job identifier returned by a previous bulk operation.
+
+        Returns:
+            dict: The API response containing job status and details.
+        """
+        return self.check_job_status_tool.run(job_id)
+
     def get_tools(self):
         return [
             self.context_tool,
             self.bulk_retrieval_tool,
             self.data_product_tool,
             self.update_catalog_asset_metadata_tool,
+            self.check_job_status_tool,
         ]

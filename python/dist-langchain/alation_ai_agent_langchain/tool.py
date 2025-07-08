@@ -89,3 +89,17 @@ def get_update_catalog_asset_metadata_tool(sdk: AlationAIAgentSDK) -> Structured
         func=run_with_args,
         args_schema=None,
     )
+
+
+def get_check_job_status_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
+    check_job_status_tool = sdk.check_job_status_tool
+
+    def run_with_args(job_id: int):
+        return check_job_status_tool.run(job_id)
+
+    return StructuredTool.from_function(
+        name=check_job_status_tool.name,
+        description=check_job_status_tool.description,
+        func=run_with_args,
+        args_schema=None,
+    )

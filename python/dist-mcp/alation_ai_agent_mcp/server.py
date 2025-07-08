@@ -80,6 +80,14 @@ def create_server():
         result = alation_sdk.update_catalog_asset_metadata(custom_field_values)
         return str(result)
 
+    @mcp.tool(
+        name=alation_sdk.check_job_status_tool.name,
+        description=alation_sdk.check_job_status_tool.description,
+    )
+    def check_job_status(job_id: int) -> str:
+        result = alation_sdk.check_job_status(job_id)
+        return str(result)
+
     return mcp
 
 

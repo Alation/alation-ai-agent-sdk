@@ -138,3 +138,27 @@ custom_field_values = [
 result = sdk.update_catalog_asset_metadata(custom_field_values)
 print(result)
 ```
+
+## Check Job Status Tool
+
+The `check_job_status` tool allows you to check the status of a bulk metadata job in Alation by job ID.
+
+### Example Usage
+
+```python
+from alation_ai_agent_sdk import AlationAIAgentSDK
+
+sdk = AlationAIAgentSDK(
+    base_url="https://your-alation-instance.com",
+    auth_method="service_account",
+    auth_params=("your-client-id", "your-client-secret")
+)
+
+job_status = sdk.check_job_status(123)
+print(job_status)
+```
+
+- **Parameters:**
+  - `job_id` (int): The integer job identifier returned by a previous bulk operation.
+- **Returns:**
+  - The job status and details as a JSON object.
