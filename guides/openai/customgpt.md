@@ -286,24 +286,77 @@ paths:
           schema:
             type: string
       responses:
-        200:
+        "200":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AggregatedContext_Response'
           description: Aggregated context from the Alation Catalog for RAG.
-        400:
-          $ref: ./common/responses.yaml#/components/responses/Standard_400_Error_Response
-        401:
-          $ref: ./common/responses.yaml#/components/responses/Standard_401_Error_Response
-        403:
-          $ref: ./common/responses.yaml#/components/responses/Standard_403_Error_Response
-        404:
-          $ref: ./common/responses.yaml#/components/responses/Standard_404_Error_Response
-        429:
-          $ref: ./common/responses.yaml#/components/responses/Standard_429_Error_Response
-        500:
-          $ref: ./common/responses.yaml#/components/responses/Standard_500_Error_Response
+        "400":
+          description: Malformed Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "400XXX"
+                title: "Malformed Request"
+                detail: "The request sent by user is in the wrong format.
+                (Refer the error documentation for specific details of the error)"
+        "401":
+          description: Unauthorized bad/missing token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "401XXX"
+                title: "Unauthorized"
+                detail: "You are unauthorized to access this resource. Please obtain valid credentials.
+                (Refer the error documentation for specific details of the error)"
+        "403":
+          description: Forbidden User cannot edit this resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "403XXX"
+                title: "Forbidden Action"
+                detail: "This is forbidden to access. Make sure you access the right resource.
+                (Refer the error documentation for specific details of the error)"
+        "404":
+          description: The specified resource was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "404XXX"
+                title: "Resource not found"
+                detail: "This is not a valid resource. Please try something else.
+                (Refer the error documentation for specific details of the error)"
+        "429":
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "429XXX"
+                title: "Too many requests"
+                detail: "Rate limit for read/ write requests reached. Expected available in X seconds."
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: "500XXX"
+                title: "Internal Server Error"
+                detail: "Something went wrong, Please try again later.
+                (Refer the error documentation for specific details of the error)"
       summary: Get relevant objects for RAG
       tags:
       - Context
@@ -323,15 +376,30 @@ components:
       in: header
       name: TOKEN
       description: API Key for the user.
-  schemas:
-                
+  schemas:     
     AggregatedContext_SignatureSearchFilterFlagValues:
       type: string
       enum:
         - Endorsement
         - Deprecation
         - Warning
-                  
+    Error:
+      type: object
+      description: Properties of a Error Object
+      properties:
+        status:
+          type: string
+          description: The HTTP status code
+        title:
+          type: string
+          description: The title of the error message
+        details:
+          type: string
+          description: More information about the error
+      required:
+        - status
+        - title
+        - details                  
     AggregatedContext_Response:
       description: >
         The aggregated context from Alation pertaining to the user question.
