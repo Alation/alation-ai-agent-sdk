@@ -120,7 +120,11 @@ class GetDataProductTool:
 
 
 class CheckDataQualityTool:
-  
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
     @staticmethod
     def _get_name() -> str:
         return "get_data_quality"
@@ -174,6 +178,8 @@ class CheckDataQualityTool:
                 output_format=output_format,
                 dq_score_threshold=dq_score_threshold,
             )
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
 
 class AlationBulkRetrievalTool:
     def __init__(self, api: AlationAPI):
