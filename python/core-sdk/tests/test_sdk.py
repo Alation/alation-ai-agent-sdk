@@ -278,3 +278,37 @@ def test_error_handling_in_token_validation(mock_requests_post):
         with pytest.raises(AlationAPIError, match="Mocked error in JWT token validation"):
             sdk.api._is_jwt_token_valid()
         mock_jwt_token_valid.assert_called_once()
+
+
+def test_check_data_quality(monkeypatch):
+    sdk = AlationAIAgentSDK(
+        base_url=MOCK_BASE_URL,
+        auth_method=AUTH_METHOD_USER_ACCOUNT,
+        auth_params=UserAccountAuthParams(user_id=MOCK_USER_ID, refresh_token=MOCK_REFRESH_TOKEN),
+    )
+    mock_response = {"result": "success", "details": {"score": 95}}
+
+    def mock_post(url, headers=None, json=None, timeout=None):
+        class MockResponse:
+            def __init__(self, data, status_code=200):
+                self._data = data
+                self.status_code = status_code
+                self.text = str(data)
+
+            def raise_for_status(self):
+                pass
+
+            def json(self):
+                return self._data
+
+        if url.endswith("/integration/v1/createAPIAccessToken/"):
+            # Simulate a valid token response
+            return MockResponse({"api_access_token": "mock-token"})
+        elif url.endswith("/integration/v1/dq/check_sql_query_tables/"):
+            return MockResponse(mock_response)
+        else:
+            return MockResponse({}, status_code=404)
+
+    monkeypatch.setattr("requests.post", mock_post)
+    result = sdk.check_data_quality(sql_query="SELECT * FROM test_table;", ds_id=1)
+    assert result == mock_response

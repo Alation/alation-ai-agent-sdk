@@ -1,11 +1,12 @@
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
 
 from .api import (
     AlationAPI,
     AlationAPIError,
     AuthParams,
 )
-from .tools import AlationContextTool, AlationBulkRetrievalTool, GetDataProductTool
+
+from .tools import AlationContextTool, AlationBulkRetrievalTool,CheckDataQualityTool, GetDataProductTool
 
 
 class AlationAIAgentSDK:
@@ -36,6 +37,7 @@ class AlationAIAgentSDK:
         self.context_tool = AlationContextTool(self.api)
         self.bulk_retrieval_tool = AlationBulkRetrievalTool(self.api)
         self.data_product_tool = GetDataProductTool(self.api)
+        self.check_data_quality_tool = CheckDataQualityTool(self.api)
 
     def get_context(
         self, question: str, signature: Optional[Dict[str, Any]] = None
@@ -99,5 +101,38 @@ class AlationAIAgentSDK:
         except AlationAPIError as e:
             return {"error": e.to_dict()}
 
+    def check_data_quality(
+        self,
+        table_ids: Optional[list] = None,
+        sql_query: Optional[str] = None,
+        db_uri: Optional[str] = None,
+        ds_id: Optional[int] = None,
+        bypassed_dq_sources: Optional[list] = None,
+        default_schema_name: Optional[str] = None,
+        output_format: Optional[str] = None,
+        dq_score_threshold: Optional[int] = None,
+    ) -> Union[Dict[str, Any], str]:
+        """
+        Check SQL Query or tables for quality using Alation's Data Quality API.
+        Returns dict (JSON) or str (YAML Markdown) depending on output_format.
+        """
+        if not table_ids and not sql_query:
+            raise ValueError("At least one of 'table_ids' or 'sql_query' must be provided.")
+
+        try:
+            return self.check_data_quality_tool.run(
+                table_ids=table_ids,
+                sql_query=sql_query,
+                db_uri=db_uri,
+                ds_id=ds_id,
+                bypassed_dq_sources=bypassed_dq_sources,
+                default_schema_name=default_schema_name,
+                output_format=output_format,
+                dq_score_threshold=dq_score_threshold,
+            )
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
     def get_tools(self):
-        return [self.context_tool, self.bulk_retrieval_tool, self.data_product_tool]
+        return [self.context_tool, self.data_product_tool, self.check_data_quality_tool,self.bulk_retrieval_tool]
+

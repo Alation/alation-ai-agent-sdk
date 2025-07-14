@@ -22,11 +22,18 @@ def mock_sdk_with_context_tool():
     mock_sdk.data_product_tool.name = "AlationDataProductsToolFromSDK"
     mock_sdk.data_product_tool.description = "Provides data products from Alation. Sourced from SDK's data_product_tool."
     mock_sdk.data_product_tool.run = MagicMock(return_value="Expected data products via SDK run")
+    # Add mock for check_data_quality_tool to support new toolkit
+    mock_sdk.check_data_quality_tool = MagicMock()
+    mock_sdk.check_data_quality_tool.name = "AlationCheckDataQualityToolFromSDK"
+    mock_sdk.check_data_quality_tool.description = "Checks data quality from Alation. Sourced from SDK's check_data_quality_tool."
+    mock_sdk.check_data_quality_tool.run = MagicMock(return_value="Expected data quality via SDK run")
+
     # Add mock for AlationBulkRetrievalTool
     mock_sdk.bulk_retrieval_tool = MagicMock()
     mock_sdk.bulk_retrieval_tool.name = "AlationBulkRetrievalToolFromSDK"
     mock_sdk.bulk_retrieval_tool.description = "Provides bulk retrieval from Alation. Sourced from SDK's bulk_retrieval."
     mock_sdk.bulk_retrieval_tool.run = MagicMock(return_value="Expected bulk retrieval data via SDK run")
+
     # Patch .run for StructuredTool.func compatibility
     def run_with_signature(*args, **kwargs):
         return mock_sdk.context_tool.run(*args, **kwargs)
@@ -76,8 +83,8 @@ def test_alation_tool_run_invokes_sdk_context_tool_no_signature(mock_sdk_with_co
     is called correctly when no signature is provided.
     """
     tools_list = get_langchain_tools(mock_sdk_with_context_tool)
-    assert len(tools_list) > 0, "Tool list should not be empty."
-    alation_tool = tools_list[0]
+    # Find the context tool by name
+    alation_tool = next(tool for tool in tools_list if tool.name == "AlationContextToolFromSDK")
 
     test_question = "What are the active data sources?"
     expected_result = "Expected context data via SDK run" # From mock_sdk_with_context_tool setup
@@ -95,8 +102,8 @@ def test_alation_tool_run_invokes_sdk_context_tool_with_signature(mock_sdk_with_
     Tests that the Alation tool's function is called correctly when a signature is provided.
     """
     tools_list = get_langchain_tools(mock_sdk_with_context_tool)
-    assert len(tools_list) > 0, "Tool list should not be empty."
-    alation_tool = tools_list[0]
+    # Find the context tool by name
+    alation_tool = next(tool for tool in tools_list if tool.name == "AlationContextToolFromSDK")
 
     test_question = "Describe tables related to 'customers'."
     test_signature = {"table": {"fields_required": ["name", "description", "steward"]}}
@@ -116,8 +123,8 @@ def test_alation_tool_func_can_be_called_multiple_times(mock_sdk_with_context_to
     This also implicitly tests the 'run_with_signature' wrapper logic within the tool.
     """
     tools_list = get_langchain_tools(mock_sdk_with_context_tool)
-    assert len(tools_list) > 0, "Tool list should not be empty."
-    alation_tool_function = tools_list[0].func # Get the callable function from the tool
+    # Find the context tool by name
+    alation_tool_function = next(tool for tool in tools_list if tool.name == "AlationContextToolFromSDK").func # Get the callable function from the tool
 
     question1 = "First question?"
     signature1 = {"detail_level": "summary"}

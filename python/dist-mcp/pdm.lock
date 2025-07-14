@@ -7,6 +7,7 @@ strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
 content_hash = "sha256:f96105b623dd96599b11b783feeae9ec625f2d9808f21a4f6d0273eb5710cdb6"
 
+
 [[metadata.targets]]
 requires_python = ">=3.10"
 
@@ -22,6 +23,7 @@ dependencies = [
 files = [
     {file = "alation_ai_agent_sdk-0.4.0-py3-none-any.whl", hash = "sha256:2adf27bd1c34a6984cbf794bb3b18b4a7bf5e97dc7ed21c739a281acbfb0ed1d"},
     {file = "alation_ai_agent_sdk-0.4.0.tar.gz", hash = "sha256:b018f70ada4b3f5b2798197c19b6b434d348d712ce326e374c2f873b1f1d376c"},
+
 ]
 
 [[package]]
