@@ -1,11 +1,13 @@
 import os
+import argparse
+import uvicorn
 from typing import Dict, Any, Optional
 
 from mcp.server.fastmcp import FastMCP
 from alation_ai_agent_sdk import AlationAIAgentSDK, UserAccountAuthParams, ServiceAccountAuthParams
 
 
-def create_server():
+def create_server(json_response: bool = False):
     # Load Alation credentials from environment variables
     base_url = os.getenv("ALATION_BASE_URL")
     auth_method = os.getenv("ALATION_AUTH_METHOD")
@@ -43,7 +45,9 @@ def create_server():
         )
 
     # Initialize FastMCP server
-    mcp = FastMCP(name="Alation MCP Server", version="0.4.0")
+    mcp = FastMCP(
+        name="Alation MCP Server", version="0.4.0", json_response=json_response, http_path="/mcp"
+    )
 
     # Initialize Alation SDK
     alation_sdk = AlationAIAgentSDK(base_url, auth_method, auth_params)
@@ -53,7 +57,10 @@ def create_server():
         result = alation_sdk.get_context(question, signature)
         return str(result)
 
-    @mcp.tool(name=alation_sdk.bulk_retrieval_tool.name, description=alation_sdk.bulk_retrieval_tool.description)
+    @mcp.tool(
+        name=alation_sdk.bulk_retrieval_tool.name,
+        description=alation_sdk.bulk_retrieval_tool.description,
+    )
     def alation_bulk_retrieval(signature: Dict[str, Any]) -> str:
         result = alation_sdk.get_bulk_objects(signature)
         return str(result)
@@ -76,8 +83,21 @@ mcp = None
 def run_server():
     """Entry point for running the MCP server"""
     global mcp
-    mcp = create_server()
-    mcp.run()
+    parser = argparse.ArgumentParser(description="Run MCP server (STDIO or HTTP)")
+    parser.add_argument(
+        "--http", action="store_true", help="Run as HTTP server (streamable HTTP mode)"
+    )
+    parser.add_argument(
+        "--port", type=int, default=8123, help="Port for HTTP server (default: 8123)"
+    )
+    args = parser.parse_args()
+
+    if args.http:
+        mcp = create_server(json_response=True)
+        uvicorn.run(mcp.streamable_http_app, host="localhost", port=args.port)
+    else:
+        mcp = create_server()
+        mcp.run()
 
 
 if __name__ == "__main__":
