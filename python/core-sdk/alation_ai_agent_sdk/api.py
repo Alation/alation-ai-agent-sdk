@@ -1,10 +1,27 @@
 import logging
 import urllib.parse
 import json
-from typing import Dict, Any, Optional, Union, NamedTuple
+from typing import Any, Dict, List, Optional, Union
 from http import HTTPStatus
+from alation_ai_agent_sdk.lineage_filtering import filter_graph
+from alation_ai_agent_sdk.lineage_filtering import filter_graph
 import requests
 import requests.exceptions
+
+from alation_ai_agent_sdk.lineage import (
+    LineageBatchSizeType,
+    LineageDesignTimeType,
+    LineageGraphProcessingOptions,
+    LineageGraphProcessingType,
+    LineageKeyTypeType,
+    LineageOTypeFilterType,
+    LineagePagination,
+    LineageRootNode,
+    LineageAllowedSchemaIdsType,
+    LineageTimestampType,
+    LineageDirectionType,
+)
+
 
 AUTH_METHOD_USER_ACCOUNT = "user_account"
 AUTH_METHOD_SERVICE_ACCOUNT = "service_account"
@@ -144,6 +161,8 @@ class ServiceAccountAuthParams(NamedTuple):
 
 
 AuthParams = Union[UserAccountAuthParams, ServiceAccountAuthParams]
+
+
 
 
 class AlationAPI:
@@ -622,3 +641,110 @@ class AlationAPI:
             raise ValueError(
                 "You must provide either a product_id or a query to search for data products."
             )
+
+    def get_bulk_lineage(
+        self,
+        root_nodes: List[LineageRootNode],
+        direction: LineageDirectionType,
+        limit: int,
+        batch_size: LineageBatchSizeType,
+        processing_mode: LineageGraphProcessingType,
+        show_temporal_objects: bool,
+        design_time: LineageDesignTimeType,
+        max_depth: int,
+        allowed_schema_ids: LineageAllowedSchemaIdsType,
+        allowed_otypes: LineageOTypeFilterType,
+        time_from: LineageTimestampType,
+        time_to: LineageTimestampType,
+        key_type: LineageKeyTypeType,
+        pagination: Optional[LineagePagination] = None,
+    ) -> dict:
+        """
+        Fetch lineage information from Alation's catalog for a given object / root node.
+
+        Args:
+            root_node (LineageRootNode): The root node to start lineage from.
+            direction (LineageDirectionType): The direction of lineage to fetch, either "upstream" or "downstream".
+            limit (int, optional): The maximum number of nodes to return. Defaults to 1000.
+            batch_size (int, optional): The size of each batch for chunked processing. Defaults to 1000.
+            pagination (LineagePagination, optional): Pagination parameters only used with chunked processing.
+            processing_mode (LineageGraphProcessingType, optional): The processing mode for lineage graph. Strongly recommended to use 'complete' for full lineage graphs.
+            show_temporal_objects (bool, optional): Whether to include temporary objects in the lineage. Defaults to False.
+            design_time (LineageDesignTimeType, optional): The design time option to filter lineage. Defaults to LineageDesignTimeOptions.EITHER_DESIGN_OR_RUN_TIME.
+            max_depth (int, optional): The maximum depth to traverse in the lineage graph. Defaults to 10.
+            allowed_schema_ids (LineageAllowedSchemaIdsType, optional): A list of allowed schema IDs to filter lineage nodes. Defaults to None.
+            allowed_otypes (LineageOTypeFilterType, optional): A list of allowed object types to filter lineage nodes. Defaults to None.
+            time_from (LineageTimestampType, optional): The start time for temporal lineage filtering. Defaults to None.
+            time_to (LineageTimestampType, optional): The end time for temporal lineage filtering. Defaults to None.
+        
+        Returns:
+            Dict[str, Dict[str, any]]]: A dictionary containing the lineage `graph` and `pagination` information.
+
+        Raises:
+            ValueError: When argument combinations are invalid, such as:
+                pagination in complete processing mode,
+                allowed_otypes in chunked processing mode
+            AlationAPIError: On network, API, or response errors.
+        """
+        self._with_valid_token()
+
+        headers = {
+            "Token": self.access_token,
+            "Accept": "application/json",
+        }
+
+        # Filter out any incompatible options
+        if allowed_otypes is not None and processing_mode != LineageGraphProcessingOptions.COMPLETE:
+            raise ValueError("allowed_otypes is only supported in 'complete' processing mode.")
+        if pagination is not None and processing_mode == LineageGraphProcessingOptions.COMPLETE:
+            raise ValueError("Pagination is only supported in 'chunked' processing mode.")
+
+        lineage_request_dict = {
+            "key_type": key_type,
+            "root_nodes": root_nodes,
+            "direction": direction,
+            "limit": limit,
+            "filters": {
+                "depth": max_depth,
+                "time_filter": {
+                    "from": time_from,
+                    "to": time_to,
+                },
+                "schema_filter": allowed_schema_ids, # TODO: double check these are allowed vs disallowed
+                "temp_filter": show_temporal_objects,
+                "design_time": design_time,
+            },
+            "request_id": pagination.get("request_id", "") if pagination else "",
+            "cursor": pagination.get("cursor", 0) if pagination else 0,
+            "batch_size": limit if processing_mode == LineageGraphProcessingOptions.COMPLETE else pagination.get("batch_size", limit) if pagination else batch_size,
+        }
+        url = f"{self.base_url}/integration/v2/bulk_lineage/"
+        try:
+            response = requests.post(
+                url, headers=headers, json=lineage_request_dict, timeout=60
+            )
+            response.raise_for_status()
+            response_data = response.json()
+            if "graph" in response_data and processing_mode == LineageGraphProcessingOptions.COMPLETE:
+                if allowed_otypes is not None:
+                    allowed_otypes_set = set(allowed_otypes)
+                    response_data["graph"] = filter_graph(
+                        response_data["graph"], allowed_otypes_set
+                    )
+            request_id = response_data.get("request_id", "")
+            # Deliberately Pascal cased to match implementation. We'll change it to be consistent for anything
+            # invoking the tool.
+            pagination = response_data.get("Pagination", None)
+            if pagination is not None:
+                new_pagination = {
+                    "request_id": request_id,
+                    "cursor": pagination.get("cursor", 0),
+                    "batch_size": pagination.get("batch_size", batch_size),
+                    "has_more": pagination.get("has_more", False),
+                }
+                response_data["pagination"] = new_pagination
+                del response_data["request_id"]
+            response_data["direction"] = direction
+            return response_data
+        except requests.RequestException as e:
+            self._handle_request_error(e, f"getting lineage for: {json.dumps(lineage_request_dict)}")

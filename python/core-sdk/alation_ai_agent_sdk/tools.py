@@ -1,7 +1,19 @@
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
-from alation_ai_agent_sdk.api import AlationAPI, AlationAPIError
-
+from alation_ai_agent_sdk.api import AlationAPI, AlationAPIError 
+from alation_ai_agent_sdk.lineage import (
+    LineageBatchSizeType,
+    LineageDesignTimeType,
+    LineageAllowedSchemaIdsType,
+    LineageTimestampType,
+    LineageDirectionType,
+    LineageGraphProcessingType,
+    LineagePagination,
+    LineageRootNode,
+    LineageOTypeFilterType,
+    LineageToolResponse,
+    make_lineage_kwargs
+)
 
 class AlationContextTool:
     def __init__(self, api: AlationAPI):
@@ -72,7 +84,7 @@ class AlationContextTool:
             return {"error": e.to_dict()}
 
 
-class GetDataProductTool:
+class AlationGetDataProductTool:
     def __init__(self, api: AlationAPI):
         self.api = api
         self.name = self._get_name()
@@ -177,5 +189,95 @@ class AlationBulkRetrievalTool:
 
         try:
             return self.api.get_bulk_objects_from_catalog(signature)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
+
+class AlationLineageTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "get_lineage"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """Retrieves contextual information from Alation's data catalog about the lineage of an object. 
+
+    This tool returns a directed graph representation of assets relative to the root object, the direction of the relationship (upstream or downstream), and pagination information.
+
+    ALWAYS include one `root_node` and a `direction`.
+
+    IMPORTANT:
+        - Use optional parameters sparingly. Most of the defaults are suitable for common use cases. Use them when directed by the user or when the user's question warrants their specific inclusion.
+
+    Parameters:
+        - `root_node`: The root node for the lineage query. Typically an object key consisting of the object ID and type. e.g. `{"id": 123, "type": "table"}`
+        - `direction`: The direction of the lineage (upstream or downstream). Upstream objects can be related via a process or transformation or may represent the original source of the data. Downstream objects may be derived from the current object in some way.
+        - `limit`: The maximum number of nodes to return. `limit` and `batch_size` should reuse the same value to avoid multiple round trips and the added assembly of several subgraphs unless in chunked processing mode.
+        - `batch_size`: The number of nodes to process in each batch.
+        - `pagination`: Pagination information for the query. This should originate from an initial lineage response. Never generate a `pagination` parameter without having received one. It is okay to reuse one from the previous response when in 'chunked' processing mode.
+        - `processing_mode`: The processing mode for the query (complete or chunked). Only use the chunked processing mode for extremely large graphs (10,000+ nodes) and as a last resort.
+        - `show_temporal_objects`: Whether to show temporal objects. These tend to clutter graphs more than help. But can be included to show a more complete picture of the lineage.
+        - `design_time`: The design time option. Use 3 for nearly all cases. It includes objects created at either run time or design time. Use 1 for objects created during design time and use 2 for objects only created during run time.
+        - `max_depth`: The maximum depth for the query. Default is 10.
+        - `allowed_schema_ids`: The allowed schema IDs like: [1, 2, 3].
+        - `allowed_otypes`: The allowed object types. Pass values as strings like: ["table"].
+        - `time_from`: The start time (timestamp) for the query.
+        - `time_to`: The end time (timestamp) for the query.
+
+        Returns:
+        - A dictionary containing the following keys: `graph`, `direction`, and `pagination`.
+
+        USAGE EXAMPLES:
+        - Find all upstream objects for a given table: `get_lineage(root_node={"id": 123, "type": "table"},direction="upstream")`
+        - Find all downstream objects for a given table: `get_lineage(root_node={"id": 123, "type": "table"},direction="downstream")`
+        - Find all upstream table objects for a given table: `get_lineage(root_node={"id": 123, "type": "table"},direction="upstream",allowed_otypes=["table"])`
+        - Find all downstream column objects for a given column: `get_lineage(root_node={"id": 123, "type": "attribute"},direction="downstream",allowed_otypes=["attribute"])`
+        - Find all upstream objects for a given table including temporal objects: `get_lineage(root_node={"id": 123, "type": "table"},direction="upstream",show_temporal_objects=True)`
+        """
+
+    def run(
+        self,
+        root_node: LineageRootNode,
+        direction: LineageDirectionType,
+        limit: Optional[int] = 1000,
+        batch_size: Optional[LineageBatchSizeType] = 1000,
+        pagination: Optional[LineagePagination] = None,
+        processing_mode: Optional[LineageGraphProcessingType] = None,
+        show_temporal_objects: Optional[bool] = False,
+        design_time: Optional[LineageDesignTimeType] = None,
+        max_depth: Optional[int] = 10,
+        allowed_schema_ids: Optional[LineageAllowedSchemaIdsType] = None,
+        allowed_otypes: Optional[LineageOTypeFilterType] = None,
+        time_from: Optional[LineageTimestampType] = None,
+        time_to: Optional[LineageTimestampType] = None,
+    ) -> LineageToolResponse:
+
+        lineage_kwargs = make_lineage_kwargs(
+            root_node=root_node,
+            processing_mode=processing_mode,
+            show_temporal_objects=show_temporal_objects,
+            design_time=design_time,
+            max_depth=max_depth,
+            allowed_schema_ids=allowed_schema_ids,
+            allowed_otypes=allowed_otypes,
+            time_from=time_from,
+            time_to=time_to
+        )
+
+        try:
+            return self.api.get_bulk_lineage(
+                root_nodes=[root_node],
+                direction=direction,
+                limit=limit,
+                batch_size=batch_size,
+                pagination=pagination,
+                max_depth=max_depth,
+                **lineage_kwargs
+            )
         except AlationAPIError as e:
             return {"error": e.to_dict()}
