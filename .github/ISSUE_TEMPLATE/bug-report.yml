@@ -1,0 +1,122 @@
+name: Bug Report
+description: Report a bug or unexpected behavior in the alation‑ai‑agent‑sdk
+title: "[Bug] <short summary>"
+labels: [bug]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please fill out all required fields. For more help, check the [feature flags guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/README.md) or the [authentication guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md).
+
+  - type: input
+    id: alation-version
+    attributes:
+      label: Alation Version
+      description: The version of your Alation instance (e.g. 2025.1.2).
+      placeholder: "2025.1.2"
+    validations:
+      required: true
+
+  - type: input
+    id: alation-host
+    attributes:
+      label: Alation Host
+      description: The hostname part from your instance URL (e.g. `aaa` if your URL is `https://aaa.alationcloud.com`).
+      placeholder: "aaa"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: instance-type
+    attributes:
+      label: Instance Type
+      description: Is this a cloud or on‑prem deployment?
+      options:
+        - cloud
+        - onprem
+    validations:
+      required: true
+
+  - type: dropdown
+    id: context-tool-ff
+    attributes:
+      label: context_tool feature flag enabled?
+      description: Check feature flags section in SDK README.
+      options:
+        - yes
+        - no
+        - "don't know"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: data-products-ff
+    attributes:
+      label: data_products feature flag enabled?
+      description: Check feature flags section in SDK README.
+      options:
+        - yes
+        - no
+        - "don't know"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: auth-type
+    attributes:
+      label: Auth method used
+      description: Options in [guides/authentication.md](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md).
+      options:
+        - service_account
+        - user_account
+        - "don't know"
+    validations:
+      required: true
+
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Bug Description
+      description: What happened and what you expected.
+      placeholder: A clear summary.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce (optional)
+      description: Step-by-step to recreate.
+      placeholder: |
+        1. Do this  
+        2. Run this  
+        3. See this error
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs (optional)
+      description: Paste relevant logs (```) format.
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots (optional)
+      description: Upload images to show the issue.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Acknowledgement
+      options:
+        - label: I checked docs and searched existing issues.
+          required: true
