@@ -38,8 +38,8 @@ body:
     id: alation-host
     attributes:
       label: Alation Host
-      description: From your instance URL (e.g. `aaa` if your URL is `https://aaa.alationcloud.com`)
-      placeholder: "aaa"
+      description: From your instance URL (e.g. `aaa` if your URL is `https://mycompany.alationcloud.com`)
+      placeholder: "mycompany"
     validations:
       required: true
 
@@ -49,8 +49,8 @@ body:
       label: Is the `context_tool` feature flag enabled?
       description: Refer to the [Feature Flags section](https://github.com/Alation/alation-ai-agent-sdk#feature-flags)
       options:
-        - yes
-        - no
+        - "yes"
+        - "no"
         - "don't know"
     validations:
       required: true
@@ -61,8 +61,8 @@ body:
       label: Is the `data_products` feature flag enabled?
       description: Refer to the [Feature Flags section](https://github.com/Alation/alation-ai-agent-sdk#feature-flags)
       options:
-        - yes
-        - no
+        - "yes"
+        - "no"
         - "don't know"
     validations:
       required: true
@@ -73,8 +73,8 @@ body:
       label: Auth method used
       description: Refer to the [Authentication Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md)
       options:
-        - service_account
-        - user_account
+        - "service_account"
+        - "user_account"
         - "don't know"
     validations:
       required: true
