@@ -37,9 +37,9 @@ body:
   - type: input
     id: alation-host
     attributes:
-      label: Alation Host
-      description: From your instance URL (e.g. `aaa` if your URL is `https://mycompany.alationcloud.com`)
-      placeholder: "mycompany"
+      label: Alation Host URL
+      description: Place the complete Alation URL here (example URL is `https://mycompany.alationcloud.com`)
+      placeholder: "https://mycompany.alationcloud.com"
     validations:
       required: true
 
