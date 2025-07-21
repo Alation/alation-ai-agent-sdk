@@ -5,6 +5,7 @@ from typing import Dict, Any, Optional
 
 from mcp.server.fastmcp import FastMCP
 from alation_ai_agent_sdk import AlationAIAgentSDK, UserAccountAuthParams, ServiceAccountAuthParams
+from alation_ai_agent_sdk.api import CatalogAssetMetadataPayloadItem
 
 
 def create_server(json_response: bool = False):
@@ -71,6 +72,24 @@ def create_server(json_response: bool = False):
     )
     def get_data_products(product_id: Optional[str] = None, query: Optional[str] = None) -> str:
         result = alation_sdk.get_data_products(product_id, query)
+        return str(result)
+
+    @mcp.tool(
+        name=alation_sdk.update_catalog_asset_metadata_tool.name,
+        description=alation_sdk.update_catalog_asset_metadata_tool.description,
+    )
+    def update_catalog_asset_metadata(
+        custom_field_values: list[CatalogAssetMetadataPayloadItem],
+    ) -> str:
+        result = alation_sdk.update_catalog_asset_metadata(custom_field_values)
+        return str(result)
+
+    @mcp.tool(
+        name=alation_sdk.check_job_status_tool.name,
+        description=alation_sdk.check_job_status_tool.description,
+    )
+    def check_job_status(job_id: int) -> str:
+        result = alation_sdk.check_job_status(job_id)
         return str(result)
 
     return mcp

@@ -1,11 +1,13 @@
 from typing import Dict, Any, Optional
 
-from .api import (
-    AlationAPI,
-    AlationAPIError,
-    AuthParams,
+from .api import AlationAPI, AlationAPIError, AuthParams, CatalogAssetMetadataPayloadItem
+from .tools import (
+    AlationContextTool,
+    AlationBulkRetrievalTool,
+    GetDataProductTool,
+    UpdateCatalogAssetMetadataTool,
+    CheckJobStatusTool,
 )
-from .tools import AlationContextTool, AlationBulkRetrievalTool, GetDataProductTool
 
 
 class AlationAIAgentSDK:
@@ -36,6 +38,8 @@ class AlationAIAgentSDK:
         self.context_tool = AlationContextTool(self.api)
         self.bulk_retrieval_tool = AlationBulkRetrievalTool(self.api)
         self.data_product_tool = GetDataProductTool(self.api)
+        self.update_catalog_asset_metadata_tool = UpdateCatalogAssetMetadataTool(self.api)
+        self.check_job_status_tool = CheckJobStatusTool(self.api)
 
     def get_context(
         self, question: str, signature: Optional[Dict[str, Any]] = None
@@ -78,7 +82,9 @@ class AlationAIAgentSDK:
         except AlationAPIError as e:
             return {"error": e.to_dict()}
 
-    def get_data_products(self, product_id: Optional[str] = None, query: Optional[str] = None) -> Dict[str, Any]:
+    def get_data_products(
+        self, product_id: Optional[str] = None, query: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Fetch data products from Alation's catalog for a given product_id or user query.
 
@@ -99,5 +105,59 @@ class AlationAIAgentSDK:
         except AlationAPIError as e:
             return {"error": e.to_dict()}
 
+    def update_catalog_asset_metadata(
+        self, custom_field_values: list[CatalogAssetMetadataPayloadItem]
+    ) -> dict:
+        """
+        Updates metadata for one or more Alation catalog assets.
+
+        Args:
+            custom_field_values (list[CatalogAssetMetadataPayloadItem]): List of payload items for updating catalog asset metadata.
+                Each item must have the following structure:
+
+                CatalogAssetMetadataPayloadItem = TypedDict('CatalogAssetMetadataPayloadItem', {
+                    'otype': Literal['glossary_v3', 'glossary_term'],  # Only these otypes are supported
+                    'oid': int,  # The object ID of the asset to update
+                    'field_id': Literal[3, 4],  # 3 for TEXT, 4 for RICH_TEXT
+                    'value': Any,  # The value to set for the field. Type is validated by field_id -> type mapping.
+                })
+                Example:
+                    {
+                        "oid": 219,
+                        "otype": "glossary_term",
+                        "field_id": 3,
+                        "value": "New Title"
+                    }
+
+        Returns:
+            dict: One of the following:
+                - On success: {"job_id": <int>} (job is queued, use get_job_status to track progress)
+                - On error: {
+                      "title": "Invalid Payload",
+                      "detail": "Please check the API documentation for more details on the spec.",
+                      "errors": [ ... ],
+                      "code": "400000"
+                  }
+        """
+        return self.update_catalog_asset_metadata_tool.run(custom_field_values)
+
+    def check_job_status(self, job_id: int) -> dict:
+        """
+        Check the status of a bulk metadata job in Alation by job ID.
+
+        Args:
+            job_id (int): The integer job identifier returned by a previous bulk operation.
+
+        Returns:
+            dict: The API response containing job status and details.
+        """
+        return self.check_job_status_tool.run(job_id)
+
     def get_tools(self):
-        return [self.context_tool, self.bulk_retrieval_tool, self.data_product_tool]
+        return [
+            self.context_tool,
+            self.bulk_retrieval_tool,
+            self.data_product_tool,
+            self.update_catalog_asset_metadata_tool,
+            self.check_job_status_tool,
+        ]
