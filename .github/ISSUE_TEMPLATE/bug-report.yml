@@ -1,5 +1,5 @@
 name: Bug Report
-description: Report a bug or unexpected behavior in the alation‑ai‑agent‑sdk
+description: Report a bug or unexpected behavior in the alation-ai-agent-sdk
 title: "[Bug] <short summary>"
 labels: [bug]
 assignees: []
@@ -8,13 +8,28 @@ body:
   - type: markdown
     attributes:
       value: |
-        Please fill out all required fields. For more help, check the [feature flags guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/README.md) or the [authentication guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md).
+        ⚠️ **Before You Submit a Bug Report**
+
+        - This SDK is **only supported for Alation Cloud instances**. If you are using **on-prem**, features like `context_tool` or `data_products` are not be supported.
+        - Please verify the documentation before filing a bug:
+          - [Feature Flags](https://github.com/Alation/alation-ai-agent-sdk#feature-flags)
+          - [Authentication Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md)
+
+        ---
+
+  - type: checkboxes
+    id: cloud-confirm
+    attributes:
+      label: Confirm Compatibility
+      options:
+        - label: I understand this SDK is only supported on Alation Cloud and not on-prem.
+          required: true
 
   - type: input
     id: alation-version
     attributes:
       label: Alation Version
-      description: The version of your Alation instance (e.g. 2025.1.2).
+      description: The version of your Alation instance (e.g. 2025.1.2)
       placeholder: "2025.1.2"
     validations:
       required: true
@@ -23,27 +38,16 @@ body:
     id: alation-host
     attributes:
       label: Alation Host
-      description: The hostname part from your instance URL (e.g. `aaa` if your URL is `https://aaa.alationcloud.com`).
+      description: From your instance URL (e.g. `aaa` if your URL is `https://aaa.alationcloud.com`)
       placeholder: "aaa"
-    validations:
-      required: true
-
-  - type: dropdown
-    id: instance-type
-    attributes:
-      label: Instance Type
-      description: Is this a cloud or on‑prem deployment?
-      options:
-        - cloud
-        - onprem
     validations:
       required: true
 
   - type: dropdown
     id: context-tool-ff
     attributes:
-      label: context_tool feature flag enabled?
-      description: Check feature flags section in SDK README.
+      label: Is the `context_tool` feature flag enabled?
+      description: Refer to the [Feature Flags section](https://github.com/Alation/alation-ai-agent-sdk#feature-flags)
       options:
         - yes
         - no
@@ -54,8 +58,8 @@ body:
   - type: dropdown
     id: data-products-ff
     attributes:
-      label: data_products feature flag enabled?
-      description: Check feature flags section in SDK README.
+      label: Is the `data_products` feature flag enabled?
+      description: Refer to the [Feature Flags section](https://github.com/Alation/alation-ai-agent-sdk#feature-flags)
       options:
         - yes
         - no
@@ -67,7 +71,7 @@ body:
     id: auth-type
     attributes:
       label: Auth method used
-      description: Options in [guides/authentication.md](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md).
+      description: Refer to the [Authentication Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md)
       options:
         - service_account
         - user_account
@@ -79,8 +83,8 @@ body:
     id: bug-description
     attributes:
       label: Bug Description
-      description: What happened and what you expected.
-      placeholder: A clear summary.
+      description: What happened and what you expected
+      placeholder: A clear summary of the issue
     validations:
       required: true
 
@@ -88,7 +92,7 @@ body:
     id: steps-to-reproduce
     attributes:
       label: Steps to Reproduce (optional)
-      description: Step-by-step to recreate.
+      description: Step-by-step to recreate the bug
       placeholder: |
         1. Do this  
         2. Run this  
@@ -100,7 +104,7 @@ body:
     id: logs
     attributes:
       label: Logs (optional)
-      description: Paste relevant logs using code block format (enclosed in triple backticks ```).
+      description: Paste relevant logs (format with triple backticks)
       render: shell
     validations:
       required: false
@@ -109,7 +113,7 @@ body:
     id: screenshots
     attributes:
       label: Screenshots (optional)
-      description: Upload images to show the issue.
+      description: Upload images that show the issue
     validations:
       required: false
 
@@ -118,5 +122,5 @@ body:
     attributes:
       label: Acknowledgement
       options:
-        - label: I checked docs and searched existing issues.
+        - label: I checked the documentation and existing issues before submitting.
           required: true
