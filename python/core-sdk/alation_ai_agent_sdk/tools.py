@@ -258,3 +258,50 @@ class CheckJobStatusTool:
 
     def run(self, job_id: int) -> dict:
         return self.api.check_job_status(job_id)
+
+
+class CreateSuggestChangeWorkflowRequestTool:
+    def __init__(self, api):
+        self.api = api
+        self.name = "create_suggest_change_workflow_request"
+        self.description = """
+        Create a suggest change workflow request in Alation.
+
+        Use this tool to:
+        - Initiate a workflow execution (change request) for catalog objects, such as updating column descriptions, using the Alation workflow API.
+
+        Parameters:
+        - payload (dict): The request payload for the workflow execution. Must follow the OpenAPI schema for ChangeRequest_Create_WorkflowExecution_Payload.
+
+        Example usage:
+            # Update a column (attribute) description (field_id=4)
+            payload = {
+                "context": {
+                    "otype": "attribute",
+                    "field_id": 4,
+                    "oid": 1234
+                },
+                "input": { "change": { "proposed": "this is the new description" } }
+            }
+
+        Returns:
+        - dict: The API response containing workflow execution details.
+
+        Response Behavior:
+        - Success: Workflow execution details as a JSON object.
+        - Error: Standard error response from Alation API.
+
+        See the Alation OpenAPI spec for more details on required and optional fields.
+        """
+
+    def run(self, payload: dict):
+        """
+        Create a suggest change workflow request in Alation.
+
+        Args:
+            payload (dict): The request payload for the workflow execution.
+
+        Returns:
+            dict: The API response containing workflow execution details.
+        """
+        return self.api.create_suggest_change_workflow_request(payload)

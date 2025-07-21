@@ -1,6 +1,5 @@
 from typing import Any, Optional
 from alation_ai_agent_sdk import AlationAIAgentSDK
-from alation_ai_agent_sdk.api import CatalogAssetMetadataPayloadItem
 from langchain.tools import StructuredTool
 
 
@@ -107,6 +106,31 @@ def get_check_job_status_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     return StructuredTool.from_function(
         name=check_job_status_tool.name,
         description=check_job_status_tool.description,
+        func=run_with_args,
+        args_schema=None,
+    )
+
+
+def get_create_suggest_change_workflow_request_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
+    tool = sdk.create_suggest_change_workflow_request_tool
+
+    def run_with_args(payload: dict):
+        """
+        Example payload for updating column (attribute) description (field_id=4):
+        payload = {
+            "context": {
+                "otype": "attribute",
+                "field_id": 4,
+                "oid": 1234
+            },
+            "input": { "change": { "proposed": "this is the new description" } }
+        }
+        """
+        return tool.run(payload)
+
+    return StructuredTool.from_function(
+        name=tool.name,
+        description=tool.description,
         func=run_with_args,
         args_schema=None,
     )

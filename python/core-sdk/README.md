@@ -1,3 +1,20 @@
+# Create a suggest change workflow request
+
+You can create a suggest change workflow request in Alation using the following method:
+
+```python
+# Example payload for updating column (attribute) description (field_id=4)
+payload = {
+    "context": {
+        "otype": "attribute",
+        "field_id": 4,
+        "oid": 1234
+    },
+    "input": { "change": { "proposed": "this is the new description" } }
+}
+response = sdk_user_account.create_suggest_change_workflow_request(payload)
+print(response)
+```
 # Alation AI Agent SDK
 
 The Alation AI Agent SDK is a Python library that enables AI agents to access and leverage metadata from the Alation Data Catalog.

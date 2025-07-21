@@ -40,6 +40,23 @@ class AlationAIAgentSDK:
         self.data_product_tool = GetDataProductTool(self.api)
         self.update_catalog_asset_metadata_tool = UpdateCatalogAssetMetadataTool(self.api)
         self.check_job_status_tool = CheckJobStatusTool(self.api)
+        from .tools import CreateSuggestChangeWorkflowRequestTool
+
+        self.create_suggest_change_workflow_request_tool = CreateSuggestChangeWorkflowRequestTool(
+            self.api
+        )
+
+    def create_suggest_change_workflow_request(self, payload: dict) -> dict:
+        """
+        Create a suggest change workflow request in Alation.
+
+        Args:
+            payload (dict): The request payload for the workflow execution.
+
+        Returns:
+            dict: The API response containing workflow execution details.
+        """
+        return self.create_suggest_change_workflow_request_tool.run(payload)
 
     def get_context(
         self, question: str, signature: Optional[Dict[str, Any]] = None
@@ -160,4 +177,5 @@ class AlationAIAgentSDK:
             self.data_product_tool,
             self.update_catalog_asset_metadata_tool,
             self.check_job_status_tool,
+            self.create_suggest_change_workflow_request_tool,
         ]

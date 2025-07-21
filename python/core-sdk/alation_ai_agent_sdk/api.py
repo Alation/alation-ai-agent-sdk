@@ -719,3 +719,30 @@ class AlationAPI:
             return response.json()
         except requests.RequestException as e:
             self._handle_request_error(e, "check_job_status")
+
+    def create_suggest_change_workflow_request(self, payload: dict) -> dict:
+        """
+        Create a suggest change workflow request in Alation.
+
+        Args:
+            payload (dict): The request payload for the workflow execution.
+
+        Returns:
+            dict: The API response containing workflow execution details.
+        """
+        self._with_valid_token()
+        headers = {
+            "Token": self.access_token,
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
+        url = f"{self.base_url}/integration/v2/workflow_executions/"
+        payload = dict(payload)
+        payload["type"] = "change_request"
+        print(payload)
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=60)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            self._handle_request_error(e, "create_suggest_change_workflow_request")

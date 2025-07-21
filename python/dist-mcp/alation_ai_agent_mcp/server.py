@@ -88,6 +88,25 @@ def create_server():
         result = alation_sdk.check_job_status(job_id)
         return str(result)
 
+    @mcp.tool(
+        name=alation_sdk.create_suggest_change_workflow_request_tool.name,
+        description=alation_sdk.create_suggest_change_workflow_request_tool.description,
+    )
+    def create_suggest_change_workflow_request(payload: dict) -> str:
+        """
+        Example payload for updating column (attribute) description (field_id=4):
+        payload = {
+            "context": {
+                "otype": "attribute",
+                "field_id": 4,
+                "oid": 1234
+            },
+            "input": { "change": { "proposed": "this is the new description" } }
+        }
+        """
+        result = alation_sdk.create_suggest_change_workflow_request(payload)
+        return str(result)
+
     return mcp
 
 
