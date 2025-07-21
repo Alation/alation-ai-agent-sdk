@@ -2,7 +2,7 @@ name: Bug Report
 description: Report a bug or unexpected behavior in the alation-ai-agent-sdk
 title: "[Bug] <short summary>"
 labels: [bug]
-assignees: []
+assignees: [jagannathsrs,lucyeun-alation,ashwinkumarmuruganandam,adamtalmadge-alation]
 
 body:
   - type: markdown
