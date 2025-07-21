@@ -10,7 +10,7 @@ body:
       value: |
         ⚠️ **Before You Submit a Bug Report**
 
-        - This SDK is **only supported for Alation Cloud instances**. If you are using **on-prem**, features like `context_tool` or `data_products` are not be supported.
+        - This SDK is **only supported for Alation Cloud instances**. If you are using **on-prem**, features like `context_tool` or `data_products` are not supported.
         - Please verify the documentation before filing a bug:
           - [Feature Flags](https://github.com/Alation/alation-ai-agent-sdk#feature-flags)
           - [Authentication Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md)
