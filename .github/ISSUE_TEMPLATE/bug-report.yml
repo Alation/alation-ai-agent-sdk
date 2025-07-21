@@ -100,7 +100,7 @@ body:
     id: logs
     attributes:
       label: Logs (optional)
-      description: Paste relevant logs (```) format.
+      description: Paste relevant logs using code block format (enclosed in triple backticks ```).
       render: shell
     validations:
       required: false
