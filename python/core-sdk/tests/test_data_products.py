@@ -1,6 +1,42 @@
 import pytest
 from unittest.mock import MagicMock
 from alation_ai_agent_sdk import UserAccountAuthParams, AlationAPI, AlationAPIError
+import requests
+
+
+# Global network call mocks for all tests
+@pytest.fixture(autouse=True)
+def global_network_mocks(monkeypatch):
+    # Mock requests.post for token generation
+    def mock_post(url, *args, **kwargs):
+        if "createAPIAccessToken" in url:
+            response = MagicMock()
+            response.status_code = 200
+            response.json.return_value = {
+                "api_access_token": MOCK_ACCESS_TOKEN,
+                "status": "success",
+            }
+            return response
+        return MagicMock(status_code=200, json=MagicMock(return_value={}))
+
+    monkeypatch.setattr(requests, "post", mock_post)
+
+    # Mock requests.get for license and version
+    def mock_get(url, *args, **kwargs):
+        if "/api/v1/license" in url:
+            response = MagicMock()
+            response.status_code = 200
+            response.json.return_value = {"is_cloud": True}
+            return response
+        if "/full_version" in url:
+            response = MagicMock()
+            response.status_code = 200
+            response.json.return_value = {"ALATION_RELEASE_NAME": "2025.1.2"}
+            return response
+        return MagicMock(status_code=200, json=MagicMock(return_value={}))
+
+    monkeypatch.setattr(requests, "get", mock_get)
+
 
 MOCK_BASE_URL = "https://mock-alation-instance.com"
 MOCK_ACCESS_TOKEN = "mock-access-token"
