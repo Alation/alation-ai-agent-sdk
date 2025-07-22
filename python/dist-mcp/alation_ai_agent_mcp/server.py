@@ -67,7 +67,7 @@ def create_server():
     alation_version = getattr(alation_sdk.api, "alation_release_name", None)
     is_cloud = getattr(alation_sdk.api, "is_cloud", None)
     logger.info(
-        f"Alation MCP Server initializing |Alation version: {alation_version} | Cloud instance: {is_cloud} | dist_version: mcp-{MCP_SERVER_VERSION}"
+        f"Alation MCP Server initializing |Alation version: {alation_version} | Cloud instance: {is_cloud} | dist_version: {f'mcp-{MCP_SERVER_VERSION}'}"
     )
 
     @mcp.tool(name=alation_sdk.context_tool.name, description=alation_sdk.context_tool.description)
