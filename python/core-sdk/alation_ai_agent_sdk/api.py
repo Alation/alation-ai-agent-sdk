@@ -291,8 +291,20 @@ class AlationAPI:
 
     def _handle_request_error(self, exception: requests.RequestException, context: str):
         """Utility function to handle request exceptions."""
+
         alation_release_name = getattr(self, "alation_release_name", None)
         dist_version = getattr(self, "dist_version", None)
+
+        if isinstance(exception, requests.exceptions.Timeout):
+            raise AlationAPIError(
+                f"Request to {context} timed out after 60 seconds.",
+                reason="Timeout Error",
+                resolution_hint="Ensure the server is reachable and try again later.",
+                help_links=["https://developer.alation.com/"],
+                alation_release_name=alation_release_name,
+                dist_version=dist_version,
+            )
+
         status_code = getattr(exception.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR)
         response_text = getattr(exception.response, "text", "No response received from server")
         parsed = {"error": response_text}
