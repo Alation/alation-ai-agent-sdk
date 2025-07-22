@@ -1,7 +1,7 @@
 import logging
 import urllib.parse
 import json
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, NamedTuple, Optional, Union
 from http import HTTPStatus
 from alation_ai_agent_sdk.lineage_filtering import filter_graph
 from alation_ai_agent_sdk.lineage_filtering import filter_graph
@@ -665,8 +665,8 @@ class AlationAPI:
         Args:
             root_node (LineageRootNode): The root node to start lineage from.
             direction (LineageDirectionType): The direction of lineage to fetch, either "upstream" or "downstream".
-            limit (int, optional): The maximum number of nodes to return. Defaults to 1000.
-            batch_size (int, optional): The size of each batch for chunked processing. Defaults to 1000.
+            limit (int, optional): The maximum number of nodes to return. Defaults to the maximum 1,000.
+            batch_size (int, optional): The size of each batch for chunked processing. Defaults to 1,000.
             pagination (LineagePagination, optional): Pagination parameters only used with chunked processing.
             processing_mode (LineageGraphProcessingType, optional): The processing mode for lineage graph. Strongly recommended to use 'complete' for full lineage graphs.
             show_temporal_objects (bool, optional): Whether to include temporary objects in the lineage. Defaults to False.
@@ -686,18 +686,23 @@ class AlationAPI:
                 allowed_otypes in chunked processing mode
             AlationAPIError: On network, API, or response errors.
         """
+        # Filter out any incompatible options
+        if limit > 1000:
+            raise ValueError("limit cannot exceed 1,000.")
+        if allowed_otypes is not None:
+            if processing_mode != LineageGraphProcessingOptions.COMPLETE:
+                raise ValueError("allowed_otypes is only supported in 'complete' processing mode.")
+            if len(allowed_otypes) == 0:
+                raise ValueError("allowed_otypes cannot be empty list.")
+        if pagination is not None and processing_mode == LineageGraphProcessingOptions.COMPLETE:
+            raise ValueError("pagination is only supported in 'chunked' processing mode.")
+
         self._with_valid_token()
 
         headers = {
             "Token": self.access_token,
             "Accept": "application/json",
         }
-
-        # Filter out any incompatible options
-        if allowed_otypes is not None and processing_mode != LineageGraphProcessingOptions.COMPLETE:
-            raise ValueError("allowed_otypes is only supported in 'complete' processing mode.")
-        if pagination is not None and processing_mode == LineageGraphProcessingOptions.COMPLETE:
-            raise ValueError("Pagination is only supported in 'chunked' processing mode.")
 
         lineage_request_dict = {
             "key_type": key_type,
@@ -743,6 +748,7 @@ class AlationAPI:
                     "has_more": pagination.get("has_more", False),
                 }
                 response_data["pagination"] = new_pagination
+                del response_data["Pagination"]
                 del response_data["request_id"]
             response_data["direction"] = direction
             return response_data

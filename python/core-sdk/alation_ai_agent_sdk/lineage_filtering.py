@@ -158,10 +158,10 @@ def build_filtered_graph(
         if "fully_qualified_name" in original_node:
             new_node["fully_qualified_name"] = original_node["fully_qualified_name"]
         new_node["neighbors"] = [
-            n for n in original_node["neighbors"] if get_node_object_key(n) in kept_keys
+            n for n in original_node.get("neighbors", []) if get_node_object_key(n) in kept_keys
         ]
         new_nodes.append(new_node)
-    # Each item in the list have have neighors but their neighbors are not allowed otherwise we're repeating
+    # Each item in the list have have neighbors but their neighbors are not allowed otherwise we're repeating
     # it in the nested structure at at the item list level.
     for node in new_nodes:
         if len(node["neighbors"]) == 0:
@@ -171,25 +171,3 @@ def build_filtered_graph(
                 del neighbor_node["neighbors"]
 
     return new_nodes
-
-"""
-# For testing purposes 
-graph = [
-    {"id": 1, "otype": "table", "fully_qualified_name": "1", "neighbors": [{"id": 2, "otype": "table", "fully_qualified_name": "2"}]},
-    {"id": 2, "otype": "table", "fully_qualified_name": "2", "neighbors": [{"id": 3, "otype": "etl", "fully_qualified_name": "3"}, {"id": 4, "otype": "table", "fully_qualified_name": "4"}]},
-    {"id": 3, "otype": "etl", "fully_qualified_name": "3", "neighbors": [{"id": 5, "otype": "table", "fully_qualified_name": "5"}]},
-    {"id": 4, "otype": "table", "fully_qualified_name": "4", "neighbors": []},
-    {"id": 5, "otype": "table", "fully_qualified_name": "5", "neighbors": []},
-    {"id": 6, "otype": "table", "fully_qualified_name": "6", "neighbors": [{"id": 3, "otype": "etl", "fully_qualified_name": "3"}]},
-    {"id": 7, "otype": "etl", "fully_qualified_name": "7", "neighbors": [{"id": 8, "otype": "etl", "fully_qualified_name": "8"}]},
-    {"id": 8, "otype": "etl", "fully_qualified_name": "8", "neighbors": []},
-    {"id": 9, "otype": "etl", "fully_qualified_name": "9", "neighbors": [{"id": 10, "otype": "table", "fully_qualified_name": "10"}]},
-    {"id": 10, "otype": "table", "fully_qualified_name": "10", "neighbors": []}
-]
-
-allowed = {"table"}
-filtered_graph = filter_graph(graph, allowed)
-
-import json
-print(json.dumps(filtered_graph, indent=2))
-"""

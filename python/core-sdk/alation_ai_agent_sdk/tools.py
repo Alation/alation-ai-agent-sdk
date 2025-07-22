@@ -217,14 +217,14 @@ class AlationLineageTool:
     Parameters:
         - `root_node`: The root node for the lineage query. Typically an object key consisting of the object ID and type. e.g. `{"id": 123, "type": "table"}`
         - `direction`: The direction of the lineage (upstream or downstream). Upstream objects can be related via a process or transformation or may represent the original source of the data. Downstream objects may be derived from the current object in some way.
-        - `limit`: The maximum number of nodes to return. `limit` and `batch_size` should reuse the same value to avoid multiple round trips and the added assembly of several subgraphs unless in chunked processing mode.
+        - `limit`: The maximum number of nodes to return. `limit` and `batch_size` should reuse the same value to avoid multiple round trips and the added assembly of several subgraphs unless in chunked processing mode. Hard upper limit of 1,000.
         - `batch_size`: The number of nodes to process in each batch.
         - `pagination`: Pagination information for the query. This should originate from an initial lineage response. Never generate a `pagination` parameter without having received one. It is okay to reuse one from the previous response when in 'chunked' processing mode.
         - `processing_mode`: The processing mode for the query (complete or chunked). Only use the chunked processing mode for extremely large graphs (10,000+ nodes) and as a last resort.
         - `show_temporal_objects`: Whether to show temporal objects. These tend to clutter graphs more than help. But can be included to show a more complete picture of the lineage.
         - `design_time`: The design time option. Use 3 for nearly all cases. It includes objects created at either run time or design time. Use 1 for objects created during design time and use 2 for objects only created during run time.
         - `max_depth`: The maximum depth for the query. Default is 10.
-        - `allowed_schema_ids`: The allowed schema IDs like: [1, 2, 3].
+        - `allowed_schema_ids`: The allowed schema IDs like: [1, 2, 3]. The graph will only include items that belong to these schemas.
         - `allowed_otypes`: The allowed object types. Pass values as strings like: ["table"].
         - `time_from`: The start time (timestamp) for the query.
         - `time_to`: The end time (timestamp) for the query.
@@ -276,7 +276,6 @@ class AlationLineageTool:
                 limit=limit,
                 batch_size=batch_size,
                 pagination=pagination,
-                max_depth=max_depth,
                 **lineage_kwargs
             )
         except AlationAPIError as e:
