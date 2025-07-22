@@ -1,157 +1,22 @@
 import logging
 import urllib.parse
 import json
-from typing import Dict, Any, Optional, Union, NamedTuple
+from typing import Dict, Any, Optional
 from http import HTTPStatus
 import requests
 import requests.exceptions
-from typing_extensions import TypedDict
+from .types import (
+    UserAccountAuthParams,
+    ServiceAccountAuthParams,
+    AuthParams,
+    CatalogAssetMetadataPayloadItem,
+)
+from .errors import AlationAPIError, AlationErrorClassifier
 
 AUTH_METHOD_USER_ACCOUNT = "user_account"
 AUTH_METHOD_SERVICE_ACCOUNT = "service_account"
 
 logger = logging.getLogger(__name__)
-
-
-class AlationAPIError(Exception):
-    """Raised when an Alation API call fails logically or at HTTP level."""
-
-    def __init__(
-        self,
-        message: str,
-        *,
-        original_exception=None,
-        status_code=None,
-        response_body=None,
-        reason=None,
-        resolution_hint=None,
-        help_links=None,
-    ):
-        super().__init__(message)
-        self.original_exception = original_exception
-        self.status_code = status_code
-        self.response_body = response_body
-        self.reason = reason
-        self.resolution_hint = resolution_hint
-        self.help_links = help_links or []
-
-    def to_dict(self) -> dict:
-        return {
-            "message": str(self),
-            "status_code": self.status_code,
-            "reason": self.reason,
-            "resolution_hint": self.resolution_hint,
-            "is_retryable": self.status_code
-            in [
-                HTTPStatus.TOO_MANY_REQUESTS,
-                HTTPStatus.INTERNAL_SERVER_ERROR,
-            ],
-            "response_body": self.response_body,
-            "help_links": self.help_links,
-        }
-
-
-class AlationErrorClassifier:
-    @staticmethod
-    def classify_catalog_error(status_code: int, response_body: dict) -> Dict[str, Any]:
-        reason = "Unexpected Error"
-        resolution_hint = "An unknown error occurred."
-        help_links = []
-
-        if status_code == HTTPStatus.BAD_REQUEST:
-            reason = "Bad Request"
-            resolution_hint = (
-                response_body.get("error")
-                or response_body.get("message")
-                or "Request was malformed. Check the query and signature structure."
-            )
-            help_links = [
-                "https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/signature.md",
-                "https://github.com/Alation/alation-ai-agent-sdk?tab=readme-ov-file#usage",
-                "https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature",
-            ]
-        elif status_code == HTTPStatus.UNAUTHORIZED:
-            reason = "Unauthorized"
-            resolution_hint = "Token missing or invalid. Retry with a valid token."
-            help_links = [
-                "https://developer.alation.com/dev/v2024.1/docs/authentication-into-alation-apis",
-                "https://developer.alation.com/dev/reference/refresh-access-token-overview",
-            ]
-        elif status_code == HTTPStatus.FORBIDDEN:
-            reason = "Forbidden"
-            resolution_hint = (
-                "Token likely expired or lacks permissions. Ask the user to re-authenticate."
-            )
-            help_links = [
-                "https://developer.alation.com/dev/v2024.1/docs/authentication-into-alation-apis",
-                "https://developer.alation.com/dev/reference/refresh-access-token-overview",
-            ]
-        elif status_code == HTTPStatus.NOT_FOUND:
-            reason = "Not Found"
-            resolution_hint = (
-                "The requested resource was not found or is not enabled, check feature flag"
-            )
-            help_links = [
-                "https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta"
-            ]
-        elif status_code == HTTPStatus.TOO_MANY_REQUESTS:
-            reason = "Too Many Requests"
-            resolution_hint = "Rate limit exceeded. Retry after some time."
-            help_links = [
-                "https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta#rate-limiting"
-            ]
-        elif status_code == HTTPStatus.INTERNAL_SERVER_ERROR:
-            reason = "Internal Server Error"
-            resolution_hint = "Server error. Retry later or contact Alation support."
-            help_links = [
-                "https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta"
-            ]
-
-        return {"reason": reason, "resolution_hint": resolution_hint, "help_links": help_links}
-
-    @staticmethod
-    def classify_token_error(status_code: int, response_body: dict) -> Dict[str, Any]:
-        reason = "Unexpected Token Error"
-        resolution_hint = "An unknown token-related error occurred."
-        help_links = [
-            "https://developer.alation.com/dev/v2024.1/docs/authentication-into-alation-apis",
-            "https://developer.alation.com/dev/reference/refresh-access-token-overview",
-        ]
-
-        if status_code == HTTPStatus.BAD_REQUEST:
-            reason = "Token Request Invalid"
-            resolution_hint = response_body.get("error") or "Token request payload is malformed."
-        elif status_code == HTTPStatus.UNAUTHORIZED:
-            reason = "Token Unauthorized"
-            resolution_hint = "[User ID,refresh token] or [client id, client secret] is invalid."
-        elif status_code == HTTPStatus.FORBIDDEN:
-            reason = "Token Forbidden"
-            resolution_hint = "You do not have permission to generate a token."
-        elif status_code == HTTPStatus.INTERNAL_SERVER_ERROR:
-            reason = "Token Generation Failed"
-            resolution_hint = "Alation server failed to process token request."
-
-        return {"reason": reason, "resolution_hint": resolution_hint, "help_links": help_links}
-
-
-class UserAccountAuthParams(NamedTuple):
-    user_id: int
-    refresh_token: str
-
-
-class ServiceAccountAuthParams(NamedTuple):
-    client_id: str
-    client_secret: str
-
-
-AuthParams = Union[UserAccountAuthParams, ServiceAccountAuthParams]
-
-
-class CatalogAssetMetadataPayloadItem(TypedDict):
-    oid: str
-    otype: str  # Only 'glossary_v3' or 'glossary_term'
-    field_id: int  # Only 3 (TEXT) or 4 (RICH_TEXT)
-    value: Any  # Accept any type, validated by field_id -> type mapping
 
 
 class CatalogAssetMetadataPayloadBuilder:
@@ -217,10 +82,15 @@ class AlationAPI:
         base_url: str,
         auth_method: str,
         auth_params: AuthParams,
+        dist_version: Optional[str] = None,
     ):
         self.base_url = base_url.rstrip("/")
         self.access_token: Optional[str] = None
         self.auth_method = auth_method
+        self.is_cloud = None
+        self.alation_release_name = None
+        self.alation_version_info = None
+        self.dist_version = dist_version
 
         # Validate auth_method and auth_params
         if auth_method == AUTH_METHOD_USER_ACCOUNT:
@@ -242,29 +112,72 @@ class AlationAPI:
 
         logger.debug(f"AlationAPI initialized with auth method: {self.auth_method}")
 
+        self._fetch_and_cache_instance_info()
+
+    def _fetch_and_cache_instance_info(self):
+        """
+        Fetches instance info (license and version) after authentication and caches in memory.
+        """
+        self._with_valid_token()
+        headers = {
+            "Token": self.access_token,
+            "Accept": "application/json",
+        }
+        try:
+            # License info
+            license_url = f"{self.base_url}/api/v1/license"
+            license_resp = requests.get(license_url, headers=headers, timeout=10)
+            license_resp.raise_for_status()
+            license_data = license_resp.json()
+            self.is_cloud = license_data.get("is_cloud", None)
+            self.alation_license_info = license_data
+        except Exception as e:
+            logger.warning(f"Could not fetch license info: {e}")
+            self.is_cloud = None
+            self.alation_license_info = None
+        try:
+            # Version info
+            version_url = f"{self.base_url}/full_version"
+            version_resp = requests.get(version_url, timeout=10)
+            version_resp.raise_for_status()
+            version_data = version_resp.json()
+            self.alation_release_name = version_data.get("ALATION_RELEASE_NAME", None)
+            self.alation_version_info = version_data
+        except Exception as e:
+            logger.warning(f"Could not fetch version info: {e}")
+            self.alation_release_name = None
+            self.alation_version_info = None
+
     def _handle_request_error(self, exception: requests.RequestException, context: str):
         """Utility function to handle request exceptions."""
+
+        alation_release_name = getattr(self, "alation_release_name", None)
+        dist_version = getattr(self, "dist_version", None)
+
         if isinstance(exception, requests.exceptions.Timeout):
             raise AlationAPIError(
                 f"Request to {context} timed out after 60 seconds.",
                 reason="Timeout Error",
                 resolution_hint="Ensure the server is reachable and try again later.",
                 help_links=["https://developer.alation.com/"],
+                alation_release_name=alation_release_name,
+                dist_version=dist_version,
             )
 
         status_code = getattr(exception.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR)
         response_text = getattr(exception.response, "text", "No response received from server")
         parsed = {"error": response_text}
         meta = AlationErrorClassifier.classify_catalog_error(status_code, parsed)
-
         raise AlationAPIError(
-            f"""HTTP error during {context}: {meta["reason"]}""",
+            f"HTTP error during {context}: {meta['reason']}",
             original_exception=exception,
             status_code=status_code,
             response_body=parsed,
             reason=meta["reason"],
             resolution_hint=meta["resolution_hint"],
             help_links=meta["help_links"],
+            alation_release_name=alation_release_name,
+            dist_version=dist_version,
         )
 
     def _generate_access_token_with_refresh_token(self):
