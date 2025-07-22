@@ -5,6 +5,15 @@ from mcp.server.fastmcp import FastMCP
 from alation_ai_agent_sdk import AlationAIAgentSDK, UserAccountAuthParams, ServiceAccountAuthParams
 from alation_ai_agent_sdk.api import CatalogAssetMetadataPayloadItem
 
+import logging
+
+logger = logging.getLogger("alation.mcp.server")
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
+
 
 def create_server():
     # Load Alation credentials from environment variables
@@ -46,8 +55,16 @@ def create_server():
     # Initialize FastMCP server
     mcp = FastMCP(name="Alation MCP Server", version="0.4.0")
 
-    # Initialize Alation SDK
-    alation_sdk = AlationAIAgentSDK(base_url, auth_method, auth_params)
+    alation_sdk = AlationAIAgentSDK(base_url, auth_method, auth_params, dist_version="mcp-0.4.0")
+
+    if not getattr(alation_sdk.api, "is_cloud", None):
+        raise RuntimeError("This Alation instance is on-prem. MCP tools require a cloud instance.")
+
+    alation_version = getattr(alation_sdk.api, "alation_release_name", None)
+    is_cloud = getattr(alation_sdk.api, "is_cloud", None)
+    logger.info(
+        f"Alation MCP Server initializing |Alation version: {alation_version} | Cloud instance: {is_cloud} | dist_version: mcp-0.4.0"
+    )
 
     @mcp.tool(name=alation_sdk.context_tool.name, description=alation_sdk.context_tool.description)
     def alation_context(question: str, signature: Dict[str, Any] | None = None) -> str:

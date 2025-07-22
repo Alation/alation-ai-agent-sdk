@@ -1,6 +1,53 @@
 from typing import Dict, Any, Optional
+import re
+import logging
 
+logger = logging.getLogger(__name__)
 from alation_ai_agent_sdk.api import AlationAPI, AlationAPIError, CatalogAssetMetadataPayloadItem
+
+
+def min_alation_version(min_version: str):
+    """
+    Decorator to enforce minimum Alation version for a tool's run method (inclusive).
+    """
+
+    def decorator(func):
+        def wrapper(self, *args, **kwargs):
+            current_version = getattr(self.api, "alation_release_name", None)
+            if not current_version or not is_version_supported(current_version, min_version):
+                logger.warning(
+                    f"[VersionCheck] {self.__class__.__name__} blocked: required >= {min_version}, current = {current_version}"
+                )
+                return {
+                    "error": {
+                        "message": f"{self.__class__.__name__} requires Alation version >= {min_version}. Current: {current_version}",
+                        "reason": "Unsupported Alation Version",
+                        "resolution_hint": f"Upgrade your Alation instance to at least {min_version} to use this tool.",
+                        "alation_version": current_version,
+                    }
+                }
+            return func(self, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def is_version_supported(current: str, minimum: str) -> bool:
+    """
+    Compare Alation version strings (e.g., '2025.1.5' >= '2025.1.2'). Returns True if current >= minimum.
+    """
+
+    def parse(ver):
+        match = re.search(r"(\d+\.\d+\.\d+)", ver)
+        ver = match.group(1) if match else ver
+        parts = [int(p) for p in ver.split(".")]
+        return tuple(parts + [0] * (3 - len(parts)))
+
+    try:
+        return parse(current) >= parse(minimum)
+    except Exception:
+        return False
 
 
 class AlationContextTool:
@@ -65,6 +112,7 @@ class AlationContextTool:
             }
 """
 
+    @min_alation_version("2025.1.2")
     def run(self, question: str, signature: Optional[Dict[str, Any]] = None):
         try:
             return self.api.get_context_from_catalog(question, signature)

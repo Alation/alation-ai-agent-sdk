@@ -26,6 +26,8 @@ class AlationAPIError(Exception):
         reason=None,
         resolution_hint=None,
         help_links=None,
+        alation_release_name=None,
+        dist_version=None,
     ):
         super().__init__(message)
         self.original_exception = original_exception
@@ -34,6 +36,8 @@ class AlationAPIError(Exception):
         self.reason = reason
         self.resolution_hint = resolution_hint
         self.help_links = help_links or []
+        self.alation_release_name = alation_release_name
+        self.dist_version = dist_version
 
     def to_dict(self) -> dict:
         return {
@@ -48,6 +52,8 @@ class AlationAPIError(Exception):
             ],
             "response_body": self.response_body,
             "help_links": self.help_links,
+            "alation_release_name": self.alation_release_name,
+            "dist_version": self.dist_version,
         }
 
 
@@ -217,10 +223,15 @@ class AlationAPI:
         base_url: str,
         auth_method: str,
         auth_params: AuthParams,
+        dist_version: Optional[str] = None,
     ):
         self.base_url = base_url.rstrip("/")
         self.access_token: Optional[str] = None
         self.auth_method = auth_method
+        self.is_cloud = None
+        self.alation_release_name = None
+        self.alation_version_info = None
+        self.dist_version = dist_version
 
         # Validate auth_method and auth_params
         if auth_method == AUTH_METHOD_USER_ACCOUNT:
@@ -242,29 +253,60 @@ class AlationAPI:
 
         logger.debug(f"AlationAPI initialized with auth method: {self.auth_method}")
 
+        self._fetch_and_cache_instance_info()
+
+    def _fetch_and_cache_instance_info(self):
+        """
+        Fetches instance info (license and version) after authentication and caches in memory.
+        """
+        self._with_valid_token()
+        headers = {
+            "Token": self.access_token,
+            "Accept": "application/json",
+        }
+        try:
+            # License info
+            license_url = f"{self.base_url}/api/v1/license"
+            license_resp = requests.get(license_url, headers=headers, timeout=10)
+            license_resp.raise_for_status()
+            license_data = license_resp.json()
+            self.is_cloud = license_data.get("is_cloud", None)
+            self.alation_license_info = license_data
+        except Exception as e:
+            logger.warning(f"Could not fetch license info: {e}")
+            self.is_cloud = None
+            self.alation_license_info = None
+        try:
+            # Version info
+            version_url = f"{self.base_url}/full_version"
+            version_resp = requests.get(version_url, timeout=10)
+            version_resp.raise_for_status()
+            version_data = version_resp.json()
+            self.alation_release_name = version_data.get("ALATION_RELEASE_NAME", None)
+            self.alation_version_info = version_data
+        except Exception as e:
+            logger.warning(f"Could not fetch version info: {e}")
+            self.alation_release_name = None
+            self.alation_version_info = None
+
     def _handle_request_error(self, exception: requests.RequestException, context: str):
         """Utility function to handle request exceptions."""
-        if isinstance(exception, requests.exceptions.Timeout):
-            raise AlationAPIError(
-                f"Request to {context} timed out after 60 seconds.",
-                reason="Timeout Error",
-                resolution_hint="Ensure the server is reachable and try again later.",
-                help_links=["https://developer.alation.com/"],
-            )
-
+        alation_release_name = getattr(self, "alation_release_name", None)
+        dist_version = getattr(self, "dist_version", None)
         status_code = getattr(exception.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR)
         response_text = getattr(exception.response, "text", "No response received from server")
         parsed = {"error": response_text}
         meta = AlationErrorClassifier.classify_catalog_error(status_code, parsed)
-
         raise AlationAPIError(
-            f"""HTTP error during {context}: {meta["reason"]}""",
+            f"HTTP error during {context}: {meta['reason']}",
             original_exception=exception,
             status_code=status_code,
             response_body=parsed,
             reason=meta["reason"],
             resolution_hint=meta["resolution_hint"],
             help_links=meta["help_links"],
+            alation_release_name=alation_release_name,
+            dist_version=dist_version,
         )
 
     def _generate_access_token_with_refresh_token(self):
