@@ -58,7 +58,7 @@ def create_server():
     mcp = FastMCP(name="Alation MCP Server", version=MCP_SERVER_VERSION)
 
     alation_sdk = AlationAIAgentSDK(
-        base_url, auth_method, auth_params, dist_version="mcp-{MCP_SERVER_VERSION}"
+        base_url, auth_method, auth_params, dist_version=f"mcp-{MCP_SERVER_VERSION}"
     )
 
     if not getattr(alation_sdk.api, "is_cloud", None):
