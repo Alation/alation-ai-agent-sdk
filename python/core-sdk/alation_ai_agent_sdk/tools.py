@@ -215,13 +215,15 @@ class AlationLineageTool:
         - Use optional parameters sparingly. Most of the defaults are suitable for common use cases. Use them when directed by the user or when the user's question warrants their specific inclusion.
 
     Parameters:
-        - `root_node`: The root node for the lineage query. Typically an object key consisting of the object ID and type. e.g. `{"id": 123, "type": "table"}`
+        - `root_node`: The root node for the lineage query. Typically this is an object key consisting of the object ID and type `{"id": 123, "otype": "table"}`.
+             However, certain otypes (`file`, `directory`, and `external`) require a fully qualified name for id.
+             A fully qualified name for those object types is the complete path to the file or directory prefixed by the filesystem id separated by a period like "<fileSystemId>.directory/to/filename". For filesystem id 2 and `file1` it would be `{"id": "2.root_folder/nested_folder/file1", "otype": "file"}`
         - `direction`: The direction of the lineage (upstream or downstream). Upstream objects can be related via a process or transformation or may represent the original source of the data. Downstream objects may be derived from the current object in some way.
         - `limit`: The maximum number of nodes to return. `limit` and `batch_size` should reuse the same value to avoid multiple round trips and the added assembly of several subgraphs unless in chunked processing mode. Hard upper limit of 1,000.
         - `batch_size`: The number of nodes to process in each batch.
         - `pagination`: Pagination information for the query. This should originate from an initial lineage response. Never generate a `pagination` parameter without having received one. It is okay to reuse one from the previous response when in 'chunked' processing mode.
-        - `processing_mode`: The processing mode for the query (complete or chunked). Only use the chunked processing mode for extremely large graphs (10,000+ nodes) and as a last resort.
-        - `show_temporal_objects`: Whether to show temporal objects. These tend to clutter graphs more than help. But can be included to show a more complete picture of the lineage.
+        - `processing_mode`: The processing mode for the query (complete or chunked). Only use the chunked processing mode when you wish to limit the response to smaller subgraphs.
+        - `show_temporal_objects`: Whether to show temporal objects. These tend to clutter graphs more than help but can be included to show a more complete picture of the lineage.
         - `design_time`: The design time option. Use 3 for nearly all cases. It includes objects created at either run time or design time. Use 1 for objects created during design time and use 2 for objects only created during run time.
         - `max_depth`: The maximum depth for the query. Default is 10.
         - `allowed_schema_ids`: The allowed schema IDs like: [1, 2, 3]. The graph will only include items that belong to these schemas.
@@ -233,11 +235,11 @@ class AlationLineageTool:
         - A dictionary containing the following keys: `graph`, `direction`, and `pagination`.
 
         USAGE EXAMPLES:
-        - Find all upstream objects for a given table: `get_lineage(root_node={"id": 123, "type": "table"},direction="upstream")`
-        - Find all downstream objects for a given table: `get_lineage(root_node={"id": 123, "type": "table"},direction="downstream")`
-        - Find all upstream table objects for a given table: `get_lineage(root_node={"id": 123, "type": "table"},direction="upstream",allowed_otypes=["table"])`
-        - Find all downstream column objects for a given column: `get_lineage(root_node={"id": 123, "type": "attribute"},direction="downstream",allowed_otypes=["attribute"])`
-        - Find all upstream objects for a given table including temporal objects: `get_lineage(root_node={"id": 123, "type": "table"},direction="upstream",show_temporal_objects=True)`
+        - Find all upstream objects for a given table: `get_lineage(root_node={"id": 123, "otype": "table"}, direction="upstream")`
+        - Find all downstream objects for a given table: `get_lineage(root_node={"id": 123, "otype": "table"}, direction="downstream")`
+        - Find all upstream table objects for a given table: `get_lineage(root_node={"id": 123, "otype": "table"}, direction="upstream", allowed_otypes=["table"])`
+        - Find all downstream column objects for a given column / attribute: `get_lineage(root_node={"id": 123, "otype": "attribute"}, direction="downstream", allowed_otypes=["attribute"])`
+        - Find all upstream objects for a given table including temporal objects: `get_lineage(root_node={"id": 123, "otype": "table"}, direction="upstream", show_temporal_objects=True)`
         """
 
     def run(

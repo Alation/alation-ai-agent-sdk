@@ -715,7 +715,11 @@ class AlationAPI:
                     "from": time_from,
                     "to": time_to,
                 },
-                "schema_filter": allowed_schema_ids, # TODO: double check these are allowed vs disallowed
+                # WARNING: There is a discrepancy between the schema_filter parameter description vs its behavior in the MT service.
+                # In the service it appears to exclude objects that are part of the schema filter rather than restricting objects to only
+                # those schema ids.
+                # TODO: consider removing the option and parameter temporarily.
+                "schema_filter": allowed_schema_ids,
                 "temp_filter": show_temporal_objects,
                 "design_time": design_time,
             },
