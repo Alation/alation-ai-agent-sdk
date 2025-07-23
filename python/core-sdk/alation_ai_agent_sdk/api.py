@@ -4,7 +4,6 @@ import json
 from typing import Any, Dict, List, NamedTuple, Optional, Union
 from http import HTTPStatus
 from alation_ai_agent_sdk.lineage_filtering import filter_graph
-from alation_ai_agent_sdk.lineage_filtering import filter_graph
 import requests
 import requests.exceptions
 from typing_extensions import TypedDict

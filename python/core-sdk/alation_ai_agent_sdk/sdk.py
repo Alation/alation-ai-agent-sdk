@@ -180,7 +180,6 @@ class AlationAIAgentSDK:
             limit=limit,
             batch_size=batch_size,
             pagination=pagination,
-            max_depth=max_depth
             **lineage_kwargs,
         )
 
