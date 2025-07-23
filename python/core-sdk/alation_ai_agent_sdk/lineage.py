@@ -24,7 +24,7 @@ class LineagePagination(TypedDict):
     request_id: str
 
 type LineageDirectionType = Literal["upstream", "downstream"]
-type LineageAllowedSchemaIdsType = List[int]
+type LineageExcludedSchemaIdsType = List[int]
 type LineageTimestampType = str
 type LineageKeyTypeType = Literal["id", "fully_qualified_name"]
 type LineageDesignTimeType = Literal[1, 2, 3]
@@ -63,7 +63,7 @@ def make_lineage_kwargs(
     show_temporal_objects: Optional[bool] = False,
     design_time: Optional[LineageDesignTimeType] = None,
     max_depth: Optional[int] = 10,
-    allowed_schema_ids: Optional[LineageAllowedSchemaIdsType] = None,
+    excluded_schema_ids: Optional[LineageExcludedSchemaIdsType] = None,
     allowed_otypes: Optional[LineageOTypeFilterType] = None,
     time_from: Optional[LineageTimestampType] = None,
     time_to: Optional[LineageTimestampType] = None,
@@ -77,7 +77,7 @@ def make_lineage_kwargs(
         show_temporal_objects (Optional[bool]): Whether to show temporal objects.
         design_time (Optional[LineageDesignTimeType]): The design time option.
         max_depth (Optional[int]): The maximum depth for the query.
-        allowed_schema_ids (Optional[LineageAllowedSchemaIdsType]): The allowed schema IDs.
+        excluded_schema_ids (Optional[LineageExcludedSchemaIdsType]): The allowed schema IDs.
         allowed_otypes (Optional[LineageOTypeFilterType]): The allowed object types.
         time_from (Optional[LineageTimestampType]): The start time for the query.
         time_to (Optional[LineageTimestampType]): The end time for the query.
@@ -96,8 +96,8 @@ def make_lineage_kwargs(
     if design_time is None:
         design_time = LineageDesignTimeOptions.EITHER_DESIGN_OR_RUN_TIME
 
-    if allowed_schema_ids is None:
-        allowed_schema_ids = []
+    if excluded_schema_ids is None:
+        excluded_schema_ids = []
 
     if allowed_otypes is None:
         allowed_otypes = []
@@ -114,7 +114,7 @@ def make_lineage_kwargs(
         "show_temporal_objects": show_temporal_objects,
         "design_time": design_time,
         "max_depth": max_depth,
-        "allowed_schema_ids": allowed_schema_ids,
+        "excluded_schema_ids": excluded_schema_ids,
         "allowed_otypes": allowed_otypes,
         "time_from": time_from,
         "time_to": time_to,

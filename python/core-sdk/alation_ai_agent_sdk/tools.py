@@ -4,7 +4,7 @@ from alation_ai_agent_sdk.api import AlationAPI, AlationAPIError, CatalogAssetMe
 from alation_ai_agent_sdk.lineage import (
     LineageBatchSizeType,
     LineageDesignTimeType,
-    LineageAllowedSchemaIdsType,
+    LineageExcludedSchemaIdsType,
     LineageTimestampType,
     LineageDirectionType,
     LineageGraphProcessingType,
@@ -224,7 +224,7 @@ class AlationLineageTool:
         - `show_temporal_objects`: Whether to show temporal objects. These tend to clutter graphs more than help but can be included to show a more complete picture of the lineage.
         - `design_time`: The design time option. Use 3 for nearly all cases. It includes objects created at either run time or design time. Use 1 for objects created during design time and use 2 for objects only created during run time.
         - `max_depth`: The maximum depth for the query. Default is 10.
-        - `allowed_schema_ids`: The allowed schema IDs like: [1, 2, 3]. The graph will only include items that belong to these schemas.
+        - `excluded_schema_ids`: The excluded schema IDs like: [1, 2, 3]. The graph will omit items which belong to these schemas.
         - `allowed_otypes`: The allowed object types. Pass values as strings like: ["table"].
         - `time_from`: The start time (timestamp) for the query.
         - `time_to`: The end time (timestamp) for the query.
@@ -251,7 +251,7 @@ class AlationLineageTool:
         show_temporal_objects: Optional[bool] = False,
         design_time: Optional[LineageDesignTimeType] = None,
         max_depth: Optional[int] = 10,
-        allowed_schema_ids: Optional[LineageAllowedSchemaIdsType] = None,
+        excluded_schema_ids: Optional[LineageExcludedSchemaIdsType] = None,
         allowed_otypes: Optional[LineageOTypeFilterType] = None,
         time_from: Optional[LineageTimestampType] = None,
         time_to: Optional[LineageTimestampType] = None,
@@ -263,7 +263,7 @@ class AlationLineageTool:
             show_temporal_objects=show_temporal_objects,
             design_time=design_time,
             max_depth=max_depth,
-            allowed_schema_ids=allowed_schema_ids,
+            excluded_schema_ids=excluded_schema_ids,
             allowed_otypes=allowed_otypes,
             time_from=time_from,
             time_to=time_to

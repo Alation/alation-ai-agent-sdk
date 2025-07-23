@@ -18,7 +18,7 @@ from alation_ai_agent_sdk.lineage import (
     LineageOTypeFilterType,
     LineagePagination,
     LineageRootNode,
-    LineageAllowedSchemaIdsType,
+    LineageExcludedSchemaIdsType,
     LineageTimestampType,
     LineageDirectionType,
 )
@@ -701,7 +701,7 @@ class AlationAPI:
         show_temporal_objects: bool,
         design_time: LineageDesignTimeType,
         max_depth: int,
-        allowed_schema_ids: LineageAllowedSchemaIdsType,
+        excluded_schema_ids: LineageExcludedSchemaIdsType,
         allowed_otypes: LineageOTypeFilterType,
         time_from: LineageTimestampType,
         time_to: LineageTimestampType,
@@ -721,7 +721,7 @@ class AlationAPI:
             show_temporal_objects (bool, optional): Whether to include temporary objects in the lineage. Defaults to False.
             design_time (LineageDesignTimeType, optional): The design time option to filter lineage. Defaults to LineageDesignTimeOptions.EITHER_DESIGN_OR_RUN_TIME.
             max_depth (int, optional): The maximum depth to traverse in the lineage graph. Defaults to 10.
-            allowed_schema_ids (LineageAllowedSchemaIdsType, optional): A list of allowed schema IDs to filter lineage nodes. Defaults to None.
+            excluded_schema_ids (LineageExcludedSchemaIdsType, optional): A list of excluded schema IDs to filter lineage nodes. Defaults to None.
             allowed_otypes (LineageOTypeFilterType, optional): A list of allowed object types to filter lineage nodes. Defaults to None.
             time_from (LineageTimestampType, optional): The start time for temporal lineage filtering. Defaults to None.
             time_to (LineageTimestampType, optional): The end time for temporal lineage filtering. Defaults to None.
@@ -764,11 +764,7 @@ class AlationAPI:
                     "from": time_from,
                     "to": time_to,
                 },
-                # WARNING: There is a discrepancy between the schema_filter parameter description vs its behavior in the MT service.
-                # In the service it appears to exclude objects that are part of the schema filter rather than restricting objects to only
-                # those schema ids.
-                # TODO: consider removing the option and parameter temporarily.
-                "schema_filter": allowed_schema_ids,
+                "schema_filter": excluded_schema_ids,
                 "temp_filter": show_temporal_objects,
                 "design_time": design_time,
             },

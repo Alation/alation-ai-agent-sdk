@@ -31,7 +31,7 @@ def test_make_lineage_kwargs_creates_defaults():
     assert response["show_temporal_objects"] == False
     assert response["design_time"] == LineageDesignTimeOptions.EITHER_DESIGN_OR_RUN_TIME
     assert response["max_depth"] == 10
-    assert response["allowed_schema_ids"] == []
+    assert response["excluded_schema_ids"] == []
     assert response["allowed_otypes"] == []
     assert response["time_from"] == ""
     assert response["time_to"] == ""
@@ -45,20 +45,20 @@ def test_make_lineage_kwargs_recognizes_fully_qualified_name_as_key_type():
 
 def test_make_lineage_kwargs_respects_provided_values():
     expected_max_depth = 22
-    expected_allowed_schema_ids = [1, 2]
+    expected_excluded_schema_ids = [1, 2]
     expected_allowed_otypes = ["table"]
     expected_processing_mode = LineageGraphProcessingOptions.CHUNKED
     expected_design_time = LineageDesignTimeOptions.ONLY_DESIGN_TIME
     response = make_lineage_kwargs(
       root_node={"id": 1, "otype": "table"},
       max_depth=expected_max_depth,
-      allowed_schema_ids=expected_allowed_schema_ids,
+      excluded_schema_ids=expected_excluded_schema_ids,
       allowed_otypes=expected_allowed_otypes,
       processing_mode=expected_processing_mode,
       design_time=expected_design_time
     )
     assert response["max_depth"] == expected_max_depth
-    assert response["allowed_schema_ids"] == expected_allowed_schema_ids
+    assert response["excluded_schema_ids"] == expected_excluded_schema_ids
     assert response["allowed_otypes"] == expected_allowed_otypes
     assert response["processing_mode"] == expected_processing_mode
     assert response["design_time"] == expected_design_time
@@ -336,7 +336,7 @@ def test_alation_lineage_tool_raises_value_errors_during_validation():
             batch_size=10000,
             processing_mode=LineageGraphProcessingOptions.COMPLETE,
             allowed_otypes=None,
-            allowed_schema_ids=None,
+            excluded_schema_ids=None,
             max_depth=1000,
             show_temporal_objects=False,
             key_type="id",
@@ -354,7 +354,7 @@ def test_alation_lineage_tool_raises_value_errors_during_validation():
             direction="downstream",
             allowed_otypes=[],
             processing_mode=LineageGraphProcessingOptions.COMPLETE,
-            allowed_schema_ids=None,
+            excluded_schema_ids=None,
             max_depth=1000,
             show_temporal_objects=False,
             key_type="id",
@@ -372,7 +372,7 @@ def test_alation_lineage_tool_raises_value_errors_during_validation():
             batch_size=1000,
             allowed_otypes=["table"],
             processing_mode=LineageGraphProcessingOptions.CHUNKED,
-            allowed_schema_ids=None,
+            excluded_schema_ids=None,
             max_depth=1000,
             show_temporal_objects=False,
             key_type="id",
@@ -396,7 +396,7 @@ def test_alation_lineage_tool_raises_value_errors_during_validation():
                 "cursor": 123,
                 "has_more": True
             },
-            allowed_schema_ids=None,
+            excluded_schema_ids=None,
             max_depth=1000,
             show_temporal_objects=False,
             key_type="id",
@@ -503,7 +503,7 @@ def test_get_bulk_lineage_success_complete_filtered_with_pagination_response(ala
         show_temporal_objects=False,
         design_time=LineageDesignTimeOptions.EITHER_DESIGN_OR_RUN_TIME,
         max_depth=10,
-        allowed_schema_ids=None,
+        excluded_schema_ids=None,
         allowed_otypes=["table"],
         time_from="",
         time_to="",
@@ -564,7 +564,7 @@ def test_get_bulk_lineage_success_chunked(alation_api, mock_requests_post, mock_
         show_temporal_objects=False,
         design_time=LineageDesignTimeOptions.EITHER_DESIGN_OR_RUN_TIME,
         max_depth=10,
-        allowed_schema_ids=None,
+        excluded_schema_ids=None,
         allowed_otypes=None,
         time_from="",
         time_to="",

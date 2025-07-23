@@ -16,7 +16,7 @@ from .lineage import (
     LineageDirectionType,
     LineageDesignTimeType,
     LineageGraphProcessingType,
-    LineageAllowedSchemaIdsType,
+    LineageExcludedSchemaIdsType,
     LineageOTypeFilterType,
     LineageTimestampType,
     LineagePagination,
@@ -131,7 +131,7 @@ class AlationAIAgentSDK:
         show_temporal_objects: Optional[bool] = False,
         design_time: Optional[LineageDesignTimeType] = None,
         max_depth: Optional[int] = 10,
-        allowed_schema_ids: Optional[LineageAllowedSchemaIdsType] = None,
+        excluded_schema_ids: Optional[LineageExcludedSchemaIdsType] = None,
         allowed_otypes: Optional[LineageOTypeFilterType] = None,
         time_from: Optional[LineageTimestampType] = None,
         time_to: Optional[LineageTimestampType] = None,
@@ -149,7 +149,7 @@ class AlationAIAgentSDK:
             show_temporal_objects (bool, optional): Whether to include temporary objects in the lineage. Defaults to False.
             design_time (LineageDesignTimeType, optional): The design time option to filter lineage. Defaults to LineageDesignTimeOptions.EITHER_DESIGN_OR_RUN_TIME.
             max_depth (int, optional): The maximum depth to traverse in the lineage graph. Defaults to 10.
-            allowed_schema_ids (LineageAllowedSchemaIdsType, optional): A list of allowed schema IDs to filter lineage nodes. Defaults to None.
+            excluded_schema_ids (LineageExcludedSchemaIdsType, optional): A list of allowed schema IDs to filter lineage nodes. Defaults to None.
             allowed_otypes (LineageOTypeFilterType, optional): A list of allowed object types to filter lineage nodes. Defaults to None.
             time_from (LineageTimestampType, optional): The start time for temporal lineage filtering. Defaults to None.
             time_to (LineageTimestampType, optional): The end time for temporal lineage filtering. Defaults to None.
@@ -169,7 +169,7 @@ class AlationAIAgentSDK:
             show_temporal_objects=show_temporal_objects,
             design_time=design_time,
             max_depth=max_depth,
-            allowed_schema_ids=allowed_schema_ids,
+            excluded_schema_ids=excluded_schema_ids,
             allowed_otypes=allowed_otypes,
             time_from=time_from,
             time_to=time_to
