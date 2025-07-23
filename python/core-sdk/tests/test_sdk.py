@@ -2,7 +2,10 @@ import pytest
 import requests
 from unittest.mock import MagicMock, patch
 
-from alation_ai_agent_sdk.sdk import AlationAIAgentSDK
+from alation_ai_agent_sdk.sdk import (
+    AlationAIAgentSDK,
+    AlationTools,
+)
 from alation_ai_agent_sdk.api import (
     AUTH_METHOD_USER_ACCOUNT,
     AUTH_METHOD_SERVICE_ACCOUNT,
@@ -278,3 +281,21 @@ def test_error_handling_in_token_validation(mock_requests_post):
         with pytest.raises(AlationAPIError, match="Mocked error in JWT token validation"):
             sdk.api._is_jwt_token_valid()
         mock_jwt_token_valid.assert_called_once()
+
+def test_lineage_beta_tools_disabled_by_default():
+    sdk = AlationAIAgentSDK(
+        base_url=MOCK_BASE_URL,
+        auth_method=AUTH_METHOD_USER_ACCOUNT,
+        auth_params=UserAccountAuthParams(MOCK_USER_ID, MOCK_REFRESH_TOKEN),
+    )
+    assert AlationTools.LINEAGE not in sdk.enabled_beta_tools
+
+def test_check_job_status_tool_explicitly_disabled():
+    sdk = AlationAIAgentSDK(
+        base_url=MOCK_BASE_URL,
+        auth_method=AUTH_METHOD_USER_ACCOUNT,
+        auth_params=UserAccountAuthParams(MOCK_USER_ID, MOCK_REFRESH_TOKEN),
+        disabled_tools={AlationTools.CHECK_JOB_STATUS}
+    )
+    assert AlationTools.CHECK_JOB_STATUS in sdk.disabled_tools
+    assert sdk.check_job_status not in sdk.get_tools()

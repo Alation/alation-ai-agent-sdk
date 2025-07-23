@@ -23,6 +23,15 @@ from .lineage import (
     LineageBatchSizeType,
 )
 
+class AlationTools:
+    AGGREGATED_CONTEXT = "aggregated_context"
+    BULK_RETRIEVAL = "bulk_retrieval"
+    CHECK_JOB_STATUS = "check_job_status"
+    DATA_PRODUCT = "data_product"
+    DATA_QUALITY = "data_quality"
+    LINEAGE = "lineage"
+    UPDATE_METADATA = "update_metadata"
+
 
 class AlationAIAgentSDK:
     """
@@ -40,12 +49,17 @@ class AlationAIAgentSDK:
         base_url: str,
         auth_method: str,
         auth_params: AuthParams,
+        disabled_tools: Optional[set[str]] = None,
+        enabled_beta_tools: Optional[set[str]] = None
     ):
         if not base_url or not isinstance(base_url, str):
             raise ValueError("base_url must be a non-empty string.")
 
         if not auth_method or not isinstance(auth_method, str):
             raise ValueError("auth_method must be a non-empty string.")
+
+        self.disabled_tools = disabled_tools or set()
+        self.enabled_beta_tools = enabled_beta_tools or set()
 
         # Delegate validation of auth_params to AlationAPI
         self.api = AlationAPI(base_url=base_url, auth_method=auth_method, auth_params=auth_params)
@@ -55,6 +69,12 @@ class AlationAIAgentSDK:
         self.update_catalog_asset_metadata_tool = UpdateCatalogAssetMetadataTool(self.api)
         self.check_job_status_tool = CheckJobStatusTool(self.api)
         self.lineage_tool = AlationLineageTool(self.api)
+
+    def set_enabled_beta_tools(self, tools: set[str]):
+        self.enabled_beta_tools = tools
+
+    def set_disabled_tools(self, tools: set[str]):
+        self.disabled_tools = tools
 
     def get_context(
         self, question: str, signature: Optional[Dict[str, Any]] = None
@@ -232,11 +252,17 @@ class AlationAIAgentSDK:
         return self.check_job_status_tool.run(job_id)
 
     def get_tools(self):
-        return [
-            self.context_tool,
-            self.bulk_retrieval_tool,
-            self.data_product_tool,
-            self.update_catalog_asset_metadata_tool,
-            self.check_job_status_tool,
-            self.get_lineage_tool,
-        ]
+        tools = []
+        if not AlationTools.AGGREGATED_CONTEXT in self.disabled_tools:
+            tools.append(self.context_tool)
+        if not AlationTools.BULK_RETRIEVAL in self.disabled_tools:
+            tools.append(self.bulk_retrieval_tool)
+        if not AlationTools.DATA_PRODUCT in self.disabled_tools:
+            tools.append(self.data_product_tool)
+        if not AlationTools.UPDATE_METADATA in self.disabled_tools:
+            tools.append(self.update_catalog_asset_metadata_tool)
+        if not AlationTools.CHECK_JOB_STATUS in self.disabled_tools:
+            tools.append(self.check_job_status_tool)
+        if AlationTools.LINEAGE in self.enabled_beta_tools and not AlationTools.LINEAGE in self.disabled_tools:
+            tools.append(self.get_lineage_tool)
+        return tools
