@@ -23,16 +23,17 @@ class LineagePagination(TypedDict):
     has_more: bool
     request_id: str
 
-type LineageDirectionType = Literal["upstream", "downstream"]
-type LineageExcludedSchemaIdsType = List[int]
-type LineageTimestampType = str
-type LineageKeyTypeType = Literal["id", "fully_qualified_name"]
-type LineageDesignTimeType = Literal[1, 2, 3]
-type LineageOTypeFilterType = Optional[List[str]]
-type LineageGraphProcessingType = Literal['chunked', 'complete']
-type LineageBatchSizeType = int
 
-type LineageResponseRequestIdType = str
+LineageDirectionType = Literal["upstream", "downstream"]
+LineageExcludedSchemaIdsType = List[int]
+LineageTimestampType = str
+LineageKeyTypeType = Literal["id", "fully_qualified_name"]
+LineageDesignTimeType = Literal[1, 2, 3]
+LineageOTypeFilterType = Optional[List[str]]
+LineageGraphProcessingType = Literal['chunked', 'complete']
+LineageBatchSizeType = int
+
+LineageResponseRequestIdType = str
 
 class LineageResponseGraphNeighborNode(TypedDict):
     id: Union[str, int]

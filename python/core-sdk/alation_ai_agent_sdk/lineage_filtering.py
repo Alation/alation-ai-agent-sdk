@@ -1,8 +1,6 @@
 from typing import List, Dict, Set, TypedDict, Union
 
-type OType = str
-type AllowedOTypeSet = set[OType]
-
+OType = str
 class LineageGraphNode(TypedDict):
     fully_qualified_name: str
     id: Union[str, int]
