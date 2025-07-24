@@ -15,7 +15,7 @@ Here are a handful of guides & examples to show you how to work with the Alation
 - [Testing with MCP Inspector](./mcp/testing_with_mcp_inspector.md)
 - [Claude Desktop Integration](./mcp/claude_desktop.md)
 - [LibreChat Integration](./mcp/librechat.md)
-
+- [Code Editor Integration](./mcp/code_editors.md)
 ## LangChain
 
 - [LangChain Integration](../python/dist-langchain/)
