@@ -123,6 +123,6 @@ class AlationErrorClassifier:
             resolution_hint = "You do not have permission to generate a token."
         elif status_code == HTTPStatus.INTERNAL_SERVER_ERROR:
             reason = "Token Generation Failed"
-            resolution_hint = "Alation server failed to process token request."
+            resolution_hint = "Alation server failed to process token request. Retry later or contact Alation support."
 
         return {"reason": reason, "resolution_hint": resolution_hint, "help_links": help_links}

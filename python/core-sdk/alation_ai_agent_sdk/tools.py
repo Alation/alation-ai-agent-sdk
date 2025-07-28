@@ -14,7 +14,13 @@ def min_alation_version(min_version: str):
     def decorator(func):
         def wrapper(self, *args, **kwargs):
             current_version = getattr(self.api, "alation_release_name", None)
-            if not current_version or not is_version_supported(current_version, min_version):
+            if current_version is None:
+                logger.warning(
+                    f"[VersionCheck] Unable to extract Alation version for {self.__class__.__name__}. Required >= {min_version}. Proceeding with caution."
+                )
+                # Continue execution, do not block
+                return func(self, *args, **kwargs)
+            if not is_version_supported(current_version, min_version):
                 logger.warning(
                     f"[VersionCheck] {self.__class__.__name__} blocked: required >= {min_version}, current = {current_version}"
                 )
