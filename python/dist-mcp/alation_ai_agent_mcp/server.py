@@ -6,6 +6,27 @@ from typing import Dict, Any, Optional
 from mcp.server.fastmcp import FastMCP
 from alation_ai_agent_sdk import AlationAIAgentSDK, UserAccountAuthParams, ServiceAccountAuthParams
 from alation_ai_agent_sdk.api import CatalogAssetMetadataPayloadItem
+from mcp.server.auth.settings import AuthSettings, ClientRegistrationOptions
+from pydantic import AnyHttpUrl
+from mcp.server.auth.provider import AccessToken, TokenVerifier
+import httpx
+
+
+class Alation2LOVerifier(TokenVerifier):
+    async def verify_token(self, token: str) -> AccessToken | None:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                "https://genai-gartner.mtse.alationcloud.com/oauth/v2/introspect/",
+                data={"token": token},
+                auth=("client-id", "client-secret"),  # Optional if needed
+            )
+            if resp.status_code == 200 and resp.json().get("active"):
+                return AccessToken(
+                    token=token,
+                    client_id=resp.json().get("client_id", ""),
+                    scopes=resp.json().get("scope", "").split(),
+                )
+        return None
 
 
 def create_server(json_response: bool = False):
@@ -47,7 +68,16 @@ def create_server(json_response: bool = False):
 
     # Initialize FastMCP server
     mcp = FastMCP(
-        name="Alation MCP Server", version="0.4.0", json_response=json_response, http_path="/mcp"
+        name="Alation MCP Server",
+        version="0.4.0",
+        json_response=json_response,
+        http_path="/mcp",
+        token_verifier=Alation2LOVerifier(),
+        auth=AuthSettings(
+            issuer_url=AnyHttpUrl("http://127.0.0.1:9000"),
+            resource_server_url=AnyHttpUrl("http://localhost:8123"),
+            client_registration_options=ClientRegistrationOptions(enabled=True),
+        ),
     )
 
     # Initialize Alation SDK
