@@ -61,7 +61,10 @@ def create_server():
         base_url, auth_method, auth_params, dist_version=f"mcp-{MCP_SERVER_VERSION}"
     )
 
-    if not getattr(alation_sdk.api, "is_cloud", None):
+    is_cloud = getattr(alation_sdk.api, "is_cloud", None)
+    if is_cloud is None:
+        raise RuntimeError("Failed to fetch license info. Unable to determine if the instance is cloud or on-prem.")
+    if not is_cloud:
         raise RuntimeError("This Alation instance is on-prem. MCP tools require a cloud instance.")
 
     alation_version = getattr(alation_sdk.api, "alation_release_name", None)
