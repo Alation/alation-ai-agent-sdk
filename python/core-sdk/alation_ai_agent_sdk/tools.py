@@ -370,7 +370,7 @@ class CheckJobStatusTool:
     def run(self, job_id: int) -> dict:
         return self.api.check_job_status(job_id)
 
-def env_to_tool_list(tool_env_var: Optional[str] = None) -> List[str]:
+def csv_str_to_tool_list(tool_env_var: Optional[str] = None) -> List[str]:
     if tool_env_var is None:
         return []
     tools = []

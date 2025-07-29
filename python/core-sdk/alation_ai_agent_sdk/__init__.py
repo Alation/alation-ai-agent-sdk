@@ -8,7 +8,7 @@ from .sdk import (
     AlationAIAgentSDK,
     AlationTools,
 )
-from .tools import env_to_tool_list
+from .tools import csv_str_to_tool_list
 
 __all__ = [
     "AlationAIAgentSDK",
@@ -17,5 +17,5 @@ __all__ = [
     "AlationAPIError",
     "UserAccountAuthParams",
     "ServiceAccountAuthParams",
-    "env_to_tool_list",
+    "csv_str_to_tool_list",
 ]

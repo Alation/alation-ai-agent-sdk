@@ -1,3 +1,4 @@
+import argparse
 import os
 from typing import (
     Any,
@@ -13,18 +14,18 @@ from alation_ai_agent_sdk import (
     AlationTools,
     UserAccountAuthParams,
     ServiceAccountAuthParams,
-    env_to_tool_list,
+    csv_str_to_tool_list,
 )
 from alation_ai_agent_sdk.api import CatalogAssetMetadataPayloadItem
 
 
-def create_server():
+def create_server(disabled_tools_str: Optional[str], enabled_beta_tools_str: Optional[str]):
     # Load Alation credentials from environment variables
     base_url = os.getenv("ALATION_BASE_URL")
     auth_method = os.getenv("ALATION_AUTH_METHOD")
 
-    tools_disabled = env_to_tool_list(os.getenv("ALATION_DISABLED_TOOLS"))
-    beta_tools_enabled = env_to_tool_list(os.getenv("ALATION_ENABLED_BETA_TOOLS"))
+    tools_disabled = csv_str_to_tool_list(disabled_tools_str if disabled_tools_str is not None else os.getenv("ALATION_DISABLED_TOOLS"))
+    beta_tools_enabled = csv_str_to_tool_list(enabled_beta_tools_str if enabled_beta_tools_str is not None else os.getenv("ALATION_ENABLED_BETA_TOOLS"))
 
     if not base_url or not auth_method:
         raise ValueError(
@@ -153,9 +154,14 @@ mcp = None
 
 
 def run_server():
+    parser = argparse.ArgumentParser(description="Alation MCP Server")
+    parser.add_argument("--disabled-tools", type=str, help="Comma-separated list of tools to disable", required=False)
+    parser.add_argument("--enabled-beta-tools", type=str, help="Comma-separated list of beta tools to enable", required=False)
+    args = parser.parse_args()
+
     """Entry point for running the MCP server"""
     global mcp
-    mcp = create_server()
+    mcp = create_server(disabled_tools_str=args.disabled_tools, enabled_beta_tools_str=args.enabled_beta_tools)
     mcp.run()
 
 
