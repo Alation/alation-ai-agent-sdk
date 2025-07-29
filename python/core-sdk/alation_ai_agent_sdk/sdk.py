@@ -1,6 +1,14 @@
-from typing import Dict, Any, Optional
-
-from .api import AlationAPI, AlationAPIError, AuthParams, CatalogAssetMetadataPayloadItem
+from typing import (
+    Any,
+    Dict,
+    Optional,
+)
+from .api import (
+    AlationAPI,
+    AlationAPIError,
+    AuthParams,
+    CatalogAssetMetadataPayloadItem,
+)
 from .tools import (
     AlationContextTool,
     AlationBulkRetrievalTool,
@@ -69,6 +77,18 @@ class AlationAIAgentSDK:
         self.update_catalog_asset_metadata_tool = UpdateCatalogAssetMetadataTool(self.api)
         self.check_job_status_tool = CheckJobStatusTool(self.api)
         self.lineage_tool = AlationLineageTool(self.api)
+
+    def is_tool_enabled(self, tool_name: str) -> bool:
+        if tool_name in self.disabled_tools:
+            return False
+        if len(self.enabled_beta_tools) == 0:
+            return True
+        beta_tools = {AlationTools.LINEAGE}
+        if tool_name not in beta_tools:
+            return True
+        if tool_name in self.enabled_beta_tools:
+            return True
+        return False
 
     def set_enabled_beta_tools(self, tools: set[str]):
         self.enabled_beta_tools = tools
@@ -253,16 +273,16 @@ class AlationAIAgentSDK:
 
     def get_tools(self):
         tools = []
-        if not AlationTools.AGGREGATED_CONTEXT in self.disabled_tools:
+        if self.is_tool_enabled(AlationTools.AGGREGATED_CONTEXT):
             tools.append(self.context_tool)
-        if not AlationTools.BULK_RETRIEVAL in self.disabled_tools:
+        if self.is_tool_enabled(AlationTools.BULK_RETRIEVAL):
             tools.append(self.bulk_retrieval_tool)
-        if not AlationTools.DATA_PRODUCT in self.disabled_tools:
+        if self.is_tool_enabled(AlationTools.DATA_PRODUCT):
             tools.append(self.data_product_tool)
-        if not AlationTools.UPDATE_METADATA in self.disabled_tools:
+        if self.is_tool_enabled(AlationTools.UPDATE_METADATA):
             tools.append(self.update_catalog_asset_metadata_tool)
-        if not AlationTools.CHECK_JOB_STATUS in self.disabled_tools:
+        if self.is_tool_enabled(AlationTools.CHECK_JOB_STATUS):
             tools.append(self.check_job_status_tool)
-        if AlationTools.LINEAGE in self.enabled_beta_tools and not AlationTools.LINEAGE in self.disabled_tools:
+        if self.is_tool_enabled(AlationTools.LINEAGE):
             tools.append(self.get_lineage_tool)
         return tools

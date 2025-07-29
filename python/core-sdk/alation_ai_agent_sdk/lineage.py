@@ -1,4 +1,5 @@
-from typing import List, Literal, Optional, TypedDict, Union
+from typing import List, Literal, Optional, Union
+from typing_extensions import TypedDict
 
 class LineageDesignTimeOptions:
     ONLY_DESIGN_TIME = 1

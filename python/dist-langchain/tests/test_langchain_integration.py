@@ -54,6 +54,11 @@ def mock_sdk_with_context_tool():
     mock_sdk.check_job_status_tool.run = MagicMock(
         return_value="Expected check job status via SDK run"
     )
+    mock_sdk.get_lineage_tool = MagicMock()
+    mock_sdk.get_lineage_tool.name = "GetLineageToolFromSDK"
+    mock_sdk.get_lineage_tool.description = (
+        "Provides lineage from SDK"
+    )
 
     # Patch .run for StructuredTool.func compatibility
     def run_with_signature(*args, **kwargs):
@@ -64,6 +69,11 @@ def mock_sdk_with_context_tool():
 
     def run_with_bulk_signature(*args, **kwargs):
         return mock_sdk.bulk_retrieval_tool.run(*args, **kwargs)
+
+    """
+    def run_with_lineage_tool(*args, **kwargs):
+        return mock_sdk.get_lineage_tool.run(*args, **kwargs)
+    """
 
     mock_sdk.context_tool.run_with_signature = run_with_signature
     mock_sdk.data_product_tool.run_with_query_or_product_id = run_with_query_or_product_id

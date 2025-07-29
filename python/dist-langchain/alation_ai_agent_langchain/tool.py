@@ -1,6 +1,17 @@
 from typing import Any, Optional
 from alation_ai_agent_sdk import AlationAIAgentSDK
 from alation_ai_agent_sdk.api import CatalogAssetMetadataPayloadItem
+from alation_ai_agent_sdk.lineage import (
+    LineageBatchSizeType,
+    LineageDesignTimeType,
+    LineageDirectionType,
+    LineageExcludedSchemaIdsType,
+    LineageGraphProcessingType,
+    LineageOTypeFilterType,
+    LineagePagination,
+    LineageRootNode,
+    LineageTimestampType,
+)
 from langchain.tools import StructuredTool
 
 
@@ -107,6 +118,47 @@ def get_check_job_status_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     return StructuredTool.from_function(
         name=check_job_status_tool.name,
         description=check_job_status_tool.description,
+        func=run_with_args,
+        args_schema=None,
+    )
+
+def get_alation_lineage_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
+    lineage_tool = sdk.get_lineage_tool
+
+    def run_with_args(
+        root_node: LineageRootNode,
+        direction: LineageDirectionType,
+        limit: Optional[int] = 1000,
+        batch_size: Optional[LineageBatchSizeType] = 1000,
+        pagination: Optional[LineagePagination] = None,
+        processing_mode: Optional[LineageGraphProcessingType] = None,
+        show_temporal_objects: Optional[bool] = False,
+        design_time: Optional[LineageDesignTimeType] = None,
+        max_depth: Optional[int] = 10,
+        excluded_schema_ids: Optional[LineageExcludedSchemaIdsType] = None,
+        allowed_otypes: Optional[LineageOTypeFilterType] = None,
+        time_from: Optional[LineageTimestampType] = None,
+        time_to: Optional[LineageTimestampType] = None,
+    ):
+        return lineage_tool.run(
+            root_node=root_node,
+            direction=direction,
+            limit=limit,
+            batch_size=batch_size,
+            pagination=pagination,
+            processing_mode=processing_mode,
+            show_temporal_objects=show_temporal_objects,
+            design_time=design_time,
+            max_depth=max_depth,
+            excluded_schema_ids=excluded_schema_ids,
+            allowed_otypes=allowed_otypes,
+            time_from=time_from,
+            time_to=time_to,
+        )
+
+    return StructuredTool.from_function(
+        name=lineage_tool.name,
+        description=lineage_tool.description,
         func=run_with_args,
         args_schema=None,
     )
