@@ -14,7 +14,7 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
 )
 
-MCP_SERVER_VERSION = "0.4.0"
+MCP_SERVER_VERSION = "0.5.0"
 
 
 def create_server():
@@ -63,7 +63,9 @@ def create_server():
 
     is_cloud = getattr(alation_sdk.api, "is_cloud", None)
     if is_cloud is None:
-        raise RuntimeError("Failed to fetch license info. Unable to determine if the instance is cloud or on-prem.")
+        raise RuntimeError(
+            "Failed to fetch license info. Unable to determine if the instance is cloud or on-prem."
+        )
     if not is_cloud:
         raise RuntimeError("This Alation instance is on-prem. MCP tools require a cloud instance.")
 
