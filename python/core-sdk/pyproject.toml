@@ -1,6 +1,6 @@
 [project]
 name = "alation-ai-agent-sdk"
-version = "0.4.0"
+version = "0.5.0"
 description = "Alation Agent SDK"
 authors = [
   { name="Jagannath (Jags) Saragadam", email="jags.saragadam@alation.com"},
