@@ -30,7 +30,7 @@ logging.basicConfig(
 MCP_SERVER_VERSION = "0.5.0"
 
 
-def create_server(disabled_tools_str: Optional[str], enabled_beta_tools_str: Optional[str]):
+def create_server(disabled_tools_str: Optional[str] = None, enabled_beta_tools_str: Optional[str] = None):
     # Load Alation credentials from environment variables
     base_url = os.getenv("ALATION_BASE_URL")
     auth_method = os.getenv("ALATION_AUTH_METHOD")
