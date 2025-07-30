@@ -352,3 +352,4 @@ def test_check_job_status_tool_explicitly_disabled(
     )
     assert AlationTools.CHECK_JOB_STATUS in sdk.disabled_tools
     assert sdk.check_job_status not in sdk.get_tools()
+

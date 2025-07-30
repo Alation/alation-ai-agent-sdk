@@ -252,4 +252,42 @@ def test_create_server_service_account(
     )
     assert mcp_result is mock_mcp_instance
 
-# TODO: add test for env handling and CLI cases
+@patch("alation_ai_agent_mcp.server.create_server")
+def test_run_server_cli_no_arguments(mock_create_server):
+    with patch("alation_ai_agent_mcp.server.argparse") as mock_argparse:
+        arg_parser = MagicMock()
+        mock_argparse.ArgumentParser.return_value = arg_parser
+        known_args_instance = MagicMock()
+        arg_parser.parse_known_args.return_value = (known_args_instance,)
+        known_args_instance.disabled_tools = None
+        known_args_instance.enabled_beta_tools = None
+
+        server.mcp = None  # Reset global before test
+
+        server.run_server()
+
+        mock_create_server.assert_called_once()
+        mock_create_server.assert_called_with(
+            disabled_tools_str=None,
+            enabled_beta_tools_str=None
+        )
+
+@patch("alation_ai_agent_mcp.server.create_server")
+def test_run_server_cli_with_arguments(mock_create_server):
+    with patch("alation_ai_agent_mcp.server.argparse") as mock_argparse:
+        arg_parser = MagicMock()
+        mock_argparse.ArgumentParser.return_value = arg_parser
+        known_args_instance = MagicMock()
+        arg_parser.parse_known_args.return_value = (known_args_instance,)
+        known_args_instance.disabled_tools = 'tool1,tool2'
+        known_args_instance.enabled_beta_tools = 'tool3'
+
+        server.mcp = None  # Reset global before test
+
+        server.run_server()
+
+        mock_create_server.assert_called_once()
+        mock_create_server.assert_called_with(
+            disabled_tools_str='tool1,tool2',
+            enabled_beta_tools_str='tool3'
+        )

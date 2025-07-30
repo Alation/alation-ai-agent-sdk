@@ -186,7 +186,8 @@ def run_server():
     parser = argparse.ArgumentParser(description="Alation MCP Server")
     parser.add_argument("--disabled-tools", type=str, help="Comma-separated list of tools to disable", required=False)
     parser.add_argument("--enabled-beta-tools", type=str, help="Comma-separated list of beta tools to enable", required=False)
-    args, unknown_args = parser.parse_known_args()
+    # Uses parse_known_args() to prevent exit(2) when there are unknown arguments
+    args = parser.parse_known_args()[0]
 
     """Entry point for running the MCP server"""
     global mcp
