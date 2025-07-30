@@ -54,6 +54,15 @@ def mock_sdk_with_context_tool():
     mock_sdk.check_job_status_tool.run = MagicMock(
         return_value="Expected check job status via SDK run"
     )
+    # Add mock for generate data product
+    mock_sdk.generate_data_product_tool = MagicMock()
+    mock_sdk.generate_data_product_tool.name = "GenerateDataProductToolFromSDK"
+    mock_sdk.generate_data_product_tool.description = (
+        "Generates data product schemas from SDK's generate_data_product_tool."
+    )
+    mock_sdk.generate_data_product_tool.run = MagicMock(
+        return_value="Expected generate data product schema via SDK run"
+    )
 
     # Patch .run for StructuredTool.func compatibility
     def run_with_signature(*args, **kwargs):
