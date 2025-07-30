@@ -112,6 +112,14 @@ def create_server():
         result = alation_sdk.check_job_status(job_id)
         return str(result)
 
+    @mcp.tool(
+        name=alation_sdk.generate_data_product_tool.name,
+        description=alation_sdk.generate_data_product_tool.description,
+    )
+    def generate_data_product() -> str:
+        result = alation_sdk.generate_data_product()
+        return result
+
     return mcp
 
 

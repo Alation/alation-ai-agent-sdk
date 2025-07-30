@@ -110,3 +110,16 @@ def get_check_job_status_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
         func=run_with_args,
         args_schema=None,
     )
+
+def get_generate_data_product_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
+    generate_data_product_tool = sdk.generate_data_product_tool
+
+    def run_with_no_args():
+        return generate_data_product_tool.run()
+
+    return StructuredTool.from_function(
+        name=generate_data_product_tool.name,
+        description=generate_data_product_tool.description,
+        func=run_with_no_args,
+        args_schema=None,
+    )

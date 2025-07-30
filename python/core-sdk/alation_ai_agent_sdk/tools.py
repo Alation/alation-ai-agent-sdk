@@ -1,6 +1,8 @@
 from typing import Dict, Any, Optional
 import re
 import logging
+import requests
+from requests.exceptions import RequestException
 
 logger = logging.getLogger(__name__)
 from alation_ai_agent_sdk.api import AlationAPI, AlationAPIError, CatalogAssetMetadataPayloadItem
@@ -312,3 +314,235 @@ class CheckJobStatusTool:
 
     def run(self, job_id: int) -> dict:
         return self.api.check_job_status(job_id)
+
+
+class GenerateDataProductTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+        self._cached_schema = None  # Cache the schema to avoid repeated requests
+
+    @staticmethod
+    def _get_name() -> str:
+        return "generate_data_product"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
+        Returns a complete set of instructions, including the current Alation Data Product schema and a valid example, for creating an Alation Data Product. Use this to prepare the AI for a data product creation task.
+
+        This tool provides:
+        - The current Alation Data Product schema specification (fetched dynamically from your instance)
+        - A validated example following the schema
+        - Detailed instructions for converting user input to valid YAML
+        - Guidelines for handling required vs optional fields
+        - Rules for avoiding hallucination of data not provided by the user
+
+        Use this tool when you need to:
+        - Convert semantic layers to Alation Data Products
+        - Create data product specifications from user descriptions
+        - Understand the current schema requirements
+        - Get examples of properly formatted data products
+
+        No parameters required - returns the complete instruction set with the latest schema from your Alation instance.
+        """
+
+    def _fetch_schema_from_instance(self) -> Optional[str]:
+        """
+        Fetch the data product schema from the Alation instance.
+
+        Returns:
+            str: The schema content as YAML string, or None if fetch fails
+        """
+        if not self.api or not hasattr(self.api, 'base_url'):
+            logger.warning("No API instance available to fetch schema")
+            return None
+
+        schema_url = f"{self.api.base_url}/static/swagger/specs/data_products/product_schema.yaml"
+
+        try:
+            logger.debug(f"Fetching data product schema from: {schema_url}")
+            response = requests.get(schema_url, timeout=10)
+            response.raise_for_status()
+
+            schema_content = response.text
+            logger.debug("Successfully fetched data product schema from instance")
+            return schema_content
+
+        except RequestException as e:
+            logger.warning(f"Failed to fetch schema from {schema_url}: {e}")
+            return None
+        except Exception as e:
+            logger.warning(f"Unexpected error fetching schema: {e}")
+            return None
+
+    def _get_schema_content(self) -> str:
+        """
+        Get the schema content, trying to fetch from instance first, then falling back to hardcoded version.
+        """
+        # Check cache first
+        if self._cached_schema is not None:
+            return self._cached_schema
+
+        # Try to fetch from instance
+        schema_content = self._fetch_schema_from_instance()
+
+        if schema_content:
+            # Cache the fetched schema
+            self._cached_schema = schema_content
+            return schema_content
+
+        # If we get here, the fetch failed - raise an error
+        raise AlationAPIError(
+            "Failed to fetch data product schema from Alation instance",
+            reason="Schema Fetch Failed",
+            resolution_hint="Ensure your Alation instance is accessible and the schema endpoint is available. Check network connectivity and instance version.",
+            alation_release_name=getattr(self.api, "alation_release_name", None),
+            dist_version=getattr(self.api, "dist_version", None),
+        )
+
+    @staticmethod
+    def _get_example_content() -> str:
+        return """
+    product:
+      productId: "marketing.db.customer_360_view"
+      version: "1.0"
+      contactEmail: "data-gov-team@alation.com"
+      contactName: "Data Governance Team"
+      en:
+        name: "Customer 360 View"
+        shortDescription: "Comprehensive view of active customers combining CRM, sales, and support data"
+        description: |
+          A comprehensive, 360-degree view of our active customers. This product combines data from our CRM, sales, and support systems to provide a unified customer profile. It is the gold standard for all customer-related analytics.
+
+          ## Key Concepts
+          - **Active Customer:** A customer who has made a purchase in the last 12 months.
+          - **Data Quality Note:** Customer names are not guaranteed to be unique. Use customer_id for joins.
+
+          ## Relationships
+          - `customer_profile(customer_id)` -> `customer_monthly_spend(customer_id)`
+
+      deliverySystems:
+        snowflake_prod:
+          type: sql
+          uri: "snowflake://company.snowflakecomputing.com/PROD_DB"
+
+      recordSets:
+        customer_profile:
+          name: "customer_profile"
+          displayName: "Customer Profile"
+          description: "Core customer information and attributes"
+          schema:
+            - name: "customer_id"
+              displayName: "Customer ID"
+              type: "integer"
+              description: "Unique identifier for the customer."
+            - name: "full_name"
+              displayName: "Full Name"
+              type: "string"
+              description: "Full name of the customer."
+            - name: "email"
+              displayName: "Email Address"
+              type: "string"
+              description: "Primary email address for the customer."
+          dataAccess:
+            - type: "sql"
+              qualifiedName:
+                schema: "marketing"
+                table: "customer_profile"
+
+        customer_monthly_spend:
+          name: "customer_monthly_spend"
+          displayName: "Customer Monthly Spend"
+          description: "Monthly spending patterns per customer"
+          schema:
+            - name: "customer_id"
+              displayName: "Customer ID"
+              type: "integer"
+              description: "Foreign key to the customer_profile record set."
+            - name: "month_year"
+              displayName: "Month Year"
+              type: "date"
+              description: "The month and year for this spending record."
+            - name: "total_spend_usd"
+              displayName: "Total Spend (USD)"
+              type: "number"
+              description: "Total amount spent by the customer in that month, in USD."
+          sample:
+            type: "mock"
+            data: |
+              customer_id,month_year,total_spend_usd
+              123,2024-01-01,1250.50
+              124,2024-01-01,890.25
+              123,2024-02-01,1100.00
+          dataAccess:
+            - type: "sql"
+              qualifiedName:
+                schema: "marketing"
+                table: "customer_monthly_spend"
+    """
+
+    @staticmethod
+    def _get_prompt_instructions() -> str:
+        return """
+    You are an AI assistant for Alation. You have been provided with the current Alation Data Product schema and a valid example. Your task is to convert user-provided semantic layers or data specifications into valid Alation Data Product YAML files.
+
+    **CRITICAL: DO NOT HALLUCINATE OR ADD ANY INFORMATION NOT PROVIDED BY THE USER**
+
+    **Your instructions are:**
+    1. You **MUST** strictly adhere to the provided schema below.
+    2. You **MUST** use the provided example below as a template for style and format.
+    3. **NEVER ADD, INVENT, OR HALLUCINATE ANY REALISTIC-LOOKING INFORMATION not present in the user's input. This includes:**
+       - Actual contact emails, names, or personal information
+       - Actual database URIs, connection strings, or system details
+       - Business logic or descriptions beyond what the user specified
+       - Access instructions or organizational details
+       - Sample data or mock values
+    4. **Field Handling Rules:**
+       - **Required fields**: If not provided by user, use placeholders like "TBD"
+       - **Optional fields**: If not provided by user, omit the field entirely
+       - **Never generate realistic-looking values** for any field type
+    5. **Specific Field Guidelines:**
+       - contactEmail: Use "TBD" if not provided (required field)
+       - contactName: Use "TBD" if not provided (required field)  
+       - sample: Omit entirely if not provided (optional field)
+       - logoUrl: Omit entirely if not provided (optional field)
+    6. The final output must be a single, valid YAML file that passes schema validation.
+
+    **Key Schema Requirements:**
+    - `recordSets` is an OBJECT (not array) where each key is a record set identifier
+    - Each record set must have `name`, `displayName`, `description`, `schema`, and optionally `sample` and `dataAccess`
+    - Schema fields must include `name`, `displayName`, `description`, and `type`
+    - `deliverySystems` is required and should be an object with at least one delivery system
+    - `en.name` is required, `en.description` and `en.shortDescription` are separate fields
+    - `sample` section is optional - omit entirely if user doesn't provide actual sample data
+    - `logoUrl` is optional - omit entirely if user doesn't provide it
+    - Optional fields should only be included when user explicitly provides values
+    - **REMINDER: Use only information from user input - NO HALLUCINATIONS**
+
+    ---
+    **THE SCHEMA (fetched from your Alation instance):**
+    {schema}
+
+    ---
+    **THE EXAMPLE:**
+    {example}
+
+    **FINAL REMINDER: Only convert what the user provided. For required fields, use "TBD" placeholders when missing. For optional fields, omit entirely when not provided. Never invent realistic-looking contact details, system information, sample data, or other metadata.**
+    """
+
+    def run(self) -> str:
+        """
+        Assembles and returns the complete instructional prompt for creating
+        an Alation Data Product using the current schema from the instance.
+        """
+        schema_content = self._get_schema_content()
+        example_content = self._get_example_content()
+        prompt_instructions = self._get_prompt_instructions()
+
+        final_instructions = prompt_instructions.format(
+            schema=schema_content,
+            example=example_content
+        )
+        return final_instructions
