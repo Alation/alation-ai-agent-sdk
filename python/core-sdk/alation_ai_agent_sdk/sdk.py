@@ -58,7 +58,8 @@ class AlationAIAgentSDK:
         auth_method: str,
         auth_params: AuthParams,
         disabled_tools: Optional[set[str]] = None,
-        enabled_beta_tools: Optional[set[str]] = None
+        enabled_beta_tools: Optional[set[str]] = None,
+        dist_version: Optional[str] = None,
     ):
         if not base_url or not isinstance(base_url, str):
             raise ValueError("base_url must be a non-empty string.")
@@ -70,7 +71,12 @@ class AlationAIAgentSDK:
         self.enabled_beta_tools = enabled_beta_tools or set()
 
         # Delegate validation of auth_params to AlationAPI
-        self.api = AlationAPI(base_url=base_url, auth_method=auth_method, auth_params=auth_params)
+        self.api = AlationAPI(
+            base_url=base_url,
+            auth_method=auth_method,
+            auth_params=auth_params,
+            dist_version=dist_version,
+        )
         self.context_tool = AlationContextTool(self.api)
         self.bulk_retrieval_tool = AlationBulkRetrievalTool(self.api)
         self.data_product_tool = AlationGetDataProductTool(self.api)
@@ -106,10 +112,7 @@ class AlationAIAgentSDK:
         - JSON context result (dict)
         - Error object with keys: message, reason, resolution_hint, response_body
         """
-        try:
-            return self.api.get_context_from_catalog(question, signature)
-        except AlationAPIError as e:
-            return {"error": e.to_dict()}
+        return self.context_tool.run(question, signature)
 
     def get_bulk_objects(self, signature: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -132,10 +135,7 @@ class AlationAIAgentSDK:
                 }
             }
         """
-        try:
-            return self.api.get_bulk_objects_from_catalog(signature)
-        except AlationAPIError as e:
-            return {"error": e.to_dict()}
+        return self.bulk_retrieval_tool.run(signature)
 
     def get_data_products(
         self, product_id: Optional[str] = None, query: Optional[str] = None
@@ -155,10 +155,7 @@ class AlationAIAgentSDK:
             ValueError: If neither product_id nor query is provided.
             AlationAPIError: On network, API, or response errors.
         """
-        try:
-            return self.api.get_data_products(product_id, query)
-        except AlationAPIError as e:
-            return {"error": e.to_dict()}
+        return self.data_product_tool.run(product_id, query)
 
     def get_lineage(
         self,

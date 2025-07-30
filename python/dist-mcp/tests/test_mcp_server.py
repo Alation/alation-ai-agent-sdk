@@ -1,8 +1,44 @@
+import requests
+import pytest
 import os
 import pytest
 from unittest.mock import patch, MagicMock
 from alation_ai_agent_mcp import server
 from alation_ai_agent_sdk import UserAccountAuthParams, ServiceAccountAuthParams
+
+
+@pytest.fixture(autouse=True)
+def global_network_mocks(monkeypatch):
+    # Mock requests.post for token generation
+    def mock_post(url, *args, **kwargs):
+        if "createAPIAccessToken" in url or "oauth/v2/token" in url:
+            response = MagicMock()
+            response.status_code = 200
+            response.json.return_value = {
+                "api_access_token": "mock-access-token",
+                "access_token": "mock-jwt-access-token",
+                "status": "success",
+            }
+            return response
+        return MagicMock(status_code=200, json=MagicMock(return_value={}))
+
+    monkeypatch.setattr(requests, "post", mock_post)
+
+    # Mock requests.get for license and version
+    def mock_get(url, *args, **kwargs):
+        if "/api/v1/license" in url:
+            response = MagicMock()
+            response.status_code = 200
+            response.json.return_value = {"is_cloud": True}
+            return response
+        if "/full_version" in url:
+            response = MagicMock()
+            response.status_code = 200
+            response.json.return_value = {"ALATION_RELEASE_NAME": "2025.1.2"}
+            return response
+        return MagicMock(status_code=200, json=MagicMock(return_value={}))
+
+    monkeypatch.setattr(requests, "get", mock_get)
 
 
 @pytest.fixture(autouse=True)
@@ -92,9 +128,14 @@ def test_create_server_success(manage_environment_variables, mock_alation_sdk, m
 
     mcp_result = server.create_server()
 
-    mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version="0.4.0")
+    mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version="0.5.0")
     mock_sdk_class.assert_called_once_with(
-        "https://mock-alation.com", "user_account", UserAccountAuthParams(12345, "mock-token"), disabled_tools=set(), enabled_beta_tools=set()
+        "https://mock-alation.com",
+        "user_account",
+        UserAccountAuthParams(12345, "mock-token"),
+        dist_version="mcp-0.5.0",
+        disabled_tools=set(),
+        enabled_beta_tools=set(),
     )
     assert mcp_result is mock_mcp_instance
 
@@ -200,11 +241,12 @@ def test_create_server_service_account(
 
     mcp_result = server.create_server()
 
-    mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version="0.4.0")
+    mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version="0.5.0")
     mock_sdk_class.assert_called_once_with(
         "https://mock-alation.com",
         "service_account",
         ServiceAccountAuthParams("mock-client-id", "mock-client-secret"),
+        dist_version="mcp-0.5.0",
         disabled_tools=set(),
         enabled_beta_tools=set(),
     )

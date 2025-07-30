@@ -18,6 +18,17 @@ from alation_ai_agent_sdk import (
 )
 from alation_ai_agent_sdk.api import CatalogAssetMetadataPayloadItem
 
+import logging
+
+logger = logging.getLogger("alation.mcp.server")
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
+
+MCP_SERVER_VERSION = "0.5.0"
+
 
 def create_server(disabled_tools_str: Optional[str], enabled_beta_tools_str: Optional[str]):
     # Load Alation credentials from environment variables
@@ -60,10 +71,28 @@ def create_server(disabled_tools_str: Optional[str], enabled_beta_tools_str: Opt
         )
 
     # Initialize FastMCP server
-    mcp = FastMCP(name="Alation MCP Server", version="0.4.0")
+    mcp = FastMCP(name="Alation MCP Server", version=MCP_SERVER_VERSION)
 
     # Initialize Alation SDK
-    alation_sdk = AlationAIAgentSDK(base_url, auth_method, auth_params, disabled_tools=set(tools_disabled), enabled_beta_tools=set(beta_tools_enabled))
+    alation_sdk = AlationAIAgentSDK(base_url, auth_method, auth_params,
+                                    dist_version=f"mcp-{MCP_SERVER_VERSION}",
+                                    disabled_tools=set(tools_disabled),
+                                    enabled_beta_tools=set(beta_tools_enabled),
+    )
+
+    is_cloud = getattr(alation_sdk.api, "is_cloud", None)
+    if is_cloud is None:
+        raise RuntimeError(
+            "Failed to fetch license info. Unable to determine if the instance is cloud or on-prem."
+        )
+    if not is_cloud:
+        raise RuntimeError("This Alation instance is on-prem. MCP tools require a cloud instance.")
+
+    alation_version = getattr(alation_sdk.api, "alation_release_name", None)
+    is_cloud = getattr(alation_sdk.api, "is_cloud", None)
+    logger.info(
+        f"Alation MCP Server initializing |Alation version: {alation_version} | Cloud instance: {is_cloud} | dist_version: {f'mcp-{MCP_SERVER_VERSION}'}"
+    )
 
     if alation_sdk.is_tool_enabled(AlationTools.AGGREGATED_CONTEXT):
         @mcp.tool(name=alation_sdk.context_tool.name, description=alation_sdk.context_tool.description)

@@ -41,7 +41,7 @@ CONTEXT_RESPONSE_SUCCESS = {"some_context_key": "some_context_value"}
 
 @pytest.fixture
 def mock_requests_post(monkeypatch):
-    """Mocks requests.post with a flexible router for different URLs."""
+    """Mocks requests.post for all relevant endpoints."""
     mock_post_responses = {}
 
     def _add_mock_response(
@@ -72,13 +72,19 @@ def mock_requests_post(monkeypatch):
 
     def mock_post_router(*args, **kwargs):
         url = args[0]
-
+        # Match all relevant endpoints
         if "createAPIAccessToken" in url:
             if "createAPIAccessToken" in mock_post_responses:
                 return mock_post_responses["createAPIAccessToken"](*args, **kwargs)
         elif "auth/accessToken" in url:
             if "auth/accessToken" in mock_post_responses:
                 return mock_post_responses["auth/accessToken"](*args, **kwargs)
+        elif "oauth/v2/token" in url:
+            if "oauth/v2/token" in mock_post_responses:
+                return mock_post_responses["oauth/v2/token"](*args, **kwargs)
+        elif "context/" in url:
+            if "context/" in mock_post_responses:
+                return mock_post_responses["context/"](*args, **kwargs)
 
         # Fallback for unmocked POST requests
         fallback_response = MagicMock(spec=requests.Response)
@@ -95,7 +101,7 @@ def mock_requests_post(monkeypatch):
 
 @pytest.fixture
 def mock_requests_get(monkeypatch):
-    """Mocks requests.get for context API calls."""
+    """Mocks requests.get for all relevant endpoints."""
     mock_get_responses = {}
 
     def _add_mock_response(
@@ -126,9 +132,16 @@ def mock_requests_get(monkeypatch):
 
     def mock_get_router(*args, **kwargs):
         url = args[0]
+        # Match all relevant endpoints
         if "context/" in url:
             if "context/" in mock_get_responses:
                 return mock_get_responses["context/"](*args, **kwargs)
+        elif "/api/v1/license" in url:
+            if "license" in mock_get_responses:
+                return mock_get_responses["license"](*args, **kwargs)
+        elif "/full_version" in url:
+            if "full_version" in mock_get_responses:
+                return mock_get_responses["full_version"](*args, **kwargs)
 
         # Fallback for unmocked GET requests
         fallback_response = MagicMock(spec=requests.Response)
@@ -146,28 +159,38 @@ def mock_requests_get(monkeypatch):
 # --- SDK Initialization Tests ---
 
 
-def test_sdk_valid_initialization_user_account():
+def test_sdk_valid_initialization_user_account(mock_requests_post, mock_requests_get):
     """Test valid SDK init with user_account auth method."""
+    mock_requests_post("createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS)
+    mock_requests_get("license", response_json={"is_cloud": True})
+    mock_requests_get("full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"})
     sdk = AlationAIAgentSDK(
         base_url=MOCK_BASE_URL,
         auth_method=AUTH_METHOD_USER_ACCOUNT,
         auth_params=UserAccountAuthParams(MOCK_USER_ID, MOCK_REFRESH_TOKEN),
+        dist_version="test-dist-version",
     )
     assert sdk.api.auth_method == AUTH_METHOD_USER_ACCOUNT
     assert sdk.api.user_id == MOCK_USER_ID
     assert sdk.api.refresh_token == MOCK_REFRESH_TOKEN
+    assert sdk.api.dist_version == "test-dist-version"
 
 
-def test_sdk_valid_initialization_service_account():
+def test_sdk_valid_initialization_service_account(mock_requests_post, mock_requests_get):
     """Test valid SDK init with service_account auth method."""
+    mock_requests_post("oauth/v2/token", response_json=JWT_RESPONSE_SUCCESS)
+    mock_requests_get("license", response_json={"is_cloud": True})
+    mock_requests_get("full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"})
     sdk = AlationAIAgentSDK(
         base_url=MOCK_BASE_URL,
         auth_method=AUTH_METHOD_SERVICE_ACCOUNT,
         auth_params=ServiceAccountAuthParams(MOCK_CLIENT_ID, MOCK_CLIENT_SECRET),
+        dist_version="test-dist-version",
     )
     assert sdk.api.auth_method == AUTH_METHOD_SERVICE_ACCOUNT
     assert sdk.api.client_id == MOCK_CLIENT_ID
     assert sdk.api.client_secret == MOCK_CLIENT_SECRET
+    assert sdk.api.dist_version == "test-dist-version"
 
 
 @pytest.mark.parametrize(
@@ -198,7 +221,12 @@ def test_sdk_valid_initialization_service_account():
 def test_sdk_invalid_initialization(auth_method, auth_params, expected_error_message_part):
     """Test invalid SDK initialization scenarios."""
     with pytest.raises(ValueError) as excinfo:
-        AlationAIAgentSDK(base_url=MOCK_BASE_URL, auth_method=auth_method, auth_params=auth_params)
+        AlationAIAgentSDK(
+            base_url=MOCK_BASE_URL,
+            auth_method=auth_method,
+            auth_params=auth_params,
+            dist_version="test-dist-version",
+        )
     assert expected_error_message_part in str(excinfo.value)
 
 
@@ -229,12 +257,16 @@ def test_token_reuse_and_refresh(
 ):
     """Test token reuse and refresh for both auth methods."""
     mock_requests_post("createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS)
+    mock_requests_post("oauth/v2/token", response_json=JWT_RESPONSE_SUCCESS)
+    mock_requests_get("license", response_json={"is_cloud": True})
+    mock_requests_get("full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"})
     mock_requests_get("context/", response_json=CONTEXT_RESPONSE_SUCCESS)
 
     sdk = AlationAIAgentSDK(
         base_url=MOCK_BASE_URL,
         auth_method=auth_method,
         auth_params=auth_params,
+        dist_version="test-dist-version",
     )
     sdk.api.access_token = "mock-access-token"  # Ensure access_token is set
 
@@ -262,6 +294,7 @@ def test_error_handling_in_token_validation(mock_requests_post):
         base_url=MOCK_BASE_URL,
         auth_method=AUTH_METHOD_USER_ACCOUNT,
         auth_params=UserAccountAuthParams(MOCK_USER_ID, MOCK_REFRESH_TOKEN),
+        dist_version="test-dist-version",
     )
 
     with patch.object(
