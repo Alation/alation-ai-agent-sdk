@@ -7,6 +7,7 @@ from .tools import (
     GetDataProductTool,
     UpdateCatalogAssetMetadataTool,
     CheckJobStatusTool,
+    GenerateDataProductTool,
 )
 
 
@@ -46,6 +47,7 @@ class AlationAIAgentSDK:
         self.data_product_tool = GetDataProductTool(self.api)
         self.update_catalog_asset_metadata_tool = UpdateCatalogAssetMetadataTool(self.api)
         self.check_job_status_tool = CheckJobStatusTool(self.api)
+        self.generate_data_product_tool = GenerateDataProductTool(self.api)
 
     def get_context(
         self, question: str, signature: Optional[Dict[str, Any]] = None
@@ -150,6 +152,21 @@ class AlationAIAgentSDK:
         """
         return self.check_job_status_tool.run(job_id)
 
+    def generate_data_product(self) -> str:
+        """
+        Generate complete instructions for creating Alation Data Products.
+
+        Returns a comprehensive guide including:
+        - The current Alation Data Product schema
+        - A validated example following the schema
+        - Detailed instructions for converting user input to valid YAML
+
+        Returns:
+            str: Complete instruction set for data product creation
+        """
+        return self.generate_data_product_tool.run()
+
+
     def get_tools(self):
         return [
             self.context_tool,
@@ -157,4 +174,5 @@ class AlationAIAgentSDK:
             self.data_product_tool,
             self.update_catalog_asset_metadata_tool,
             self.check_job_status_tool,
+            self.generate_data_product_tool,
         ]
