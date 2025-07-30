@@ -522,7 +522,7 @@ class GenerateDataProductTool:
     - **REMINDER: Use only information from user input - NO HALLUCINATIONS**
 
     ---
-    **THE SCHEMA (fetched from your Alation instance):**
+    **THE SCHEMA:**
     {schema}
 
     ---

@@ -65,7 +65,7 @@ def generate_data_product(
     print(f"Filtering by domain IDs: {domain_ids}")
 
     # STEP 1: Fetch context (tables + SQL patterns in one go)
-    print("1️⃣ Fetching catalog context...")
+    print("Step 1: Fetching catalog context...")
 
     try:
         # Get tables with relationships and columns
@@ -90,7 +90,7 @@ def generate_data_product(
             }
         })
     except AlationAPIError as e:
-        print(f"⚠️  Warning: Error fetching tables: {e}")
+        print(f"Warning: Error fetching tables: {e}")
         tables = {}
 
     try:
@@ -107,29 +107,19 @@ def generate_data_product(
             }
         })
     except AlationAPIError as e:
-        print(f"⚠️  Warning: Error fetching queries: {e}")
+        print(f"Warning: Error fetching queries: {e}")
         queries = {}
 
     # STEP 2: Get schema instructions from your Alation instance
-    print("2️⃣ Getting latest schema instructions...")
+    print("Step 2: Getting latest schema instructions...")
     try:
         instructions = sdk.generate_data_product()
+        print(instructions)
     except (AttributeError, AlationAPIError) as e:
-        print(f"⚠️  Warning: Could not fetch schema from Alation instance: {e}")
-        print("   Using fallback instructions...")
-        instructions = """
-You are creating an Alation Data Product YAML specification. 
-
-Use the provided table and query information to create a comprehensive data product YAML.
-Include all relevant tables as recordSets with their columns and descriptions.
-Use "TBD" for any required fields not provided in the context.
-Only include information that was provided - do not hallucinate realistic data.
-
-Format as valid YAML following Alation Data Product schema.
-"""
+        print(f"Warning: Could not fetch schema from Alation instance: {e}")
 
     # STEP 3: Generate YAML using AI model
-    print("3️⃣ Generating data product YAML...")
+    print("Step 3: Generating data product YAML...")
 
     # Create context for AI model
     context_text = _format_context(tables, queries, product_name)
@@ -145,7 +135,7 @@ Generate the YAML for "{product_name}" data product.
     # TODO: Replace with your AI model call
     yaml_result = _call_ai_model(prompt, openai_client)
 
-    print("✅ Data product created!")
+    print("Data product created!")
     return yaml_result
 
 
@@ -206,7 +196,7 @@ def _call_ai_model(prompt: str, openai_client: openai.OpenAI) -> str:
         Generated YAML string for Alation Data Product
     """
 
-    print(f"📝 Sending prompt to OpenAI GPT-4 ({len(prompt)} characters)")
+    print(f"Sending prompt to OpenAI GPT-4o ({len(prompt)} characters)")
 
     try:
         response = openai_client.chat.completions.create(
@@ -226,19 +216,19 @@ def _call_ai_model(prompt: str, openai_client: openai.OpenAI) -> str:
         )
 
         yaml_content = response.choices[0].message.content.strip()
-        print("✅ Successfully generated YAML from OpenAI")
+        print("Successfully generated YAML from OpenAI")
         return yaml_content
 
     except openai.APIError as e:
-        print(f"❌ OpenAI API Error: {e}")
+        print(f"OpenAI API Error: {e}")
         return f"# Error generating YAML: OpenAI API Error - {e}"
 
     except openai.RateLimitError as e:
-        print(f"⏳ OpenAI Rate Limit Error: {e}")
+        print(f"OpenAI Rate Limit Error: {e}")
         return f"# Error generating YAML: Rate limit exceeded - {e}"
 
     except Exception as e:
-        print(f"❌ Unexpected error calling OpenAI: {e}")
+        print(f"Unexpected error calling OpenAI: {e}")
         return f"# Error generating YAML: Unexpected error - {e}"
 
 
@@ -303,11 +293,11 @@ def main():
         if not domain_ids:
             raise ValueError("No valid domain IDs provided")
     except Exception as e:
-        print(f"❌ Error parsing domain IDs: {e}")
+        print(f" Error parsing domain IDs: {e}")
         print("   Example: --domain_ids '191,192' or --domain_ids '191'")
         return
 
-    print(f"🎯 Using domain IDs: {domain_ids}")
+    print(f"Using domain IDs: {domain_ids}")
 
     try:
         # Initialize SDK
@@ -321,13 +311,13 @@ def main():
             )
 
         openai_client = openai.OpenAI(api_key=openai_api_key)
-        print("🤖 OpenAI client initialized")
+        print("OpenAI client initialized")
 
         # Create data product
         yaml_result = generate_data_product(sdk, domain_ids, args.product_name, openai_client)
 
         print("\n" + "=" * 60)
-        print("📋 GENERATED DATA PRODUCT YAML:")
+        print("GENERATED DATA PRODUCT YAML:")
         print("=" * 60)
         print(yaml_result)
 
