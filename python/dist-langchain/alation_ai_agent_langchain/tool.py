@@ -123,7 +123,7 @@ def get_check_job_status_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     )
 
 def get_alation_lineage_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
-    lineage_tool = sdk.get_lineage_tool
+    lineage_tool = sdk.lineage_tool
 
     def run_with_args(
         root_node: LineageRootNode,

@@ -281,5 +281,5 @@ class AlationAIAgentSDK:
         if self.is_tool_enabled(AlationTools.CHECK_JOB_STATUS):
             tools.append(self.check_job_status_tool)
         if self.is_tool_enabled(AlationTools.LINEAGE):
-            tools.append(self.get_lineage_tool)
+            tools.append(self.lineage_tool)
         return tools

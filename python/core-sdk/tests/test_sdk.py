@@ -85,6 +85,10 @@ def mock_requests_post(monkeypatch):
         elif "context/" in url:
             if "context/" in mock_post_responses:
                 return mock_post_responses["context/"](*args, **kwargs)
+        elif url in mock_post_responses:
+            return mock_post_responses[url](*args, **kwargs)
+
+        print(f"Unmocked POST URL: {url}")  # Debugging line to see unmocked URLs
 
         # Fallback for unmocked POST requests
         fallback_response = MagicMock(spec=requests.Response)
@@ -315,7 +319,15 @@ def test_error_handling_in_token_validation(mock_requests_post):
             sdk.api._is_jwt_token_valid()
         mock_jwt_token_valid.assert_called_once()
 
-def test_lineage_beta_tools_disabled_by_default():
+def test_lineage_beta_tools_disabled_by_default(
+    mock_requests_get,
+    mock_requests_post,
+):
+    mock_requests_post("createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS)
+    mock_requests_post("oauth/v2/token", response_json=JWT_RESPONSE_SUCCESS)
+    mock_requests_get("license", response_json={"is_cloud": True})
+    mock_requests_get("full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"})
+
     sdk = AlationAIAgentSDK(
         base_url=MOCK_BASE_URL,
         auth_method=AUTH_METHOD_USER_ACCOUNT,
@@ -323,7 +335,15 @@ def test_lineage_beta_tools_disabled_by_default():
     )
     assert AlationTools.LINEAGE not in sdk.enabled_beta_tools
 
-def test_check_job_status_tool_explicitly_disabled():
+def test_check_job_status_tool_explicitly_disabled(
+    mock_requests_get,
+    mock_requests_post,
+):
+    mock_requests_post("createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS)
+    mock_requests_post("oauth/v2/token", response_json=JWT_RESPONSE_SUCCESS)
+    mock_requests_get("license", response_json={"is_cloud": True})
+    mock_requests_get("full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"})
+
     sdk = AlationAIAgentSDK(
         base_url=MOCK_BASE_URL,
         auth_method=AUTH_METHOD_USER_ACCOUNT,

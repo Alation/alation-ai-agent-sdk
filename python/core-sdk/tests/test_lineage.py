@@ -22,6 +22,12 @@ from alation_ai_agent_sdk.api import (
     AlationAPIError,
     UserAccountAuthParams,
 )
+from .test_sdk import (
+    REFRESH_TOKEN_RESPONSE_SUCCESS,
+    JWT_RESPONSE_SUCCESS,
+    mock_requests_post,
+    mock_requests_get,
+)
 
 def test_make_lineage_kwargs_creates_defaults():
     response = make_lineage_kwargs(
@@ -319,7 +325,15 @@ def test_alation_lineage_tool_returns_api_errors(get_lineage_tool, mock_api):
     assert result["error"]["reason"] == "Bad Request"
 
 
-def test_alation_lineage_tool_raises_value_errors_during_validation():
+def test_alation_lineage_tool_raises_value_errors_during_validation(
+    mock_requests_post,
+    mock_requests_get,
+):
+    mock_requests_post("createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS)
+    mock_requests_post("oauth/v2/token", response_json=JWT_RESPONSE_SUCCESS)
+    mock_requests_get("license", response_json={"is_cloud": True})
+    mock_requests_get("full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"})
+
     api = AlationAPI(
         base_url="https://api.alation.com",
         auth_method="user_account",
@@ -406,36 +420,13 @@ def test_alation_lineage_tool_raises_value_errors_during_validation():
         )
     assert "only supported in 'chunked' processing mode" in str(ex.value)
 
-
 @pytest.fixture
-def mock_requests_post(monkeypatch):
-    """Mocks requests.post for API calls."""
-    mock_post_responses = {}
+def alation_api(mock_requests_get, mock_requests_post):
+    mock_requests_post("createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS)
+    mock_requests_post("oauth/v2/token", response_json=JWT_RESPONSE_SUCCESS)
+    mock_requests_get("license", response_json={"is_cloud": True})
+    mock_requests_get("full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"})
 
-    def _add_mock_response(url_identifier, response_json=None, status_code=200):
-        mock_post_responses[url_identifier] = {
-            "response_json": response_json,
-            "status_code": status_code,
-        }
-
-    def mock_post_router(*args, **kwargs):
-        url = args[0]
-        print(f"Intercepting POST request to URL: {url}")
-        print(f"Request body: {kwargs.get('json', {})}")
-        for identifier, mock_response in mock_post_responses.items():
-            if identifier in url:
-                print(f"Mocking response for URL: {url}")
-                response_mock = MagicMock()
-                response_mock.status_code = mock_response["status_code"]
-                response_mock.json.return_value = mock_response["response_json"]
-                return response_mock
-        raise ValueError(f"No mock response found for URL: {url}")
-
-    monkeypatch.setattr("requests.post", mock_post_router)
-    return _add_mock_response
-
-@pytest.fixture
-def alation_api():
     """Fixture to initialize AlationAPI instance."""
     api = AlationAPI(
         base_url="https://api.alation.com",
@@ -445,27 +436,14 @@ def alation_api():
             refresh_token="mock-refresh-token"
         )
     )
-    api.access_token = "mock-access-token"
     return api
 
-@pytest.fixture
-def mock_token_methods(monkeypatch):
-    """Mocks token validation and generation methods."""
-    monkeypatch.setattr(
-        "alation_ai_agent_sdk.api.AlationAPI._is_access_token_valid",
-        lambda self: True,
-    )
-    monkeypatch.setattr(
-        "alation_ai_agent_sdk.api.AlationAPI._generate_access_token_with_refresh_token",
-        lambda self: None,
-    )
-    monkeypatch.setattr(
-        "alation_ai_agent_sdk.api.AlationAPI._generate_jwt_token",
-        lambda self: None,
-    )
 
-
-def test_get_bulk_lineage_success_complete_filtered_with_pagination_response(alation_api, mock_requests_post, mock_token_methods):
+def test_get_bulk_lineage_success_complete_filtered_with_pagination_response(alation_api, mock_requests_post, mock_requests_get):
+    mock_requests_post("createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS)
+    mock_requests_post("oauth/v2/token", response_json=JWT_RESPONSE_SUCCESS)
+    mock_requests_get("license", response_json={"is_cloud": True})
+    mock_requests_get("full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"})
     graph_nodes = [
       {"id": 1, "otype": "table", "fully_qualified_name": "1", "neighbors": [{"id": 2, "otype": "table", "fully_qualified_name": "2"}]},
       {"id": 2, "otype": "table", "fully_qualified_name": "2", "neighbors": [{"id": 3, "otype": "etl", "fully_qualified_name": "3"}, {"id": 4, "otype": "table", "fully_qualified_name": "4"}]},
@@ -479,7 +457,7 @@ def test_get_bulk_lineage_success_complete_filtered_with_pagination_response(ala
       {"id": 10, "otype": "table", "fully_qualified_name": "10", "neighbors": []}
     ]
     mock_requests_post(
-        "/bulk_lineage",
+        alation_api.base_url + "/integration/v2/bulk_lineage/",
         response_json=
             {
                 "graph": graph_nodes,
@@ -531,7 +509,12 @@ def test_get_bulk_lineage_success_complete_filtered_with_pagination_response(ala
     assert filtered_graph[4]["id"] == graph_nodes[5]["id"]
     assert filtered_graph[5]["id"] == graph_nodes[9]["id"]
 
-def test_get_bulk_lineage_success_chunked(alation_api, mock_requests_post, mock_token_methods):
+def test_get_bulk_lineage_success_chunked(alation_api, mock_requests_post, mock_requests_get):
+    mock_requests_post("createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS)
+    mock_requests_post("oauth/v2/token", response_json=JWT_RESPONSE_SUCCESS)
+    mock_requests_get("license", response_json={"is_cloud": True})
+    mock_requests_get("full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"})
+
     graph_nodes = [
       {"id": 1, "otype": "table", "fully_qualified_name": "1", "neighbors": [{"id": 2, "otype": "table", "fully_qualified_name": "2"}]},
       {"id": 2, "otype": "table", "fully_qualified_name": "2", "neighbors": [{"id": 3, "otype": "etl", "fully_qualified_name": "3"}, {"id": 4, "otype": "table", "fully_qualified_name": "4"}]},
@@ -545,7 +528,7 @@ def test_get_bulk_lineage_success_chunked(alation_api, mock_requests_post, mock_
       {"id": 10, "otype": "table", "fully_qualified_name": "10", "neighbors": []}
     ]
     mock_requests_post(
-        "/bulk_lineage",
+        alation_api.base_url + "/integration/v2/bulk_lineage/",
         response_json=
             {
                 "graph": graph_nodes,

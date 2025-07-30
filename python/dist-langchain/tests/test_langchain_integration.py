@@ -54,9 +54,9 @@ def mock_sdk_with_context_tool():
     mock_sdk.check_job_status_tool.run = MagicMock(
         return_value="Expected check job status via SDK run"
     )
-    mock_sdk.get_lineage_tool = MagicMock()
-    mock_sdk.get_lineage_tool.name = "GetLineageToolFromSDK"
-    mock_sdk.get_lineage_tool.description = (
+    mock_sdk.lineage_tool = MagicMock()
+    mock_sdk.lineage_tool.name = "GetLineageToolFromSDK"
+    mock_sdk.lineage_tool.description = (
         "Provides lineage from SDK"
     )
 
@@ -72,7 +72,7 @@ def mock_sdk_with_context_tool():
 
     """
     def run_with_lineage_tool(*args, **kwargs):
-        return mock_sdk.get_lineage_tool.run(*args, **kwargs)
+        return mock_sdk.lineage_tool.run(*args, **kwargs)
     """
 
     mock_sdk.context_tool.run_with_signature = run_with_signature
