@@ -190,7 +190,7 @@ class AlationAIAgentSDK:
             allowed_otypes (LineageOTypeFilterType, optional): A list of allowed object types to filter lineage nodes. Defaults to None.
             time_from (LineageTimestampType, optional): The start time for temporal lineage filtering. Defaults to None.
             time_to (LineageTimestampType, optional): The end time for temporal lineage filtering. Defaults to None.
-        
+
         Returns:
             Dict[str, Dict[str, any]]]: A dictionary containing the lineage `graph` and `pagination` information.
 

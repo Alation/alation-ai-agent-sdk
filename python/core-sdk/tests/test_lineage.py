@@ -405,7 +405,6 @@ def test_alation_lineage_tool_raises_value_errors_during_validation():
             time_to="",
         )
     assert "only supported in 'chunked' processing mode" in str(ex.value)
-        
 
 
 @pytest.fixture

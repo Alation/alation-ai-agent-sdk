@@ -251,3 +251,5 @@ def test_create_server_service_account(
         enabled_beta_tools=set(),
     )
     assert mcp_result is mock_mcp_instance
+
+# TODO: add test for env handling and CLI cases

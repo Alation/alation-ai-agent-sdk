@@ -12,10 +12,10 @@ class LineageGraphNode(TypedDict):
 def get_node_object_key(node: LineageGraphNode) -> str:
     """
     Returns a unique key for the node based on its type and ID.
-    
+
     Args:
         node (LineageGraphNode): The node to generate the key for.
-    
+
     Returns:
         str: A unique key for the node.
     """

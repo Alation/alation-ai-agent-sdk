@@ -624,7 +624,7 @@ class AlationAPI:
         Fetch lineage information from Alation's catalog for a given object / root node.
 
         Args:
-            root_node (LineageRootNode): The root node to start lineage from.
+            root_nodes (List[LineageRootNode]): The root nodes to start lineage from.
             direction (LineageDirectionType): The direction of lineage to fetch, either "upstream" or "downstream".
             limit (int, optional): The maximum number of nodes to return. Defaults to the maximum 1,000.
             batch_size (int, optional): The size of each batch for chunked processing. Defaults to 1,000.
@@ -637,7 +637,7 @@ class AlationAPI:
             allowed_otypes (LineageOTypeFilterType, optional): A list of allowed object types to filter lineage nodes. Defaults to None.
             time_from (LineageTimestampType, optional): The start time for temporal lineage filtering. Defaults to None.
             time_to (LineageTimestampType, optional): The end time for temporal lineage filtering. Defaults to None.
-        
+
         Returns:
             Dict[str, Dict[str, any]]]: A dictionary containing the lineage `graph` and `pagination` information.
 
