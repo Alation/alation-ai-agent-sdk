@@ -14,8 +14,8 @@ Requirements:
 - OpenAI API key
 
 Usage:
-    python data_product_creation.py --domain_ids "191,192" --product_name "Sales Analytics"
-    python data_product_creation.py --domain_ids "191" --product_name "Customer Analytics"
+    python data_product_generation.py --domain_ids "191,192" --product_name "Sales Analytics"
+    python data_product_generation.py --domain_ids "191" --product_name "Customer Analytics"
 
 Environment variables:
     ALATION_BASE_URL: URL of your Alation instance
