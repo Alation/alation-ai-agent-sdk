@@ -99,6 +99,7 @@ class AlationAPI:
         auth_method: str,
         auth_params: AuthParams,
         dist_version: Optional[str] = None,
+        skip_instance_info: Optional[bool] = False,
     ):
         self.base_url = base_url.rstrip("/")
         self.access_token: Optional[str] = None
@@ -128,7 +129,8 @@ class AlationAPI:
 
         logger.debug(f"AlationAPI initialized with auth method: {self.auth_method}")
 
-        self._fetch_and_cache_instance_info()
+        if not skip_instance_info:
+            self._fetch_and_cache_instance_info()
 
     def _fetch_and_cache_instance_info(self):
         """

@@ -60,6 +60,7 @@ class AlationAIAgentSDK:
         disabled_tools: Optional[set[str]] = None,
         enabled_beta_tools: Optional[set[str]] = None,
         dist_version: Optional[str] = None,
+        skip_instance_info: Optional[bool] = False,
     ):
         if not base_url or not isinstance(base_url, str):
             raise ValueError("base_url must be a non-empty string.")
@@ -76,6 +77,7 @@ class AlationAIAgentSDK:
             auth_method=auth_method,
             auth_params=auth_params,
             dist_version=dist_version,
+            skip_instance_info=skip_instance_info,
         )
         self.context_tool = AlationContextTool(self.api)
         self.bulk_retrieval_tool = AlationBulkRetrievalTool(self.api)

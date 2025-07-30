@@ -117,7 +117,7 @@ def filter_graph(nodes: List[Dict], allowed_types: Set[str]) -> List[Dict]:
         List[Dict]: The filtered list of nodes.
     """
     ordered_keys, key_to_node, visited = get_initial_graph_state(nodes)
-    
+
     # Populate the visited nodes and patch up neighbors to account for any that were omitted
     for node in nodes:
         resolve_neighbors(get_node_object_key(node), key_to_node, visited, allowed_types)
