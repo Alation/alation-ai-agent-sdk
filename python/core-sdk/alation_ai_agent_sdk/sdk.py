@@ -68,6 +68,7 @@ class AlationAIAgentSDK:
         if not auth_method or not isinstance(auth_method, str):
             raise ValueError("auth_method must be a non-empty string.")
 
+        self.beta_tools = {AlationTools.LINEAGE}
         self.disabled_tools = disabled_tools or set()
         self.enabled_beta_tools = enabled_beta_tools or set()
 
@@ -89,10 +90,7 @@ class AlationAIAgentSDK:
     def is_tool_enabled(self, tool_name: str) -> bool:
         if tool_name in self.disabled_tools:
             return False
-        if len(self.enabled_beta_tools) == 0:
-            return True
-        beta_tools = {AlationTools.LINEAGE}
-        if tool_name not in beta_tools:
+        if tool_name not in self.beta_tools:
             return True
         if tool_name in self.enabled_beta_tools:
             return True
