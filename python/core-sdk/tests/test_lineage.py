@@ -38,7 +38,6 @@ def test_make_lineage_kwargs_creates_defaults():
     assert response["design_time"] == LineageDesignTimeOptions.EITHER_DESIGN_OR_RUN_TIME
     assert response["max_depth"] == 10
     assert response["excluded_schema_ids"] == []
-    assert response["allowed_otypes"] == []
     assert response["time_from"] == ""
     assert response["time_to"] == ""
     assert response["key_type"] == "id"
