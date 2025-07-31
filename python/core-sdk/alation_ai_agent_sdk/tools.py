@@ -1,10 +1,32 @@
-from typing import Dict, Any, Optional
 import re
 import logging
 
-logger = logging.getLogger(__name__)
-from alation_ai_agent_sdk.api import AlationAPI, AlationAPIError, CatalogAssetMetadataPayloadItem
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+)
+from alation_ai_agent_sdk.api import (
+    AlationAPI,
+    AlationAPIError,
+    CatalogAssetMetadataPayloadItem,
+)
+from alation_ai_agent_sdk.lineage import (
+    LineageBatchSizeType,
+    LineageDesignTimeType,
+    LineageExcludedSchemaIdsType,
+    LineageTimestampType,
+    LineageDirectionType,
+    LineageGraphProcessingType,
+    LineagePagination,
+    LineageRootNode,
+    LineageOTypeFilterType,
+    LineageToolResponse,
+    make_lineage_kwargs
+)
 
+logger = logging.getLogger(__name__)
 
 def min_alation_version(min_version: str):
     """
@@ -126,7 +148,7 @@ class AlationContextTool:
             return {"error": e.to_dict()}
 
 
-class GetDataProductTool:
+class AlationGetDataProductTool:
     def __init__(self, api: AlationAPI):
         self.api = api
         self.name = self._get_name()
@@ -233,6 +255,105 @@ class AlationBulkRetrievalTool:
             return {"error": e.to_dict()}
 
 
+class AlationLineageTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "get_lineage"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """Retrieves lineage relationships for data catalog objects. Shows what data flows upstream (sources) or downstream (destinations) from a given object.
+
+        WHEN TO USE:
+        Use this tool when users ask about data lineage, data flow, dependencies, impact analysis, or questions like "what feeds into this table?" or "what uses this data?"
+
+        REQUIRED PARAMETERS:
+        - root_node: The starting object as {"id": object_id, "otype": "object_type"}
+        Example: {"id": 123, "otype": "table"} or {"id": 456, "otype": "attribute"}
+        - direction: Either "upstream" (sources/inputs) or "downstream" (destinations/outputs)
+
+        COMMON OPTIONAL PARAMETERS:
+        - allowed_otypes: Filter to specific object types like ["table", "attribute"]
+        - limit: Maximum nodes to return (default: 1000, max: 1000). Never change this unless the user question explicitly mentions a limit.
+        - max_depth: How many levels deep to traverse (default: 10)
+
+        PROCESSING CONTROL:
+        - processing_mode: "complete" (default, recommended) or "chunked" for portions of graphs
+        - batch_size: Nodes per batch for chunked processing (default: 1000)
+        - pagination: Continue from previous chunked response {"cursor": X, "request_id": "...", "batch_size": Y, "has_more": true}
+
+        FILTERING OPTIONS:
+        - show_temporal_objects: Include temporary objects (default: false)
+        - design_time: Filter by creation time - use 3 for both design & runtime (default), 1 for design-time only, 2 for runtime only
+        - excluded_schema_ids: Exclude objects from specific schemas like [1, 2, 3]
+        - time_from: Start timestamp for temporal filtering (format: "YYYY-MM-DDTHH:MM:SS")
+        - time_to: End timestamp for temporal filtering (format: "YYYY-MM-DDTHH:MM:SS")
+
+        SPECIAL OBJECT TYPES:
+        For file, directory, and external objects, use fully qualified names:
+        {"id": "filesystem_id.path/to/file", "otype": "file"}
+
+        COMMON EXAMPLES:
+        - Find upstream tables: get_lineage(root_node={"id": 123, "otype": "table"}, direction="upstream", allowed_otypes=["table"])
+        - Find all downstream objects: get_lineage(root_node={"id": 123, "otype": "table"}, direction="downstream")
+        - Column-level lineage: get_lineage(root_node={"id": 456, "otype": "attribute"}, direction="upstream", allowed_otypes=["attribute"])
+        - Exclude test schemas: get_lineage(root_node={"id": 123, "otype": "table"}, direction="upstream", excluded_schema_ids=[999, 1000])
+
+        RETURNS:
+        {"graph": [list of connected objects with relationships], "direction": "upstream|downstream", "pagination": {...}}
+
+        HANDLING RESPONSES:
+        - Skip any temporary nodes unless the user question explicitly mentions them
+        - Fully qualified names should be split into their component parts (period separated). The last element is the most specific name.
+        """
+
+    def run(
+        self,
+        root_node: LineageRootNode,
+        direction: LineageDirectionType,
+        limit: Optional[int] = 1000,
+        batch_size: Optional[LineageBatchSizeType] = 1000,
+        pagination: Optional[LineagePagination] = None,
+        processing_mode: Optional[LineageGraphProcessingType] = None,
+        show_temporal_objects: Optional[bool] = False,
+        design_time: Optional[LineageDesignTimeType] = None,
+        max_depth: Optional[int] = 10,
+        excluded_schema_ids: Optional[LineageExcludedSchemaIdsType] = None,
+        allowed_otypes: Optional[LineageOTypeFilterType] = None,
+        time_from: Optional[LineageTimestampType] = None,
+        time_to: Optional[LineageTimestampType] = None,
+    ) -> LineageToolResponse:
+
+        lineage_kwargs = make_lineage_kwargs(
+            root_node=root_node,
+            processing_mode=processing_mode,
+            show_temporal_objects=show_temporal_objects,
+            design_time=design_time,
+            max_depth=max_depth,
+            excluded_schema_ids=excluded_schema_ids,
+            allowed_otypes=allowed_otypes,
+            time_from=time_from,
+            time_to=time_to
+        )
+
+        try:
+            return self.api.get_bulk_lineage(
+                root_nodes=[root_node],
+                direction=direction,
+                limit=limit,
+                batch_size=batch_size,
+                pagination=pagination,
+                **lineage_kwargs
+            )
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
+
 class UpdateCatalogAssetMetadataTool:
     def __init__(self, api: AlationAPI):
         self.api = api
@@ -312,3 +433,13 @@ class CheckJobStatusTool:
 
     def run(self, job_id: int) -> dict:
         return self.api.check_job_status(job_id)
+
+def csv_str_to_tool_list(tool_env_var: Optional[str] = None) -> List[str]:
+    if tool_env_var is None:
+        return []
+    uniq = set()
+    if tool_env_var:
+        for tool_str in tool_env_var.split(","):
+            tool_str = tool_str.strip()
+            uniq.add(tool_str)
+    return list(uniq)

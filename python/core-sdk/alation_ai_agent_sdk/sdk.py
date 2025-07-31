@@ -1,13 +1,44 @@
-from typing import Dict, Any, Optional
-
-from .api import AlationAPI, AlationAPIError, AuthParams, CatalogAssetMetadataPayloadItem
+from typing import (
+    Any,
+    Dict,
+    Optional,
+)
+from .api import (
+    AlationAPI,
+    AlationAPIError,
+    AuthParams,
+    CatalogAssetMetadataPayloadItem,
+)
 from .tools import (
     AlationContextTool,
     AlationBulkRetrievalTool,
-    GetDataProductTool,
+    AlationGetDataProductTool,
+    AlationLineageTool,
     UpdateCatalogAssetMetadataTool,
     CheckJobStatusTool,
 )
+from .lineage import (
+    LineageToolResponse,
+    make_lineage_kwargs,
+    LineageRootNode,
+    LineageDirectionType,
+    LineageDesignTimeType,
+    LineageGraphProcessingType,
+    LineageExcludedSchemaIdsType,
+    LineageOTypeFilterType,
+    LineageTimestampType,
+    LineagePagination,
+    LineageBatchSizeType,
+)
+
+class AlationTools:
+    AGGREGATED_CONTEXT = "aggregated_context"
+    BULK_RETRIEVAL = "bulk_retrieval"
+    CHECK_JOB_STATUS = "check_job_status"
+    DATA_PRODUCT = "data_product"
+    DATA_QUALITY = "data_quality"
+    LINEAGE = "lineage"
+    UPDATE_METADATA = "update_metadata"
 
 
 class AlationAIAgentSDK:
@@ -26,7 +57,10 @@ class AlationAIAgentSDK:
         base_url: str,
         auth_method: str,
         auth_params: AuthParams,
+        disabled_tools: Optional[set[str]] = None,
+        enabled_beta_tools: Optional[set[str]] = None,
         dist_version: Optional[str] = None,
+        skip_instance_info: Optional[bool] = False,
     ):
         if not base_url or not isinstance(base_url, str):
             raise ValueError("base_url must be a non-empty string.")
@@ -34,18 +68,39 @@ class AlationAIAgentSDK:
         if not auth_method or not isinstance(auth_method, str):
             raise ValueError("auth_method must be a non-empty string.")
 
+        self.beta_tools = {AlationTools.LINEAGE}
+        self.disabled_tools = disabled_tools or set()
+        self.enabled_beta_tools = enabled_beta_tools or set()
+
         # Delegate validation of auth_params to AlationAPI
         self.api = AlationAPI(
             base_url=base_url,
             auth_method=auth_method,
             auth_params=auth_params,
             dist_version=dist_version,
+            skip_instance_info=skip_instance_info,
         )
         self.context_tool = AlationContextTool(self.api)
         self.bulk_retrieval_tool = AlationBulkRetrievalTool(self.api)
-        self.data_product_tool = GetDataProductTool(self.api)
+        self.data_product_tool = AlationGetDataProductTool(self.api)
         self.update_catalog_asset_metadata_tool = UpdateCatalogAssetMetadataTool(self.api)
         self.check_job_status_tool = CheckJobStatusTool(self.api)
+        self.lineage_tool = AlationLineageTool(self.api)
+
+    def is_tool_enabled(self, tool_name: str) -> bool:
+        if tool_name in self.disabled_tools:
+            return False
+        if tool_name not in self.beta_tools:
+            return True
+        if tool_name in self.enabled_beta_tools:
+            return True
+        return False
+
+    def set_enabled_beta_tools(self, tools: set[str]):
+        self.enabled_beta_tools = tools
+
+    def set_disabled_tools(self, tools: set[str]):
+        self.disabled_tools = tools
 
     def get_context(
         self, question: str, signature: Optional[Dict[str, Any]] = None
@@ -102,6 +157,69 @@ class AlationAIAgentSDK:
         """
         return self.data_product_tool.run(product_id, query)
 
+    def get_lineage(
+        self,
+        root_node: LineageRootNode,
+        direction: LineageDirectionType,
+        limit: Optional[int] = 1000,
+        batch_size: Optional[LineageBatchSizeType] = 1000,
+        pagination: Optional[LineagePagination] = None,
+        processing_mode: Optional[LineageGraphProcessingType] = None,
+        show_temporal_objects: Optional[bool] = False,
+        design_time: Optional[LineageDesignTimeType] = None,
+        max_depth: Optional[int] = 10,
+        excluded_schema_ids: Optional[LineageExcludedSchemaIdsType] = None,
+        allowed_otypes: Optional[LineageOTypeFilterType] = None,
+        time_from: Optional[LineageTimestampType] = None,
+        time_to: Optional[LineageTimestampType] = None,
+    ) -> LineageToolResponse:
+        """
+        Fetch lineage information from Alation's catalog for a given object / root node.
+
+        Args:
+            root_node (LineageRootNode): The root node to start lineage from.
+            direction (LineageDirectionType): The direction of lineage to fetch, either "upstream" or "downstream".
+            limit (int, optional): The maximum number of nodes to return. Defaults to 1000.
+            batch_size (int, optional): The size of each batch for chunked processing. Defaults to 1000.
+            pagination (LineagePagination, optional): Pagination parameters only used with chunked processing.
+            processing_mode (LineageGraphProcessingType, optional): The processing mode for lineage graph. Strongly recommended to use 'complete' for full lineage graphs.
+            show_temporal_objects (bool, optional): Whether to include temporary objects in the lineage. Defaults to False.
+            design_time (LineageDesignTimeType, optional): The design time option to filter lineage. Defaults to LineageDesignTimeOptions.EITHER_DESIGN_OR_RUN_TIME.
+            max_depth (int, optional): The maximum depth to traverse in the lineage graph. Defaults to 10.
+            excluded_schema_ids (LineageExcludedSchemaIdsType, optional): A list of excluded schema IDs to filter lineage nodes. Defaults to None.
+            allowed_otypes (LineageOTypeFilterType, optional): A list of allowed object types to filter lineage nodes. Defaults to None.
+            time_from (LineageTimestampType, optional): The start time for temporal lineage filtering. Defaults to None.
+            time_to (LineageTimestampType, optional): The end time for temporal lineage filtering. Defaults to None.
+
+        Returns:
+            Dict[str, Dict[str, any]]]: A dictionary containing the lineage `graph` and `pagination` information.
+
+        Raises:
+            ValueError: When argument combinations are invalid, such as:
+                pagination in complete processing mode,
+                allowed_otypes in chunked processing mode
+            AlationAPIError: On network, API, or response errors.
+        """
+        lineage_kwargs = make_lineage_kwargs(
+            root_node=root_node,
+            processing_mode=processing_mode,
+            show_temporal_objects=show_temporal_objects,
+            design_time=design_time,
+            max_depth=max_depth,
+            excluded_schema_ids=excluded_schema_ids,
+            allowed_otypes=allowed_otypes,
+            time_from=time_from,
+            time_to=time_to
+        )
+        return self.api.get_bulk_lineage(
+            root_nodes=[root_node],
+            direction=direction,
+            limit=limit,
+            batch_size=batch_size,
+            pagination=pagination,
+            **lineage_kwargs,
+        )
+
     def update_catalog_asset_metadata(
         self, custom_field_values: list[CatalogAssetMetadataPayloadItem]
     ) -> dict:
@@ -151,10 +269,17 @@ class AlationAIAgentSDK:
         return self.check_job_status_tool.run(job_id)
 
     def get_tools(self):
-        return [
-            self.context_tool,
-            self.bulk_retrieval_tool,
-            self.data_product_tool,
-            self.update_catalog_asset_metadata_tool,
-            self.check_job_status_tool,
-        ]
+        tools = []
+        if self.is_tool_enabled(AlationTools.AGGREGATED_CONTEXT):
+            tools.append(self.context_tool)
+        if self.is_tool_enabled(AlationTools.BULK_RETRIEVAL):
+            tools.append(self.bulk_retrieval_tool)
+        if self.is_tool_enabled(AlationTools.DATA_PRODUCT):
+            tools.append(self.data_product_tool)
+        if self.is_tool_enabled(AlationTools.UPDATE_METADATA):
+            tools.append(self.update_catalog_asset_metadata_tool)
+        if self.is_tool_enabled(AlationTools.CHECK_JOB_STATUS):
+            tools.append(self.check_job_status_tool)
+        if self.is_tool_enabled(AlationTools.LINEAGE):
+            tools.append(self.lineage_tool)
+        return tools
