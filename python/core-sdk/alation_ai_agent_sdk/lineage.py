@@ -79,7 +79,7 @@ def make_lineage_kwargs(
         show_temporal_objects (Optional[bool]): Whether to show temporal objects.
         design_time (Optional[LineageDesignTimeType]): The design time option.
         max_depth (Optional[int]): The maximum depth for the query.
-        excluded_schema_ids (Optional[LineageExcludedSchemaIdsType]): The allowed schema IDs.
+        excluded_schema_ids (Optional[LineageExcludedSchemaIdsType]): The excluded schema IDs.
         allowed_otypes (Optional[LineageOTypeFilterType]): The allowed object types.
         time_from (Optional[LineageTimestampType]): The start time for the query.
         time_to (Optional[LineageTimestampType]): The end time for the query.

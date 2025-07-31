@@ -186,7 +186,7 @@ class AlationAIAgentSDK:
             show_temporal_objects (bool, optional): Whether to include temporary objects in the lineage. Defaults to False.
             design_time (LineageDesignTimeType, optional): The design time option to filter lineage. Defaults to LineageDesignTimeOptions.EITHER_DESIGN_OR_RUN_TIME.
             max_depth (int, optional): The maximum depth to traverse in the lineage graph. Defaults to 10.
-            excluded_schema_ids (LineageExcludedSchemaIdsType, optional): A list of allowed schema IDs to filter lineage nodes. Defaults to None.
+            excluded_schema_ids (LineageExcludedSchemaIdsType, optional): A list of excluded schema IDs to filter lineage nodes. Defaults to None.
             allowed_otypes (LineageOTypeFilterType, optional): A list of allowed object types to filter lineage nodes. Defaults to None.
             time_from (LineageTimestampType, optional): The start time for temporal lineage filtering. Defaults to None.
             time_to (LineageTimestampType, optional): The end time for temporal lineage filtering. Defaults to None.
