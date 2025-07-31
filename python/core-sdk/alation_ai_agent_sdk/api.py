@@ -1,11 +1,12 @@
 import logging
 import urllib.parse
 import json
-from typing import Any, Dict, List, Optional
-from http import HTTPStatus
-from alation_ai_agent_sdk.lineage_filtering import filter_graph
 import requests
 import requests.exceptions
+from typing import Any, Dict, List, Optional
+from http import HTTPStatus
+from uuid import uuid4
+from alation_ai_agent_sdk.lineage_filtering import filter_graph
 from .types import (
     UserAccountAuthParams,
     ServiceAccountAuthParams,
@@ -679,13 +680,14 @@ class AlationAPI:
                     "to": time_to,
                 },
                 "schema_filter": excluded_schema_ids,
-                "temp_filter": show_temporal_objects,
                 "design_time": design_time,
             },
-            "request_id": pagination.get("request_id", "") if pagination else "",
+            "request_id": pagination.get("request_id") if pagination else uuid4().hex,
             "cursor": pagination.get("cursor", 0) if pagination else 0,
             "batch_size": limit if processing_mode == LineageGraphProcessingOptions.COMPLETE else pagination.get("batch_size", limit) if pagination else batch_size,
         }
+        if show_temporal_objects:
+            lineage_request_dict["filters"]["temp_filter"] = show_temporal_objects
         url = f"{self.base_url}/integration/v2/bulk_lineage/"
         try:
             response = requests.post(

@@ -279,7 +279,7 @@ class AlationLineageTool:
 
         COMMON OPTIONAL PARAMETERS:
         - allowed_otypes: Filter to specific object types like ["table", "attribute"]
-        - limit: Maximum nodes to return (default: 1000, max: 1000)
+        - limit: Maximum nodes to return (default: 1000, max: 1000). Never change this unless the user question explicitly mentions a limit.
         - max_depth: How many levels deep to traverse (default: 10)
 
         PROCESSING CONTROL:
@@ -305,7 +305,12 @@ class AlationLineageTool:
         - Exclude test schemas: get_lineage(root_node={"id": 123, "otype": "table"}, direction="upstream", excluded_schema_ids=[999, 1000])
 
         RETURNS:
-        {"graph": [list of connected objects with relationships], "direction": "upstream|downstream", "pagination": {...}}"""
+        {"graph": [list of connected objects with relationships], "direction": "upstream|downstream", "pagination": {...}}
+
+        HANDLING RESPONSES:
+        - Skip any temporary nodes unless the user question explicitly mentions them
+        - Fully qualified names should be split into their component parts (period separated). The last element is the most specific name.
+        """
 
     def run(
         self,

@@ -39,7 +39,7 @@ export ALATION_CLIENT_SECRET="your-client-secret"
 To run the Alation MCP Server, use [uvx](https://docs.astral.sh/uv/guides/tools/) (recommend), use the following command:
 
 ```bash
-uvx --from alation-ai-agent-mcp start-mcp-server
+uvx --from alation-ai-agent-mcp start-alaiton-mcp-server
 ```
 If you prefer to use `pipx`, run the following command:
 ```bash
@@ -51,7 +51,7 @@ pipx run alation-ai-agent-mcp
 2. Run the server:
 ```
 # Option A: Using entry point
-start-mcp-server
+start-alation-mcp-server
 
 # Option B: Using Python module
 python -m alation_ai_agent_mcp

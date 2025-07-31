@@ -101,9 +101,6 @@ def make_lineage_kwargs(
     if excluded_schema_ids is None:
         excluded_schema_ids = []
 
-    if allowed_otypes is None:
-        allowed_otypes = []
-
     if time_from is None:
         time_from = ""
 
