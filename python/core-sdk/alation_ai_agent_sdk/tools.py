@@ -1,6 +1,7 @@
 import re
 import logging
 import requests
+import time
 from requests.exceptions import RequestException
 
 from typing import (
@@ -442,7 +443,17 @@ class GenerateDataProductTool:
         self.api = api
         self.name = self._get_name()
         self.description = self._get_description()
-        self._cached_schema = None  # Cache the schema to avoid repeated requests
+
+        # Cache the schema to avoid repeated requests, store as a tuple: (schema_content, timestamp)
+        self._cached_schema: Optional[tuple[str, float]] = None
+
+        # Cache lifetime in seconds (e.g., 1 hour)
+        self.CACHE_TTL_SECONDS = 3600
+
+    def clear_cache(self):
+        """Manually clears the cached data product schema."""
+        self._cached_schema = None
+        logger.info("Data product schema cache has been cleared.")
 
     @staticmethod
     def _get_name() -> str:
@@ -502,16 +513,20 @@ class GenerateDataProductTool:
         """
         Get the schema content, trying to fetch from instance first, then falling back to hardcoded version.
         """
-        # Check cache first
-        if self._cached_schema is not None:
-            return self._cached_schema
+        # 1. Check if the cache exists and is still valid
+        if self._cached_schema:
+            schema_content, cached_at = self._cached_schema
+            if time.time() - cached_at < self.CACHE_TTL_SECONDS:
+                return schema_content
+            else:
+                logger.info("Schema cache has expired. Re-fetching.")
 
-        # Try to fetch from instance
+        # 2. If cache is empty or expired, fetch from instance
         schema_content = self._fetch_schema_from_instance()
 
         if schema_content:
-            # Cache the fetched schema
-            self._cached_schema = schema_content
+            # 3. If fetch is successful, update the cache with the new content and timestamp
+            self._cached_schema = (schema_content, time.time())
             return schema_content
 
         # If we get here, the fetch failed - raise an error
