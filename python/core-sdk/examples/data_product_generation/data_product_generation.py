@@ -28,12 +28,10 @@ Environment variables:
 
 import os
 import argparse
-import json
 from typing import Dict, Any, List
 
 import openai
 from alation_ai_agent_sdk import AlationAIAgentSDK, UserAccountAuthParams, ServiceAccountAuthParams
-from alation_ai_agent_sdk.api import AlationAPIError
 from alation_ai_agent_sdk.api import AlationAPIError
 
 

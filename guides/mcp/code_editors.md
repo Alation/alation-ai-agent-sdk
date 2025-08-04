@@ -20,7 +20,7 @@ Ensure you are using a recent version of your code editor. For VS Code, use **Ap
             "alation-mcp-server": {
                 "command": "uvx",
                 "args": [
-                    "--from", "alation-ai-agent-mcp", "start-mcp-server"
+                    "--from", "alation-ai-agent-mcp", "start-alation-mcp-server"
                 ],
                 "env": {
                     "ALATION_BASE_URL": "https://company.alationcloud.com",
@@ -92,7 +92,7 @@ The configuration format is the same as described above. Be sure to fill out the
     "alation-mcp-server": {
       "command": "uvx",
       "args": [
-        "--from", "alation-ai-agent-mcp", "start-mcp-server"
+        "--from", "alation-ai-agent-mcp", "start-alation-mcp-server"
       ],
       "env": {
           "ALATION_BASE_URL": "https://company.alationcloud.com",

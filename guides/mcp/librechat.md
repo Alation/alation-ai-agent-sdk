@@ -54,7 +54,7 @@ mcpServers:
     args:
       - "--from"
       - "alation-ai-agent-mcp"
-      - "start-mcp-server"
+      - "start-alation-mcp-server"
     env:
       ALATION_BASE_URL: "https://your-alation-instance.com"
       ALATION_AUTH_METHOD: "user_account"  # or "service_account"
