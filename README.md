@@ -6,19 +6,19 @@ The Alation AI Agent SDK enables AI agents to access and leverage metadata from 
 
 This SDK empowers AI agents to:
 
-- Retrieve contextual information from Alation's Data Catalog
+- Easily integrate with Alation's Data Catalog
+- Address use cases like Asset Curation, Search & Discovery, Role Based Agents, and Data Analyst Agents
 - Use natural language to search for relevant metadata
-- Fetch bulk objects from catalog
-- Customize response formats using flexible signature specifications
-- Integrate seamlessly with AI frameworks like LangChain and MCP
+- Integrate seamlessly with AI frameworks like MCP
 
 ## Components
 
 The project is organized into multiple components:
 
 - **Core SDK** - Foundation with API client and context tools
-- **LangChain Integration** - Adapters for the LangChain framework
 - **MCP Integration** - Server implementation for Model Context Protocol
+- **LangChain Integration** - Adapters for the LangChain framework
+
 
 ### Core SDK (`alation-ai-agent-sdk`)
 
@@ -86,7 +86,12 @@ If you cannot obtain service account credentials (admin only), see the [User Acc
 
 ### alation_context
 
+<details>
+<summary>
 A retrieval tool that pulls contextual information from the Alation catalog based on natural language queries.
+</summary>
+
+<br />
 
 **Functionality**
 - Accepts user questions in natural language
@@ -95,6 +100,7 @@ A retrieval tool that pulls contextual information from the Alation catalog base
 - Can return multiple object types in a single response
 
 **Usage**
+
 ```python
 response = alation_ai_sdk.get_context(
     "What certified data set is used to make decisions on providing credit for customers?"
@@ -107,10 +113,15 @@ response = alation_ai_sdk.get_context(
 
 **Returns**
 - JSON-formatted response of relevant catalog objects
+</details>
 
 ### get_data_products
-
+<details>
+<summary>
 A retrieval tool that pulls data products from the Alation catalog based on product ID or natural language queries.
+</summary>
+
+<br />
 
 **Functionality**
 - Accepts product IDs for direct lookup
@@ -136,10 +147,24 @@ response = alation_ai_sdk.get_data_products(
 **Returns**
 - JSON-formatted response of relevant data products
 
-### Bulk Object Retrieval
+</details>
 
-Retrieve catalog objects without conversational queries:
+### bulk_retrieval
+<details>
+<summary>
+A retrieval tool that pulls a set of objects from the Alation catalog based on a signature.
+</summary>
 
+<br />
+
+**Functionality**
+- Retrieve catalog objects without conversational queries.
+- Useful for having an LLM decide which items to use from a larger set.
+- Accepts a signature defining which objects and the fields required.
+- Returns relevant catalog data in JSON format
+- Can return multiple object types in a single response
+
+**Usage**
 ```python
 # Get tables from a specific datasource
 bulk_signature = {
@@ -160,9 +185,100 @@ bulk_signature = {
 response = sdk.bulk_retrieval(signature=bulk_signature)
 ```
 
+**Input Parameters**
+- `signature` (dict): The configuration controlling which objects and their fields
+
+**Returns**
+- JSON-formatted response of relevant data products
+
+</details>
+
+### check_job_status
+
+<details>
+<summary>
+A tool for checking the status of asynchronous jobs.
+</summary>
+
+<br />
+
+**Functionality**
+- Used to monitor progress and completion of async jobs.
+- Accepts a job id
+- Returns the job detail object included status
+
+**Input Parameters**
+- `job_id` (int): The identifier of the asychronous job.
+
+**Returns**
+- JSON-formatted response of the job details
+
+</details>
+
+### update_catalog_metadata
+
+<details>
+<summary>
+A tool to updates metadata for Alation catalog assets by modifying existing objects.
+</summary>
+
+<br />
+
+**Supported object types**
+- `glossary_term`: Individual glossary terms (corresponds to document objects)
+- `glossary_v3`: Glossary collections (corresponds to doc-folder objects, i.e., Document Hubs)
+
+**Functionality**
+- Creates an async job that updates one or more object field values.
+
+**Input Parameters**
+- A list of objects to be updated which include the `id`, `otype`, `field_id`, and the new `value`.
+
+**Returns**
+- validation error (dict) A dictionary containing a "error" value.
+- on success (dict) A dictionary containing a "job_id" value.
+
+</details>
+
+### lineage
+
+<details>
+<summary>
+A lineage retrieval tool to identify upstream or downstream objects relative to the starting object. Supports Column level lineage.
+</summary>
+
+<br />
+
+**NOTE**: This BETA feature must be enabled on the Alation instance. Please contact Alation support to do this. Additionally, the lineage tool within the SDK must be explicitly enabled.
+
+**Functionality**
+- Access the object's upstream or downstream lineage.
+- Graph is filterable by object type.
+- Helpful for root cause and impact analysis
+- Enables custom field value propagation
+
+**Input Parameters**
+- `root_node` (dict) The starting object. Must contain `id` and `otype`.
+- `direction` (upsteam|downstream) The direction to resolve the lineage graph from.
+- `limit` (optional int) Defaults to 1,000.
+- `batch_size` (optional int) Defaults to 1,000.
+- `max_depth` (optional int) The maximumn depth to transerve of the graph. Defaults to 10.
+- `allowed_otypes` (optional string[]) Controls which types of nodes are allowed in the graph.
+- `pagination` (optional dict) Contains information about the request including cursor identifier.
+- `show_temporal_objects` (optional bool) Defaults to false.
+- `design_time` (optional 1,2,3) 1 for design time objects. 2 for run time objects. 3 for both design and run time objects.
+- `excluded_schema_ids` (optional int[]) Remove nodes if they belong to these schemas.
+- `time_from` (optional timestamp w/o timezone) Controls the start point of a time period.
+- `time_to` (optional timestamp w/o timezone) Controls the ending point of a time period.
+
+**Returns**
+- (dict) An object containing the lineage graph, the direction, and any pagination values.
+</details>
+
+
 ## Shape the SDK to your needs
 
-The SDK's `alation-context` tool supports customizing response content using signatures. This powerful feature allows you to specify which fields to include and how to filter the catalog results. For instance:
+The SDK's `alation-context` and `bulk_retrieval` tools support customizing response content using signatures. This powerful feature allows you to specify which fields to include and how to filter the catalog results. For instance:
 
 ```python
 # Define a signature for searching only tables that optionally
