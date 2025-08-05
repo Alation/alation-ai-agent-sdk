@@ -1,17 +1,12 @@
+from alation_ai_agent_sdk.sdk import AlationTools
 import pytest
 from unittest.mock import Mock, MagicMock
 
 from langchain.tools import StructuredTool
-from alation_ai_agent_langchain import get_langchain_tools
+from alation_ai_agent_langchain import UserAccountAuthParams, get_langchain_tools
 from alation_ai_agent_sdk import AlationAIAgentSDK
 
-
-@pytest.fixture
-def mock_sdk_with_context_tool():
-    """
-    Creates a mock AlationAIAgentSDK with a mock context_tool.
-    This mock SDK will be passed to get_langchain_tools.
-    """
+def get_sdk_mock():
     mock_sdk = Mock(spec=AlationAIAgentSDK if "AlationAIAgentSDK" in globals() else object)
 
     mock_sdk.context_tool = MagicMock()
@@ -54,6 +49,11 @@ def mock_sdk_with_context_tool():
     mock_sdk.check_job_status_tool.run = MagicMock(
         return_value="Expected check job status via SDK run"
     )
+    mock_sdk.lineage_tool = MagicMock()
+    mock_sdk.lineage_tool.name = "GetLineageToolFromSDK"
+    mock_sdk.lineage_tool.description = (
+        "Provides lineage from SDK"
+    )
 
     # Patch .run for StructuredTool.func compatibility
     def run_with_signature(*args, **kwargs):
@@ -65,10 +65,22 @@ def mock_sdk_with_context_tool():
     def run_with_bulk_signature(*args, **kwargs):
         return mock_sdk.bulk_retrieval_tool.run(*args, **kwargs)
 
+    def run_with_lineage_tool(*args, **kwargs):
+        return mock_sdk.lineage_tool.run(*args, **kwargs)
+
     mock_sdk.context_tool.run_with_signature = run_with_signature
     mock_sdk.data_product_tool.run_with_query_or_product_id = run_with_query_or_product_id
     mock_sdk.bulk_retrieval_tool.run_with_bulk_signature = run_with_bulk_signature
+    mock_sdk.lineage_tool.run_with_lineage_tool = run_with_lineage_tool
     return mock_sdk
+
+@pytest.fixture
+def mock_sdk_with_context_tool():
+    """
+    Creates a mock AlationAIAgentSDK with a mock context_tool.
+    This mock SDK will be passed to get_langchain_tools.
+    """
+    return get_sdk_mock()
 
 
 def test_get_langchain_tools_returns_list_with_alation_tool(mock_sdk_with_context_tool):
@@ -86,6 +98,38 @@ def test_get_langchain_tools_returns_list_with_alation_tool(mock_sdk_with_contex
         alation_tool, StructuredTool
     ), "The Alation tool in the list should be an instance of StructuredTool."
 
+def test_get_langchain_tools_skips_beta_tools_by_default():
+    sdk = AlationAIAgentSDK(
+        base_url="https://api.alation.com",
+        auth_method="user_account",
+        auth_params=UserAccountAuthParams(
+            user_id=1,
+            refresh_token='blah',
+        ),
+        skip_instance_info=True, # No need to fetch for this test
+    )
+    assert len(sdk.enabled_beta_tools) == 0
+    assert sdk.is_tool_enabled(AlationTools.LINEAGE) is False
+
+    tools_list = get_langchain_tools(sdk)
+    assert all(t.name != AlationTools.LINEAGE for t in tools_list), "Beta tools should be skipped."
+
+def test_get_langchain_tools_skips_disabled_tools():
+    sdk = AlationAIAgentSDK(
+        base_url="https://api.alation.com",
+        auth_method="user_account",
+        auth_params=UserAccountAuthParams(
+            user_id=1,
+            refresh_token='blah',
+        ),
+        disabled_tools=set([AlationTools.AGGREGATED_CONTEXT]),
+        skip_instance_info=True, # No need to fetch for this test
+    )
+    assert len(sdk.disabled_tools) == 1
+    assert sdk.is_tool_enabled(AlationTools.AGGREGATED_CONTEXT) is False
+
+    tools_list = get_langchain_tools(sdk)
+    assert all(t.name != AlationTools.AGGREGATED_CONTEXT for t in tools_list), "Disabled tools should be skipped."
 
 def test_alation_tool_properties_from_list(mock_sdk_with_context_tool):
     """

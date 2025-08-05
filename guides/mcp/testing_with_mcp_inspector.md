@@ -44,9 +44,9 @@ You have several options to run your server with the MCP Inspector:
 
 ### Option 1: Using uvx
 ```bash
-uvx --from alation-ai-agent-mcp start-mcp-server
+uvx --from alation-ai-agent-mcp start-alation-mcp-server
 # Then run the MCP Inspector:
-npx @modelcontextprotocol/inspector uvx --from alation-ai-agent-mcp start-mcp-server
+npx @modelcontextprotocol/inspector uvx --from alation-ai-agent-mcp start-alation-mcp-server
 ```
 
 ### Option 2: Using pip with Inspector
@@ -54,7 +54,7 @@ npx @modelcontextprotocol/inspector uvx --from alation-ai-agent-mcp start-mcp-se
 # Install the package via pip
 pip install alation-ai-agent-mcp
 # Then run:
-npx @modelcontextprotocol/inspector start-mcp-server
+npx @modelcontextprotocol/inspector start-alation-mcp-server
 ```
 
 ### Option 3: Direct python execution

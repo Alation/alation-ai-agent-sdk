@@ -33,7 +33,7 @@ Add the following configuration to your `claude_desktop_config.json`. See [here]
     "alation": {
       "command": "uvx",
       "args": [
-        "--from", "alation-ai-agent-mcp", "start-mcp-server"
+        "--from", "alation-ai-agent-mcp", "start-alation-mcp-server"
       ],
       "env": {
         "ALATION_BASE_URL": "https://your-alation-instance.com",
@@ -55,17 +55,17 @@ Add the following configuration to your `claude_desktop_config.json`. See [here]
 ### Method 2: Using `pip`
 1. Install the package: ```pip install alation-ai-agent-mcp``
 
-2. After installation, you can use the start-mcp-server command. Find the installation paths.
+2. After installation, you can use the start-alation-mcp-server command. Find the installation paths.
 ```
-which start-mcp-server  # On macOS/Linux
-where start-mcp-server  # On Windows
+which start-alation-mcp-server  # On macOS/Linux
+where start-alation-mcp-server  # On Windows
 ```
 3. Add the following configuration to your `claude_desktop_config.json`.
 ```json
 {
   "mcpServers": {
     "alation": {
-      "command": "/full/path/to/start-mcp-server",
+      "command": "/full/path/to/start-alation-mcp-server",
       "env": {
         "ALATION_BASE_URL": "https://your-alation-instance.com",
         "ALATION_AUTH_METHOD": "user_account", // or "service_account"

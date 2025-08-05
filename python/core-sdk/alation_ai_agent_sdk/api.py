@@ -1,157 +1,39 @@
 import logging
 import urllib.parse
 import json
-from typing import Dict, Any, Optional, Union, NamedTuple
-from http import HTTPStatus
 import requests
 import requests.exceptions
-from typing_extensions import TypedDict
+from typing import Any, Dict, List, Optional
+from http import HTTPStatus
+from uuid import uuid4
+from alation_ai_agent_sdk.lineage_filtering import filter_graph
+from .types import (
+    UserAccountAuthParams,
+    ServiceAccountAuthParams,
+    AuthParams,
+    CatalogAssetMetadataPayloadItem,
+)
+from .errors import AlationAPIError, AlationErrorClassifier
+
+from alation_ai_agent_sdk.lineage import (
+    LineageBatchSizeType,
+    LineageDesignTimeType,
+    LineageGraphProcessingOptions,
+    LineageGraphProcessingType,
+    LineageKeyTypeType,
+    LineageOTypeFilterType,
+    LineagePagination,
+    LineageRootNode,
+    LineageExcludedSchemaIdsType,
+    LineageTimestampType,
+    LineageDirectionType,
+)
+
 
 AUTH_METHOD_USER_ACCOUNT = "user_account"
 AUTH_METHOD_SERVICE_ACCOUNT = "service_account"
 
 logger = logging.getLogger(__name__)
-
-
-class AlationAPIError(Exception):
-    """Raised when an Alation API call fails logically or at HTTP level."""
-
-    def __init__(
-        self,
-        message: str,
-        *,
-        original_exception=None,
-        status_code=None,
-        response_body=None,
-        reason=None,
-        resolution_hint=None,
-        help_links=None,
-    ):
-        super().__init__(message)
-        self.original_exception = original_exception
-        self.status_code = status_code
-        self.response_body = response_body
-        self.reason = reason
-        self.resolution_hint = resolution_hint
-        self.help_links = help_links or []
-
-    def to_dict(self) -> dict:
-        return {
-            "message": str(self),
-            "status_code": self.status_code,
-            "reason": self.reason,
-            "resolution_hint": self.resolution_hint,
-            "is_retryable": self.status_code
-            in [
-                HTTPStatus.TOO_MANY_REQUESTS,
-                HTTPStatus.INTERNAL_SERVER_ERROR,
-            ],
-            "response_body": self.response_body,
-            "help_links": self.help_links,
-        }
-
-
-class AlationErrorClassifier:
-    @staticmethod
-    def classify_catalog_error(status_code: int, response_body: dict) -> Dict[str, Any]:
-        reason = "Unexpected Error"
-        resolution_hint = "An unknown error occurred."
-        help_links = []
-
-        if status_code == HTTPStatus.BAD_REQUEST:
-            reason = "Bad Request"
-            resolution_hint = (
-                response_body.get("error")
-                or response_body.get("message")
-                or "Request was malformed. Check the query and signature structure."
-            )
-            help_links = [
-                "https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/signature.md",
-                "https://github.com/Alation/alation-ai-agent-sdk?tab=readme-ov-file#usage",
-                "https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature",
-            ]
-        elif status_code == HTTPStatus.UNAUTHORIZED:
-            reason = "Unauthorized"
-            resolution_hint = "Token missing or invalid. Retry with a valid token."
-            help_links = [
-                "https://developer.alation.com/dev/v2024.1/docs/authentication-into-alation-apis",
-                "https://developer.alation.com/dev/reference/refresh-access-token-overview",
-            ]
-        elif status_code == HTTPStatus.FORBIDDEN:
-            reason = "Forbidden"
-            resolution_hint = (
-                "Token likely expired or lacks permissions. Ask the user to re-authenticate."
-            )
-            help_links = [
-                "https://developer.alation.com/dev/v2024.1/docs/authentication-into-alation-apis",
-                "https://developer.alation.com/dev/reference/refresh-access-token-overview",
-            ]
-        elif status_code == HTTPStatus.NOT_FOUND:
-            reason = "Not Found"
-            resolution_hint = (
-                "The requested resource was not found or is not enabled, check feature flag"
-            )
-            help_links = [
-                "https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta"
-            ]
-        elif status_code == HTTPStatus.TOO_MANY_REQUESTS:
-            reason = "Too Many Requests"
-            resolution_hint = "Rate limit exceeded. Retry after some time."
-            help_links = [
-                "https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta#rate-limiting"
-            ]
-        elif status_code == HTTPStatus.INTERNAL_SERVER_ERROR:
-            reason = "Internal Server Error"
-            resolution_hint = "Server error. Retry later or contact Alation support."
-            help_links = [
-                "https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta"
-            ]
-
-        return {"reason": reason, "resolution_hint": resolution_hint, "help_links": help_links}
-
-    @staticmethod
-    def classify_token_error(status_code: int, response_body: dict) -> Dict[str, Any]:
-        reason = "Unexpected Token Error"
-        resolution_hint = "An unknown token-related error occurred."
-        help_links = [
-            "https://developer.alation.com/dev/v2024.1/docs/authentication-into-alation-apis",
-            "https://developer.alation.com/dev/reference/refresh-access-token-overview",
-        ]
-
-        if status_code == HTTPStatus.BAD_REQUEST:
-            reason = "Token Request Invalid"
-            resolution_hint = response_body.get("error") or "Token request payload is malformed."
-        elif status_code == HTTPStatus.UNAUTHORIZED:
-            reason = "Token Unauthorized"
-            resolution_hint = "[User ID,refresh token] or [client id, client secret] is invalid."
-        elif status_code == HTTPStatus.FORBIDDEN:
-            reason = "Token Forbidden"
-            resolution_hint = "You do not have permission to generate a token."
-        elif status_code == HTTPStatus.INTERNAL_SERVER_ERROR:
-            reason = "Token Generation Failed"
-            resolution_hint = "Alation server failed to process token request."
-
-        return {"reason": reason, "resolution_hint": resolution_hint, "help_links": help_links}
-
-
-class UserAccountAuthParams(NamedTuple):
-    user_id: int
-    refresh_token: str
-
-
-class ServiceAccountAuthParams(NamedTuple):
-    client_id: str
-    client_secret: str
-
-
-AuthParams = Union[UserAccountAuthParams, ServiceAccountAuthParams]
-
-
-class CatalogAssetMetadataPayloadItem(TypedDict):
-    oid: str
-    otype: str  # Only 'glossary_v3' or 'glossary_term'
-    field_id: int  # Only 3 (TEXT) or 4 (RICH_TEXT)
-    value: Any  # Accept any type, validated by field_id -> type mapping
 
 
 class CatalogAssetMetadataPayloadBuilder:
@@ -217,10 +99,16 @@ class AlationAPI:
         base_url: str,
         auth_method: str,
         auth_params: AuthParams,
+        dist_version: Optional[str] = None,
+        skip_instance_info: Optional[bool] = False,
     ):
         self.base_url = base_url.rstrip("/")
         self.access_token: Optional[str] = None
         self.auth_method = auth_method
+        self.is_cloud = None
+        self.alation_release_name = None
+        self.alation_version_info = None
+        self.dist_version = dist_version
 
         # Validate auth_method and auth_params
         if auth_method == AUTH_METHOD_USER_ACCOUNT:
@@ -242,29 +130,73 @@ class AlationAPI:
 
         logger.debug(f"AlationAPI initialized with auth method: {self.auth_method}")
 
+        if not skip_instance_info:
+            self._fetch_and_cache_instance_info()
+
+    def _fetch_and_cache_instance_info(self):
+        """
+        Fetches instance info (license and version) after authentication and caches in memory.
+        """
+        self._with_valid_token()
+        headers = {
+            "Token": self.access_token,
+            "Accept": "application/json",
+        }
+        try:
+            # License info
+            license_url = f"{self.base_url}/api/v1/license"
+            license_resp = requests.get(license_url, headers=headers, timeout=10)
+            license_resp.raise_for_status()
+            license_data = license_resp.json()
+            self.is_cloud = license_data.get("is_cloud", None)
+            self.alation_license_info = license_data
+        except Exception as e:
+            logger.warning(f"Could not fetch license info: {e}")
+            self.is_cloud = None
+            self.alation_license_info = None
+        try:
+            # Version info
+            version_url = f"{self.base_url}/full_version"
+            version_resp = requests.get(version_url, timeout=10)
+            version_resp.raise_for_status()
+            version_data = version_resp.json()
+            self.alation_release_name = version_data.get("ALATION_RELEASE_NAME", None)
+            self.alation_version_info = version_data
+        except Exception as e:
+            logger.warning(f"Could not fetch version info: {e}")
+            self.alation_release_name = None
+            self.alation_version_info = None
+
     def _handle_request_error(self, exception: requests.RequestException, context: str):
         """Utility function to handle request exceptions."""
+
+        alation_release_name = getattr(self, "alation_release_name", None)
+        dist_version = getattr(self, "dist_version", None)
+
         if isinstance(exception, requests.exceptions.Timeout):
             raise AlationAPIError(
                 f"Request to {context} timed out after 60 seconds.",
                 reason="Timeout Error",
                 resolution_hint="Ensure the server is reachable and try again later.",
                 help_links=["https://developer.alation.com/"],
+                alation_release_name=alation_release_name,
+                dist_version=dist_version,
             )
 
         status_code = getattr(exception.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR)
         response_text = getattr(exception.response, "text", "No response received from server")
         parsed = {"error": response_text}
         meta = AlationErrorClassifier.classify_catalog_error(status_code, parsed)
-
         raise AlationAPIError(
-            f"""HTTP error during {context}: {meta["reason"]}""",
+            f"HTTP error during {context}: {meta['reason']}",
             original_exception=exception,
             status_code=status_code,
             response_body=parsed,
             reason=meta["reason"],
             resolution_hint=meta["resolution_hint"],
             help_links=meta["help_links"],
+            alation_release_name=alation_release_name,
+            dist_version=dist_version,
         )
 
     def _generate_access_token_with_refresh_token(self):
@@ -674,6 +606,120 @@ class AlationAPI:
                 "You must provide either a product_id or a query to search for data products."
             )
 
+    def get_bulk_lineage(
+        self,
+        root_nodes: List[LineageRootNode],
+        direction: LineageDirectionType,
+        limit: int,
+        batch_size: LineageBatchSizeType,
+        processing_mode: LineageGraphProcessingType,
+        show_temporal_objects: bool,
+        design_time: LineageDesignTimeType,
+        max_depth: int,
+        excluded_schema_ids: LineageExcludedSchemaIdsType,
+        allowed_otypes: LineageOTypeFilterType,
+        time_from: LineageTimestampType,
+        time_to: LineageTimestampType,
+        key_type: LineageKeyTypeType,
+        pagination: Optional[LineagePagination] = None,
+    ) -> dict:
+        """
+        Fetch lineage information from Alation's catalog for a given object / root node.
+
+        Args:
+            root_nodes (List[LineageRootNode]): The root nodes to start lineage from.
+            direction (LineageDirectionType): The direction of lineage to fetch, either "upstream" or "downstream".
+            limit (int, optional): The maximum number of nodes to return. Defaults to the maximum 1,000.
+            batch_size (int, optional): The size of each batch for chunked processing. Defaults to 1,000.
+            pagination (LineagePagination, optional): Pagination parameters only used with chunked processing.
+            processing_mode (LineageGraphProcessingType, optional): The processing mode for lineage graph. Strongly recommended to use 'complete' for full lineage graphs.
+            show_temporal_objects (bool, optional): Whether to include temporary objects in the lineage. Defaults to False.
+            design_time (LineageDesignTimeType, optional): The design time option to filter lineage. Defaults to LineageDesignTimeOptions.EITHER_DESIGN_OR_RUN_TIME.
+            max_depth (int, optional): The maximum depth to traverse in the lineage graph. Defaults to 10.
+            excluded_schema_ids (LineageExcludedSchemaIdsType, optional): A list of excluded schema IDs to filter lineage nodes. Defaults to None.
+            allowed_otypes (LineageOTypeFilterType, optional): A list of allowed object types to filter lineage nodes. Defaults to None.
+            time_from (LineageTimestampType, optional): The start time for temporal lineage filtering. Defaults to None.
+            time_to (LineageTimestampType, optional): The end time for temporal lineage filtering. Defaults to None.
+
+        Returns:
+            Dict[str, Dict[str, any]]]: A dictionary containing the lineage `graph` and `pagination` information.
+
+        Raises:
+            ValueError: When argument combinations are invalid, such as:
+                pagination in complete processing mode,
+                allowed_otypes in chunked processing mode
+            AlationAPIError: On network, API, or response errors.
+        """
+        # Filter out any incompatible options
+        if limit > 1000:
+            raise ValueError("limit cannot exceed 1,000.")
+        if allowed_otypes is not None:
+            if processing_mode != LineageGraphProcessingOptions.COMPLETE:
+                raise ValueError("allowed_otypes is only supported in 'complete' processing mode.")
+            if len(allowed_otypes) == 0:
+                raise ValueError("allowed_otypes cannot be empty list.")
+        if pagination is not None and processing_mode == LineageGraphProcessingOptions.COMPLETE:
+            raise ValueError("pagination is only supported in 'chunked' processing mode.")
+
+        self._with_valid_token()
+
+        headers = {
+            "Token": self.access_token,
+            "Accept": "application/json",
+        }
+
+        lineage_request_dict = {
+            "key_type": key_type,
+            "root_nodes": root_nodes,
+            "direction": direction,
+            "limit": limit,
+            "filters": {
+                "depth": max_depth,
+                "time_filter": {
+                    "from": time_from,
+                    "to": time_to,
+                },
+                "schema_filter": excluded_schema_ids,
+                "design_time": design_time,
+            },
+            "request_id": pagination.get("request_id") if pagination else uuid4().hex,
+            "cursor": pagination.get("cursor", 0) if pagination else 0,
+            "batch_size": limit if processing_mode == LineageGraphProcessingOptions.COMPLETE else pagination.get("batch_size", limit) if pagination else batch_size,
+        }
+        if show_temporal_objects:
+            lineage_request_dict["filters"]["temp_filter"] = show_temporal_objects
+        url = f"{self.base_url}/integration/v2/bulk_lineage/"
+        try:
+            response = requests.post(
+                url, headers=headers, json=lineage_request_dict, timeout=60
+            )
+            response.raise_for_status()
+            response_data = response.json()
+            if "graph" in response_data and processing_mode == LineageGraphProcessingOptions.COMPLETE:
+                if allowed_otypes is not None:
+                    allowed_otypes_set = set(allowed_otypes)
+                    response_data["graph"] = filter_graph(
+                        response_data["graph"], allowed_otypes_set
+                    )
+            request_id = response_data.get("request_id", "")
+            # Deliberately Pascal cased to match implementation. We'll change it to be consistent for anything
+            # invoking the tool.
+            pagination = response_data.get("Pagination", None)
+            if pagination is not None:
+                new_pagination = {
+                    "request_id": request_id,
+                    "cursor": pagination.get("cursor", 0),
+                    "batch_size": pagination.get("batch_size", batch_size),
+                    "has_more": pagination.get("has_more", False),
+                }
+                response_data["pagination"] = new_pagination
+                del response_data["Pagination"]
+                del response_data["request_id"]
+            response_data["direction"] = direction
+            return response_data
+        except requests.RequestException as e:
+            self._handle_request_error(e, f"getting lineage for: {json.dumps(lineage_request_dict)}")
+
     def update_catalog_asset_metadata(
         self, custom_field_values: list[CatalogAssetMetadataPayloadItem]
     ) -> dict:
@@ -707,6 +753,7 @@ class AlationAPI:
             dict: The API response containing job status and details.
         """
         self._with_valid_token()
+
         headers = {
             "Token": self.access_token,
             "Accept": "application/json",
