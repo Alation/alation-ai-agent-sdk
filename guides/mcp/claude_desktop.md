@@ -37,15 +37,13 @@ Add the following configuration to your `claude_desktop_config.json`. See [here]
       ],
       "env": {
         "ALATION_BASE_URL": "https://your-alation-instance.com",
-        "ALATION_AUTH_METHOD": "user_account", // or "service_account"
-
-        // For user account authentication
-        "ALATION_USER_ID": "your-user-id",
-        "ALATION_REFRESH_TOKEN": "your-refresh-token",
+        "ALATION_AUTH_METHOD": "service_account", // recommended
 
         // For service account authentication
         "ALATION_CLIENT_ID": "your-client-id",
         "ALATION_CLIENT_SECRET": "your-client-secret"
+
+        // If you cannot obtain service account credentials (admin only), see the [User Account Authentication Guide](../authentication.md#user-account-authentication) for instructions.
       }
     }
   }
@@ -68,15 +66,13 @@ where start-alation-mcp-server  # On Windows
       "command": "/full/path/to/start-alation-mcp-server",
       "env": {
         "ALATION_BASE_URL": "https://your-alation-instance.com",
-        "ALATION_AUTH_METHOD": "user_account", // or "service_account"
-
-        // For user account authentication
-        "ALATION_USER_ID": "your-user-id",
-        "ALATION_REFRESH_TOKEN": "your-refresh-token",
+        "ALATION_AUTH_METHOD": "service_account", // recommended
 
         // For service account authentication
         "ALATION_CLIENT_ID": "your-client-id",
         "ALATION_CLIENT_SECRET": "your-client-secret"
+
+        // If you cannot obtain service account credentials (admin only), see the [User Account Authentication Guide](../authentication.md#user-account-authentication) for instructions.
       }
     }
   }
@@ -93,11 +89,13 @@ where start-alation-mcp-server  # On Windows
       "args": [
         "run", "-i", "--rm",
         "-e", "ALATION_BASE_URL=https://your-alation-instance.com",
-        "-e", "ALATION_AUTH_METHOD=user_account", // or "service_account",
+        "-e", "ALATION_AUTH_METHOD=service_account", // recommended
 
-        // For user account authentication
-        "-e", "ALATION_USER_ID=your-user-id",
-        "-e", "ALATION_REFRESH_TOKEN=your-refresh-token",
+        // For service account authentication
+        "-e", "ALATION_CLIENT_ID=your-client-id",
+        "-e", "ALATION_CLIENT_SECRET=your-client-secret",
+
+        // If you cannot obtain service account credentials (admin only), see the [User Account Authentication Guide](../authentication.md#user-account-authentication) for instructions.
 
         // For service account authentication
         "-e", "ALATION_CLIENT_ID=your-client-id",

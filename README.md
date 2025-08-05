@@ -63,23 +63,8 @@ pip install alation-ai-agent-mcp
 
 The library needs to be configured with your Alation instance credentials. Depending on your authentication mode, you can use either `UserAccountAuthParams` or `ServiceAccountAuthParams`.
 
-### User Account Authentication
-```python
-from alation_ai_agent_sdk import AlationAPI, UserAccountAuthParams
 
-# Initialize the SDK with User Account Authentication
-auth_params = UserAccountAuthParams(
-    user_id=12345,  # Your numeric user ID
-    refresh_token="your_refresh_token"
-)
-alation_api = AlationAPI(
-    base_url="https://your-alation-instance.com",
-    auth_method="user_account",
-    auth_params=auth_params
-)
-```
-
-### Service Account Authentication
+### Service Account Authentication (Recommended)
 ```python
 from alation_ai_agent_sdk import AlationAPI, ServiceAccountAuthParams
 
@@ -94,6 +79,8 @@ alation_api = AlationAPI(
     auth_params=auth_params
 )
 ```
+
+If you cannot obtain service account credentials (admin only), see the [User Account Authentication Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md#user-account-authentication) for instructions.
 
 ## Supported Tools
 

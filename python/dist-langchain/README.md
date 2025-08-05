@@ -30,23 +30,16 @@ from langchain_openai import ChatOpenAI
 from langchain.agents import AgentExecutor, create_openai_functions_agent
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 
-from alation_ai_agent_sdk import AlationAIAgentSDK, UserAccountAuthParams, ServiceAccountAuthParams
+
+from alation_ai_agent_sdk import AlationAIAgentSDK, ServiceAccountAuthParams
 from alation_ai_agent_langchain import get_langchain_tools
 
-# Initialize Alation SDK using user account authentication
-sdk_user_account = AlationAIAgentSDK(
-    base_url=os.getenv("ALATION_BASE_URL"),
-    auth_method="user_account",  # Specify the authentication method
-    auth_params=UserAccountAuthParams(
-        user_id=int(os.getenv("ALATION_USER_ID")),
-        refresh_token=os.getenv("ALATION_REFRESH_TOKEN")
-    )
-)
+# Initialize Alation SDK using service account authentication (recommended)
+# If you cannot obtain service account credentials (admin only), see the [User Account Authentication Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md#user-account-authentication) for instructions.
 
-# Initialize Alation SDK using service account authentication
-sdk_service_account = AlationAIAgentSDK(
+sdk = AlationAIAgentSDK(
     base_url=os.getenv("ALATION_BASE_URL"),
-    auth_method="service_account",  # Specify the authentication method
+    auth_method="service_account",
     auth_params=ServiceAccountAuthParams(
         client_id=os.getenv("ALATION_CLIENT_ID"),
         client_secret=os.getenv("ALATION_CLIENT_SECRET")
@@ -54,7 +47,7 @@ sdk_service_account = AlationAIAgentSDK(
 )
 
 # Get Langchain tools
-tools = get_langchain_tools(sdk_user_account)
+tools = get_langchain_tools(sdk)
 
 # Define agent prompt
 prompt = ChatPromptTemplate.from_messages([
@@ -70,11 +63,13 @@ agent = create_openai_functions_agent(llm=llm, tools=tools, prompt=prompt)
 # Create agent executor
 executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
+
 # Run the agent
 response = executor.invoke({
   "input": "What tables contain customer data?"}
 )
 print(response)
+
 ```
 
 ## Using Signatures with Langchain
