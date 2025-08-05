@@ -188,7 +188,7 @@ For more information about signatures, refer to [Using Signatures](https://githu
 ### General
 - [Planning an Integration](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/planning.md) - Practical considerations for getting the most out of your agents and the Alation Data Catalog.
 - [Using Signatures](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/signature.md) - How to customize your agent with concrete examples.
-- [Supported Object Types and Fields](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/supported.md) - See what's available.
+- [Supported Object Types and Fields](https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta#supported-object-types-and-object-type-fields) - See what's available.
 
 ### Core SDK
 

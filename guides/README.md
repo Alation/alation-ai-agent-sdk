@@ -7,7 +7,7 @@ Here are a handful of guides & examples to show you how to work with the Alation
 - [Authentication](./authentication.md)
 - [Integration Planning](./planning.md)
 - [Using Signatures](./signature.md)
-- [Supported Object Types and Fields](./supported.md)
+- [Supported Object Types and Fields](https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta#supported-object-types-and-object-type-fields)
 
 ## Model Context Protocol (MCP)
 

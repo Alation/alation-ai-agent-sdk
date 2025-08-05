@@ -38,7 +38,4 @@ export ALATION_CLIENT_SECRET="your-client-secret"
 
 > **Note:** Service account credentials can only be created by Alation admins. If you cannot obtain service account credentials, use user account authentication instead. See [User Account Authentication Guide](../authentication.md#user-account-authentication) for details.
 
-
-If you cannot obtain service account credentials, see the [User Account Authentication Guide](../authentication.md#user-account-authentication) for instructions on using user account authentication.
-
 See the specific client guides for detailed configuration steps.
