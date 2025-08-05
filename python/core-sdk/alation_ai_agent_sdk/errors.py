@@ -62,7 +62,6 @@ class AlationErrorClassifier:
             help_links = [
                 "https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature",
                 "https://github.com/Alation/alation-ai-agent-sdk?tab=readme-ov-file#usage",
-                "https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature",
             ]
         elif status_code == HTTPStatus.UNAUTHORIZED:
             reason = "Unauthorized"
