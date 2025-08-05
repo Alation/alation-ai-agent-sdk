@@ -15,7 +15,7 @@ The Langchain integration enables:
 - Python 3.10 or higher
 - Access to an Alation Data Catalog instance
 - A valid refresh token or client_id and secret. For more details, refer to the [Authentication Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md).
-
+- If you cannot obtain service account credentials (admin only), see the [User Account Authentication Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md#user-account-authentication) for instructions.
 ## Installation
 
 ```bash
@@ -35,7 +35,6 @@ from alation_ai_agent_sdk import AlationAIAgentSDK, ServiceAccountAuthParams
 from alation_ai_agent_langchain import get_langchain_tools
 
 # Initialize Alation SDK using service account authentication (recommended)
-# If you cannot obtain service account credentials (admin only), see the [User Account Authentication Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md#user-account-authentication) for instructions.
 
 sdk = AlationAIAgentSDK(
     base_url=os.getenv("ALATION_BASE_URL"),

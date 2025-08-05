@@ -27,6 +27,7 @@ This will create or open the configuration file at:
 
 Add the following configuration to your `claude_desktop_config.json`. See [here](https://modelcontextprotocol.io/quickstart/user) for more details.
 
+If you cannot obtain service account credentials (admin only), see the [User Account Authentication Guide](../authentication.md#user-account-authentication) for instructions.
 ```json
 {
   "mcpServers": {
@@ -42,8 +43,6 @@ Add the following configuration to your `claude_desktop_config.json`. See [here]
         // For service account authentication
         "ALATION_CLIENT_ID": "your-client-id",
         "ALATION_CLIENT_SECRET": "your-client-secret"
-
-        // If you cannot obtain service account credentials (admin only), see the [User Account Authentication Guide](../authentication.md#user-account-authentication) for instructions.
       }
     }
   }
@@ -71,13 +70,13 @@ where start-alation-mcp-server  # On Windows
         // For service account authentication
         "ALATION_CLIENT_ID": "your-client-id",
         "ALATION_CLIENT_SECRET": "your-client-secret"
-
-        // If you cannot obtain service account credentials (admin only), see the [User Account Authentication Guide](../authentication.md#user-account-authentication) for instructions.
       }
     }
   }
 }
 ```
+
+If you cannot obtain service account credentials (admin only), see the [User Account Authentication Guide](../authentication.md#user-account-authentication) for instructions.
 
 ### Method 3: Using Docker
 > This assumes you've already locally built a docker image following the instructions from [this guide](https://github.com/Alation/alation-ai-agent-sdk/tree/main/python/dist-mcp/README.md#debugging-the-server)
@@ -90,13 +89,6 @@ where start-alation-mcp-server  # On Windows
         "run", "-i", "--rm",
         "-e", "ALATION_BASE_URL=https://your-alation-instance.com",
         "-e", "ALATION_AUTH_METHOD=service_account", // recommended
-
-        // For service account authentication
-        "-e", "ALATION_CLIENT_ID=your-client-id",
-        "-e", "ALATION_CLIENT_SECRET=your-client-secret",
-
-        // If you cannot obtain service account credentials (admin only), see the [User Account Authentication Guide](../authentication.md#user-account-authentication) for instructions.
-
         // For service account authentication
         "-e", "ALATION_CLIENT_ID=your-client-id",
         "-e", "ALATION_CLIENT_SECRET=your-client-secret",
@@ -106,6 +98,7 @@ where start-alation-mcp-server  # On Windows
   }
 }
 ```
+If you cannot obtain service account credentials (admin only), see the [User Account Authentication Guide](../authentication.md#user-account-authentication) for instructions.
 
 ### Step 2: Save and Restart Claude Desktop
 
