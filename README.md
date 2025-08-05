@@ -298,14 +298,14 @@ response = sdk.get_context(
 ```
 
 For more information about signatures, refer to
-<a href="https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature" target="_blank"> Using Signatures </a>
+<a href="https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature" target="blank"> Using Signatures </a>
 
 ## Guides and Example Agents
 
 ### General
 - [Planning an Integration](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/planning.md) - Practical considerations for getting the most out of your agents and the Alation Data Catalog.
-- <a href="https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature" target="_blank"> Using Signatures </a> - How to customize your agent with concrete examples.
-- <a href="https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta#supported-object-types-and-object-type-fields" target="_blank">Supported Object Types and Fields </a> - See what's available.
+- <a href="https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature" target="blank"> Using Signatures </a> - How to customize your agent with concrete examples.
+- <a href="https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta#supported-object-types-and-object-type-fields" target="blank">Supported Object Types and Fields </a> - See what's available.
 
 ### Core SDK
 

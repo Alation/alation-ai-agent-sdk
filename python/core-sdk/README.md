@@ -92,7 +92,7 @@ response = sdk.get_context(
 )
 ```
 
-For detailed documentation on signature format and capabilities, see <a href="https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature" target="_blank"> Using Signatures </a>.
+For detailed documentation on signature format and capabilities, see <a href="https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature" target="blank"> Using Signatures </a>.
 ### Getting Available Tools
 
 
