@@ -129,7 +129,7 @@ LibreChat will invoke the MCP tool, which will forward the context API queries t
 
 ## Using Custom Signatures (Optional)
 
-To fine-tune data retrieval, you can embed **signatures** learn more about them [here](../signature.md) into prompts, just like Claude Desktop.
+To fine-tune data retrieval, you can embed **signatures** (learn more about them <a href="https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature" target="_blank"> here </a>) into prompts, just like Claude Desktop.
 
 ### Example Signature for Trusted Tables
 

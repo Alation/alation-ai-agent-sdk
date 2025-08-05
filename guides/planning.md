@@ -16,7 +16,7 @@ Field selection ensures your agent has the right context in order to achieve the
 
 We recommend starting the default fields then extending them as your use case(s) warrants. For more predicable results consider limiting any optional fields.
 
-See [Using Signatures](./signature.md) for how to put these integration ideas into practice.
+See <a href="https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature" target="_blank"> Using Signatures </a> for how to put these integration ideas into practice.
 
 ## Authentication
 

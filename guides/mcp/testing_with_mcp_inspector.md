@@ -86,7 +86,7 @@ Any of these approaches will launch the MCP Inspector UI in your browser.
 
 ## Using Signatures with MCP Inspector
 
-The Alation AI Agent SDK supports customizing data retrieval through signatures. For detailed documentation on signature format and capabilities, see [Using Signatures](../signature.md).
+The Alation AI Agent SDK supports customizing data retrieval through signatures. For detailed documentation on signature format and capabilities, see <a href="https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature" target="_blank"> Using Signatures </a>.
 
 ### Testing Signatures with MCP Inspector
 

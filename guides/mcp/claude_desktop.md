@@ -128,7 +128,7 @@ When needed, Claude will use the Alation MCP tools to retrieve contextual inform
 
 ## Using Signatures with Claude Desktop
 
-The Alation AI Agent SDK supports customizing data retrieval through signatures. For detailed documentation on signature format and capabilities, see [Using Signatures](../signature.md).
+The Alation AI Agent SDK supports customizing data retrieval through signatures. For detailed documentation on signature format and capabilities, see <a href="https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature" target="_blank"> Using Signatures </a>.
 
 ### Example 1: Simple Usage with Claude
 

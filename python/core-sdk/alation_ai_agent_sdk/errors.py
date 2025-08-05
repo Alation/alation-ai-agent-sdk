@@ -60,7 +60,7 @@ class AlationErrorClassifier:
                 or "Request was malformed. Check the query and signature structure."
             )
             help_links = [
-                "https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/signature.md",
+                "https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature",
                 "https://github.com/Alation/alation-ai-agent-sdk?tab=readme-ov-file#usage",
                 "https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature",
             ]
