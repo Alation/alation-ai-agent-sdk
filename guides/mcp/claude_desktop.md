@@ -27,6 +27,7 @@ This will create or open the configuration file at:
 
 Add the following configuration to your `claude_desktop_config.json`. See [here](https://modelcontextprotocol.io/quickstart/user) for more details.
 
+If you cannot obtain service account credentials (admin only), see the [User Account Authentication Guide](../authentication.md#user-account-authentication) for instructions.
 ```json
 {
   "mcpServers": {
@@ -37,11 +38,7 @@ Add the following configuration to your `claude_desktop_config.json`. See [here]
       ],
       "env": {
         "ALATION_BASE_URL": "https://your-alation-instance.com",
-        "ALATION_AUTH_METHOD": "user_account", // or "service_account"
-
-        // For user account authentication
-        "ALATION_USER_ID": "your-user-id",
-        "ALATION_REFRESH_TOKEN": "your-refresh-token",
+        "ALATION_AUTH_METHOD": "service_account", // recommended
 
         // For service account authentication
         "ALATION_CLIENT_ID": "your-client-id",
@@ -68,11 +65,7 @@ where start-alation-mcp-server  # On Windows
       "command": "/full/path/to/start-alation-mcp-server",
       "env": {
         "ALATION_BASE_URL": "https://your-alation-instance.com",
-        "ALATION_AUTH_METHOD": "user_account", // or "service_account"
-
-        // For user account authentication
-        "ALATION_USER_ID": "your-user-id",
-        "ALATION_REFRESH_TOKEN": "your-refresh-token",
+        "ALATION_AUTH_METHOD": "service_account", // recommended
 
         // For service account authentication
         "ALATION_CLIENT_ID": "your-client-id",
@@ -82,6 +75,8 @@ where start-alation-mcp-server  # On Windows
   }
 }
 ```
+
+If you cannot obtain service account credentials (admin only), see the [User Account Authentication Guide](../authentication.md#user-account-authentication) for instructions.
 
 ### Method 3: Using Docker
 > This assumes you've already locally built a docker image following the instructions from [this guide](https://github.com/Alation/alation-ai-agent-sdk/tree/main/python/dist-mcp/README.md#debugging-the-server)
@@ -93,12 +88,7 @@ where start-alation-mcp-server  # On Windows
       "args": [
         "run", "-i", "--rm",
         "-e", "ALATION_BASE_URL=https://your-alation-instance.com",
-        "-e", "ALATION_AUTH_METHOD=user_account", // or "service_account",
-
-        // For user account authentication
-        "-e", "ALATION_USER_ID=your-user-id",
-        "-e", "ALATION_REFRESH_TOKEN=your-refresh-token",
-
+        "-e", "ALATION_AUTH_METHOD=service_account", // recommended
         // For service account authentication
         "-e", "ALATION_CLIENT_ID=your-client-id",
         "-e", "ALATION_CLIENT_SECRET=your-client-secret",
@@ -108,6 +98,7 @@ where start-alation-mcp-server  # On Windows
   }
 }
 ```
+If you cannot obtain service account credentials (admin only), see the [User Account Authentication Guide](../authentication.md#user-account-authentication) for instructions.
 
 ### Step 2: Save and Restart Claude Desktop
 
@@ -137,7 +128,7 @@ When needed, Claude will use the Alation MCP tools to retrieve contextual inform
 
 ## Using Signatures with Claude Desktop
 
-The Alation AI Agent SDK supports customizing data retrieval through signatures. For detailed documentation on signature format and capabilities, see [Using Signatures](../signature.md).
+The Alation AI Agent SDK supports customizing data retrieval through signatures. For detailed documentation on signature format and capabilities, see <a href="https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature" target="blank"> Using Signatures </a>.
 
 ### Example 1: Simple Usage with Claude
 
