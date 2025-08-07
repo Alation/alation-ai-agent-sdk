@@ -252,7 +252,6 @@ First, ask:
             "columns": {"fields": ["name", "data_type", "description"]}
         },
         "limit": 15
-    }
 },
 {
     "query": {
