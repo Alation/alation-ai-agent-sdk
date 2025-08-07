@@ -23,24 +23,18 @@ To use the SDK, you'll need:
 - Python 3.10 or higher
 - Access to an Alation Data Catalog instance
 - A valid refresh token or client_id and secret. For more details, refer to the [Authentication Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md).
+- If you cannot obtain service account credentials (admin only), see the [User Account Authentication Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md#user-account-authentication) for instructions.
+
 
 ## Quick Start
 
 ```python
-from alation_ai_agent_sdk import AlationAIAgentSDK, UserAccountAuthParams, ServiceAccountAuthParams
 
-# Initialize the SDK using user account authentication
-sdk_user_account = AlationAIAgentSDK(
-    base_url="https://your-alation-instance.com",
-    auth_method="user_account",
-    auth_params=UserAccountAuthParams(
-        user_id=12345,
-        refresh_token="your-refresh-token"
-    )
-)
+from alation_ai_agent_sdk import AlationAIAgentSDK, ServiceAccountAuthParams
 
-# Initialize the SDK using service account authentication
-sdk_service_account = AlationAIAgentSDK(
+# Initialize the SDK using service account authentication (recommended)
+
+sdk = AlationAIAgentSDK(
     base_url="https://your-alation-instance.com",
     auth_method="service_account",
     auth_params=ServiceAccountAuthParams(
@@ -50,7 +44,7 @@ sdk_service_account = AlationAIAgentSDK(
 )
 
 # Ask a question about your data
-response = sdk_user_account.get_context(
+response = sdk.get_context(
     "What tables contain sales information?"
 )
 print(response)
@@ -62,18 +56,18 @@ signature = {
     }
 }
 
-response = sdk_user_account.get_context(
+response = sdk.get_context(
     "What are the customer tables?",
     signature
 )
 print(response)
 
 # Retrieve a data product by ID
-data_product_by_id = sdk_user_account.get_data_products(product_id="finance:loan_performance_analytics")
+data_product_by_id = sdk.get_data_products(product_id="finance:loan_performance_analytics")
 print(data_product_by_id)
 
 # Search for data products using a natural language query
-data_products_by_query = sdk_user_account.get_data_products(query="customer analytics dashboards")
+data_products_by_query = sdk.get_data_products(query="customer analytics dashboards")
 print(data_products_by_query)
 ```
 
@@ -98,7 +92,7 @@ response = sdk.get_context(
 )
 ```
 
-For detailed documentation on signature format and capabilities, see [Using Signatures](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/signature.md).
+For detailed documentation on signature format and capabilities, see <a href="https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature" target="blank"> Using Signatures </a>.
 ### Getting Available Tools
 
 
