@@ -319,5 +319,5 @@ class AlationAIAgentSDK:
         if self.is_tool_enabled(AlationTools.LINEAGE):
             tools.append(self.lineage_tool)
         if self.is_tool_enabled(AlationTools.DATA_QUALITY):
-            tools.append(self.check_data_quality)
+            tools.append(self.check_data_quality_tool)
         return tools

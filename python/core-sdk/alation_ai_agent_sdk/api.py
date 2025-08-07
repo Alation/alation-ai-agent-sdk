@@ -813,16 +813,6 @@ class AlationAPI:
         if ds_id is not None:
             payload["ds_id"] = ds_id
 
-        # Auto-expire after July 2025
-        now = datetime.datetime.now()
-        patch_expiry = datetime.datetime(2025, 8, 1)  # August 1, 2025
-        if now < patch_expiry:
-            # Ensure 'native_data_quality' is always included in bypassed_dq_sources
-            if bypassed_dq_sources is None:
-                bypassed_dq_sources = ["native_data_quality"]
-            elif "native_data_quality" not in bypassed_dq_sources:
-                bypassed_dq_sources = list(bypassed_dq_sources) + ["native_data_quality"]
-
         if bypassed_dq_sources is not None:
             payload["bypassed_dq_sources"] = bypassed_dq_sources
         if default_schema_name is not None:
