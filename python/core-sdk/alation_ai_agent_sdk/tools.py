@@ -438,6 +438,7 @@ class CheckJobStatusTool:
     def run(self, job_id: int) -> dict:
         return self.api.check_job_status(job_id)
 
+
 class GenerateDataProductTool:
     def __init__(self, api: AlationAPI):
         self.api = api
@@ -487,7 +488,7 @@ class GenerateDataProductTool:
         Returns:
             str: The schema content as YAML string, or None if fetch fails
         """
-        if not self.api or not hasattr(self.api, 'base_url'):
+        if not self.api or not hasattr(self.api, "base_url"):
             logger.warning("No API instance available to fetch schema")
             return None
 
@@ -708,13 +709,12 @@ class GenerateDataProductTool:
         prompt_instructions = self._get_prompt_instructions()
 
         final_instructions = prompt_instructions.format(
-            schema=schema_content,
-            example=example_content
+            schema=schema_content, example=example_content
         )
         return final_instructions
 
-      
- class CheckDataQualityTool:
+
+class CheckDataQualityTool:
     def __init__(self, api: AlationAPI):
         self.api = api
         self.name = self._get_name()
@@ -775,6 +775,7 @@ class GenerateDataProductTool:
             )
         except AlationAPIError as e:
             return {"error": e.to_dict()}
+
 
 def csv_str_to_tool_list(tool_env_var: Optional[str] = None) -> List[str]:
     if tool_env_var is None:
