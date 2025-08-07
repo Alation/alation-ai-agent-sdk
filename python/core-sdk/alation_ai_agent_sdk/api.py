@@ -192,7 +192,7 @@ class AlationAPI:
                 if exception.response is not None
                 else {"error": response_text}
             )
-        except Exception as parse_exc:
+        except (json.JSONDecodeError, ValueError) as parse_exc:
             parsed = {"error": response_text}
         meta = AlationErrorClassifier.classify_catalog_error(status_code, parsed)
         raise AlationAPIError(
