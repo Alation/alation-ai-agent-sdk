@@ -91,7 +91,7 @@ def create_server(
         )
 
     # Initialize FastMCP server
-    mcp = FastMCP(name="Alation MCP Server", version=MCP_SERVER_VERSION)
+    mcp = FastMCP(name="Alation MCP Server")
 
     # Initialize Alation SDK
     alation_sdk = AlationAIAgentSDK(
