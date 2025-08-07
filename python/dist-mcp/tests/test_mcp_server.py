@@ -164,7 +164,7 @@ def test_create_server_disabled_tool_and_enabled_beta_tool(manage_environment_va
     # of 6 possible tools 5 tools are on by default with one 1 beta available
 
     # So 5, -1 disabled tool, +1 enabled beta tool = 5 total tools
-    assert mock_mcp_instance.tool.call_count == 5
+    assert mock_mcp_instance.tool.call_count == 6
 
     # NOTE: each distribution may refer to the tools differently. These should be standardized so we can
     # reuse a set of constants across all projects.
@@ -175,6 +175,7 @@ def test_create_server_disabled_tool_and_enabled_beta_tool(manage_environment_va
     assert "update_catalog_asset_metadata" in mock_mcp_instance.tools
     assert "check_job_status" in mock_mcp_instance.tools
     assert "get_lineage" in mock_mcp_instance.tools
+    assert "generate_data_product" in mock_mcp_instance.tools
 
 def test_create_server_disabled_tool_and_enabled_beta_tool_via_environment(manage_environment_variables, manage_disabled_tools_and_enabled_beta_tools_environment, mock_fastmcp):
     mock_mcp_class, mock_mcp_instance = mock_fastmcp
@@ -189,7 +190,7 @@ def test_create_server_disabled_tool_and_enabled_beta_tool_via_environment(manag
     # of 6 possible tools 5 tools are on by default with one 1 beta available
 
     # So 5, -1 disabled tool, +1 enabled beta tool = 5 total tools
-    assert mock_mcp_instance.tool.call_count == 5
+    assert mock_mcp_instance.tool.call_count == 6
 
     # NOTE: each distribution may refer to the tools differently. These should be standardized so we can
     # reuse a set of constants across all projects.
@@ -200,6 +201,7 @@ def test_create_server_disabled_tool_and_enabled_beta_tool_via_environment(manag
     assert "update_catalog_asset_metadata" in mock_mcp_instance.tools
     assert "check_job_status" in mock_mcp_instance.tools
     assert "get_lineage" in mock_mcp_instance.tools
+    assert "generate_data_product" in mock_mcp_instance.tools
 
 
 def test_tool_registration(manage_environment_variables, mock_alation_sdk, mock_fastmcp):

@@ -49,6 +49,13 @@ def get_sdk_mock():
     mock_sdk.check_job_status_tool.run = MagicMock(
         return_value="Expected check job status via SDK run"
     )
+    # Add mock for generate data product
+    mock_sdk.generate_data_product_tool = MagicMock()
+    mock_sdk.generate_data_product_tool.name = "GenerateDataProductToolFromSDK"
+    mock_sdk.generate_data_product_tool.description = (
+        "Generates data product schemas from SDK's generate_data_product_tool."
+    )
+
     mock_sdk.lineage_tool = MagicMock()
     mock_sdk.lineage_tool.name = "GetLineageToolFromSDK"
     mock_sdk.lineage_tool.description = (
