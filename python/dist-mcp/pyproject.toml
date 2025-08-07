@@ -5,7 +5,7 @@ description = "Alation Agent SDK with MCP support"
 dependencies = [
   "alation-ai-agent-sdk~=0.6.0",
   "mcp[cli]>=1.2.0",
-  "fastMCP>=2.2.6"
+  "fastMCP==2.2.6"
 ]
 authors = [
   { name="Jagannath (Jags) Saragadam", email="jags.saragadam@alation.com"},
@@ -36,6 +36,7 @@ dev = [
 ]
 [project.scripts]
 "start-alation-mcp-server" = "alation_ai_agent_mcp.server:run_server"
+"start-mcp-server" = "alation_ai_agent_mcp.server:run_server" # Alias for backward compatibility
 
 [build-system]
 requires = ["pdm-backend"]
