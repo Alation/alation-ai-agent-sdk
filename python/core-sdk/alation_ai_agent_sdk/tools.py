@@ -23,10 +23,11 @@ from alation_ai_agent_sdk.lineage import (
     LineageRootNode,
     LineageOTypeFilterType,
     LineageToolResponse,
-    make_lineage_kwargs
+    make_lineage_kwargs,
 )
 
 logger = logging.getLogger(__name__)
+
 
 def min_alation_version(min_version: str):
     """
@@ -338,7 +339,7 @@ class AlationLineageTool:
             excluded_schema_ids=excluded_schema_ids,
             allowed_otypes=allowed_otypes,
             time_from=time_from,
-            time_to=time_to
+            time_to=time_to,
         )
 
         try:
@@ -348,7 +349,7 @@ class AlationLineageTool:
                 limit=limit,
                 batch_size=batch_size,
                 pagination=pagination,
-                **lineage_kwargs
+                **lineage_kwargs,
             )
         except AlationAPIError as e:
             return {"error": e.to_dict()}
@@ -433,6 +434,70 @@ class CheckJobStatusTool:
 
     def run(self, job_id: int) -> dict:
         return self.api.check_job_status(job_id)
+
+
+class CheckDataQualityTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "get_data_quality"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
+            Check data quality of SQL queries or tables before/after execution.
+            
+            **Call this function when:**
+            - User directly asks to "check data quality"
+            - User requests to "validate data quality" or "assess quality"
+            - User asks "is this data reliable/trustworthy?"
+            - User says "run data quality check" or similar explicit request
+            
+            **Required:** Either table_ids OR sql_query
+            **Key parameters:**
+            - sql_query: SQL to analyze for quality issues
+            - table_ids: List of table IDs (max 30) - use alation_context to get IDs first
+            - ds_id: Required with table_ids, datasource ID from Alation
+            - db_uri: Database URI, alternative to ds_id for SQL analysis
+            - output_format: "JSON" (default) or "YAML_MARKDOWN" for readable reports
+            - dq_score_threshold: Quality threshold (0-100), tables below this are flagged
+            
+            **Parameter combinations:**
+            1. sql_query + ds_id (recommended for SQL validation)
+            2. sql_query + db_uri (when ds_id unknown)
+            3. table_ids + ds_id (for specific table validation)
+            
+            Returns quality scores, issues, and recommendations in specified format. """
+
+    def run(
+        self,
+        table_ids: Optional[list] = None,
+        sql_query: Optional[str] = None,
+        db_uri: Optional[str] = None,
+        ds_id: Optional[int] = None,
+        bypassed_dq_sources: Optional[list] = None,
+        default_schema_name: Optional[str] = None,
+        output_format: Optional[str] = None,
+        dq_score_threshold: Optional[int] = None,
+    ):
+        try:
+            return self.api.check_sql_query_tables(
+                table_ids=table_ids,
+                sql_query=sql_query,
+                db_uri=db_uri,
+                ds_id=ds_id,
+                bypassed_dq_sources=bypassed_dq_sources,
+                default_schema_name=default_schema_name,
+                output_format=output_format,
+                dq_score_threshold=dq_score_threshold,
+            )
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
 
 def csv_str_to_tool_list(tool_env_var: Optional[str] = None) -> List[str]:
     if tool_env_var is None:

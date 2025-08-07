@@ -2,6 +2,7 @@ from typing import (
     Any,
     Dict,
     Optional,
+    Union,
 )
 from .api import (
     AlationAPI,
@@ -16,6 +17,7 @@ from .tools import (
     AlationLineageTool,
     UpdateCatalogAssetMetadataTool,
     CheckJobStatusTool,
+    CheckDataQualityTool,
 )
 from .lineage import (
     LineageToolResponse,
@@ -30,6 +32,7 @@ from .lineage import (
     LineagePagination,
     LineageBatchSizeType,
 )
+
 
 class AlationTools:
     AGGREGATED_CONTEXT = "aggregated_context"
@@ -86,6 +89,7 @@ class AlationAIAgentSDK:
         self.update_catalog_asset_metadata_tool = UpdateCatalogAssetMetadataTool(self.api)
         self.check_job_status_tool = CheckJobStatusTool(self.api)
         self.lineage_tool = AlationLineageTool(self.api)
+        self.check_data_quality_tool = CheckDataQualityTool(self.api)
 
     def is_tool_enabled(self, tool_name: str) -> bool:
         if tool_name in self.disabled_tools:
@@ -209,7 +213,7 @@ class AlationAIAgentSDK:
             excluded_schema_ids=excluded_schema_ids,
             allowed_otypes=allowed_otypes,
             time_from=time_from,
-            time_to=time_to
+            time_to=time_to,
         )
         return self.api.get_bulk_lineage(
             root_nodes=[root_node],
@@ -268,6 +272,38 @@ class AlationAIAgentSDK:
         """
         return self.check_job_status_tool.run(job_id)
 
+    def check_data_quality(
+        self,
+        table_ids: Optional[list] = None,
+        sql_query: Optional[str] = None,
+        db_uri: Optional[str] = None,
+        ds_id: Optional[int] = None,
+        bypassed_dq_sources: Optional[list] = None,
+        default_schema_name: Optional[str] = None,
+        output_format: Optional[str] = None,
+        dq_score_threshold: Optional[int] = None,
+    ) -> Union[Dict[str, Any], str]:
+        """
+        Check SQL Query or tables for quality using Alation's Data Quality API.
+        Returns dict (JSON) or str (YAML Markdown) depending on output_format.
+        """
+        if not table_ids and not sql_query:
+            raise ValueError("At least one of 'table_ids' or 'sql_query' must be provided.")
+
+        try:
+            return self.check_data_quality_tool.run(
+                table_ids=table_ids,
+                sql_query=sql_query,
+                db_uri=db_uri,
+                ds_id=ds_id,
+                bypassed_dq_sources=bypassed_dq_sources,
+                default_schema_name=default_schema_name,
+                output_format=output_format,
+                dq_score_threshold=dq_score_threshold,
+            )
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
     def get_tools(self):
         tools = []
         if self.is_tool_enabled(AlationTools.AGGREGATED_CONTEXT):
@@ -282,4 +318,6 @@ class AlationAIAgentSDK:
             tools.append(self.check_job_status_tool)
         if self.is_tool_enabled(AlationTools.LINEAGE):
             tools.append(self.lineage_tool)
+        if self.is_tool_enabled(AlationTools.DATA_QUALITY):
+            tools.append(self.check_data_quality)
         return tools

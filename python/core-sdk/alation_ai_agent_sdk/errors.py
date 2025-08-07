@@ -48,6 +48,18 @@ class AlationAPIError(Exception):
 class AlationErrorClassifier:
     @staticmethod
     def classify_catalog_error(status_code: int, response_body: dict) -> dict:
+        # If the response body has 'error' and 'message', use them directly
+        if isinstance(response_body, dict):
+            error_code = response_body.get("error")
+            error_message = response_body.get("message")
+            if error_code and error_message:
+                return {
+                    "reason": error_code,
+                    "resolution_hint": error_message,
+                    "help_links": [],
+                }
+
+        # Fallback: use generic error handling by status code
         reason = "Unexpected Error"
         resolution_hint = "An unknown error occurred."
         help_links = []

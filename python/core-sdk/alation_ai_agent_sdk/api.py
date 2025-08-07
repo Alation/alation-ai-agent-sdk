@@ -1,9 +1,10 @@
+import datetime
 import logging
 import urllib.parse
 import json
 import requests
 import requests.exceptions
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from http import HTTPStatus
 from uuid import uuid4
 from alation_ai_agent_sdk.lineage_filtering import filter_graph
@@ -185,7 +186,14 @@ class AlationAPI:
 
         status_code = getattr(exception.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR)
         response_text = getattr(exception.response, "text", "No response received from server")
-        parsed = {"error": response_text}
+        try:
+            parsed = (
+                exception.response.json()
+                if exception.response is not None
+                else {"error": response_text}
+            )
+        except Exception as parse_exc:
+            parsed = {"error": response_text}
         meta = AlationErrorClassifier.classify_catalog_error(status_code, parsed)
         raise AlationAPIError(
             f"HTTP error during {context}: {meta['reason']}",
@@ -684,18 +692,23 @@ class AlationAPI:
             },
             "request_id": pagination.get("request_id") if pagination else uuid4().hex,
             "cursor": pagination.get("cursor", 0) if pagination else 0,
-            "batch_size": limit if processing_mode == LineageGraphProcessingOptions.COMPLETE else pagination.get("batch_size", limit) if pagination else batch_size,
+            "batch_size": (
+                limit
+                if processing_mode == LineageGraphProcessingOptions.COMPLETE
+                else pagination.get("batch_size", limit) if pagination else batch_size
+            ),
         }
         if show_temporal_objects:
             lineage_request_dict["filters"]["temp_filter"] = show_temporal_objects
         url = f"{self.base_url}/integration/v2/bulk_lineage/"
         try:
-            response = requests.post(
-                url, headers=headers, json=lineage_request_dict, timeout=60
-            )
+            response = requests.post(url, headers=headers, json=lineage_request_dict, timeout=60)
             response.raise_for_status()
             response_data = response.json()
-            if "graph" in response_data and processing_mode == LineageGraphProcessingOptions.COMPLETE:
+            if (
+                "graph" in response_data
+                and processing_mode == LineageGraphProcessingOptions.COMPLETE
+            ):
                 if allowed_otypes is not None:
                     allowed_otypes_set = set(allowed_otypes)
                     response_data["graph"] = filter_graph(
@@ -718,7 +731,9 @@ class AlationAPI:
             response_data["direction"] = direction
             return response_data
         except requests.RequestException as e:
-            self._handle_request_error(e, f"getting lineage for: {json.dumps(lineage_request_dict)}")
+            self._handle_request_error(
+                e, f"getting lineage for: {json.dumps(lineage_request_dict)}"
+            )
 
     def update_catalog_asset_metadata(
         self, custom_field_values: list[CatalogAssetMetadataPayloadItem]
@@ -766,3 +781,70 @@ class AlationAPI:
             return response.json()
         except requests.RequestException as e:
             self._handle_request_error(e, "check_job_status")
+
+    def check_sql_query_tables(
+        self,
+        table_ids: Optional[list] = None,
+        sql_query: Optional[str] = None,
+        db_uri: Optional[str] = None,
+        ds_id: Optional[int] = None,
+        bypassed_dq_sources: Optional[list] = None,
+        default_schema_name: Optional[str] = None,
+        output_format: Optional[str] = None,
+        dq_score_threshold: Optional[int] = None,
+    ) -> Union[Dict[str, Any], str]:
+        """
+        Check SQL query tables for data quality using the integration/v1/dq/check_sql_query_tables endpoint.
+        Returns dict (JSON) or str (YAML Markdown) depending on output_format.
+        """
+        self._with_valid_token()
+        headers = {
+            "Token": self.access_token,
+            "Accept": "application/json",
+        }
+        url = f"{self.base_url}/integration/v1/dq/check_sql_query_tables/"
+        payload = {}
+        if table_ids is not None:
+            payload["table_ids"] = table_ids
+        if sql_query is not None:
+            payload["sql_query"] = sql_query
+        if db_uri is not None:
+            payload["db_uri"] = db_uri
+        if ds_id is not None:
+            payload["ds_id"] = ds_id
+
+        # Auto-expire after July 2025
+        now = datetime.datetime.now()
+        patch_expiry = datetime.datetime(2025, 8, 1)  # August 1, 2025
+        if now < patch_expiry:
+            # Ensure 'native_data_quality' is always included in bypassed_dq_sources
+            if bypassed_dq_sources is None:
+                bypassed_dq_sources = ["native_data_quality"]
+            elif "native_data_quality" not in bypassed_dq_sources:
+                bypassed_dq_sources = list(bypassed_dq_sources) + ["native_data_quality"]
+
+        if bypassed_dq_sources is not None:
+            payload["bypassed_dq_sources"] = bypassed_dq_sources
+        if default_schema_name is not None:
+            payload["default_schema_name"] = default_schema_name
+        if output_format is not None:
+            payload["output_format"] = output_format
+        if dq_score_threshold is not None:
+            payload["dq_score_threshold"] = dq_score_threshold
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=60)
+            response.raise_for_status()
+            if output_format and output_format.lower() == "yaml_markdown":
+                return response.text
+            return response.json()
+        except requests.RequestException as e:
+            self._handle_request_error(e, "check_sql_query_tables")
+        except ValueError:
+            raise AlationAPIError(
+                message="Invalid JSON in data quality check response",
+                status_code=None,
+                response_body=None,
+                reason="Malformed Response",
+                resolution_hint="The server returned a non-JSON response. Contact support if this persists.",
+                help_links=["https://developer.alation.com/"],
+            )

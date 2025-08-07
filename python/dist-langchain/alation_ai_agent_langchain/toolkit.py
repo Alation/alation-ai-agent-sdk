@@ -10,6 +10,7 @@ from .tool import (
     get_update_catalog_asset_metadata_tool,
     get_check_job_status_tool,
     get_alation_lineage_tool,
+    get_check_data_quality_tool,
 )
 
 
@@ -27,4 +28,6 @@ def get_tools(sdk: AlationAIAgentSDK):
         tools.append(get_check_job_status_tool(sdk))
     if sdk.is_tool_enabled(AlationTools.LINEAGE):
         tools.append(get_alation_lineage_tool(sdk))
+    if sdk.is_tool_enabled(AlationTools.DATA_QUALITY):
+        tools.append(get_check_data_quality_tool(sdk))
     return tools

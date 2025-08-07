@@ -7,7 +7,17 @@ from typing import (
     Optional,
 )
 
-from alation_ai_agent_sdk.lineage import LineageBatchSizeType, LineageDesignTimeType, LineageDirectionType, LineageExcludedSchemaIdsType, LineageGraphProcessingType, LineageOTypeFilterType, LineagePagination, LineageRootNode, LineageTimestampType
+from alation_ai_agent_sdk.lineage import (
+    LineageBatchSizeType,
+    LineageDesignTimeType,
+    LineageDirectionType,
+    LineageExcludedSchemaIdsType,
+    LineageGraphProcessingType,
+    LineageOTypeFilterType,
+    LineagePagination,
+    LineageRootNode,
+    LineageTimestampType,
+)
 from mcp.server.fastmcp import FastMCP
 from alation_ai_agent_sdk import (
     AlationAIAgentSDK,
@@ -30,13 +40,23 @@ logging.basicConfig(
 MCP_SERVER_VERSION = "0.5.0"
 
 
-def create_server(disabled_tools_str: Optional[str] = None, enabled_beta_tools_str: Optional[str] = None):
+def create_server(
+    disabled_tools_str: Optional[str] = None, enabled_beta_tools_str: Optional[str] = None
+):
     # Load Alation credentials from environment variables
     base_url = os.getenv("ALATION_BASE_URL")
     auth_method = os.getenv("ALATION_AUTH_METHOD")
 
-    tools_disabled = csv_str_to_tool_list(disabled_tools_str if disabled_tools_str is not None else os.getenv("ALATION_DISABLED_TOOLS"))
-    beta_tools_enabled = csv_str_to_tool_list(enabled_beta_tools_str if enabled_beta_tools_str is not None else os.getenv("ALATION_ENABLED_BETA_TOOLS"))
+    tools_disabled = csv_str_to_tool_list(
+        disabled_tools_str
+        if disabled_tools_str is not None
+        else os.getenv("ALATION_DISABLED_TOOLS")
+    )
+    beta_tools_enabled = csv_str_to_tool_list(
+        enabled_beta_tools_str
+        if enabled_beta_tools_str is not None
+        else os.getenv("ALATION_ENABLED_BETA_TOOLS")
+    )
 
     if not base_url or not auth_method:
         raise ValueError(
@@ -74,10 +94,13 @@ def create_server(disabled_tools_str: Optional[str] = None, enabled_beta_tools_s
     mcp = FastMCP(name="Alation MCP Server", version=MCP_SERVER_VERSION)
 
     # Initialize Alation SDK
-    alation_sdk = AlationAIAgentSDK(base_url, auth_method, auth_params,
-                                    dist_version=f"mcp-{MCP_SERVER_VERSION}",
-                                    disabled_tools=set(tools_disabled),
-                                    enabled_beta_tools=set(beta_tools_enabled),
+    alation_sdk = AlationAIAgentSDK(
+        base_url,
+        auth_method,
+        auth_params,
+        dist_version=f"mcp-{MCP_SERVER_VERSION}",
+        disabled_tools=set(tools_disabled),
+        enabled_beta_tools=set(beta_tools_enabled),
     )
 
     is_cloud = getattr(alation_sdk.api, "is_cloud", None)
@@ -95,12 +118,16 @@ def create_server(disabled_tools_str: Optional[str] = None, enabled_beta_tools_s
     )
 
     if alation_sdk.is_tool_enabled(AlationTools.AGGREGATED_CONTEXT):
-        @mcp.tool(name=alation_sdk.context_tool.name, description=alation_sdk.context_tool.description)
+
+        @mcp.tool(
+            name=alation_sdk.context_tool.name, description=alation_sdk.context_tool.description
+        )
         def alation_context(question: str, signature: Dict[str, Any] | None = None) -> str:
             result = alation_sdk.get_context(question, signature)
             return str(result)
 
     if alation_sdk.is_tool_enabled(AlationTools.BULK_RETRIEVAL):
+
         @mcp.tool(
             name=alation_sdk.bulk_retrieval_tool.name,
             description=alation_sdk.bulk_retrieval_tool.description,
@@ -110,6 +137,7 @@ def create_server(disabled_tools_str: Optional[str] = None, enabled_beta_tools_s
             return str(result)
 
     if alation_sdk.is_tool_enabled(AlationTools.DATA_PRODUCT):
+
         @mcp.tool(
             name=alation_sdk.data_product_tool.name,
             description=alation_sdk.data_product_tool.description,
@@ -119,6 +147,7 @@ def create_server(disabled_tools_str: Optional[str] = None, enabled_beta_tools_s
             return str(result)
 
     if alation_sdk.is_tool_enabled(AlationTools.UPDATE_METADATA):
+
         @mcp.tool(
             name=alation_sdk.update_catalog_asset_metadata_tool.name,
             description=alation_sdk.update_catalog_asset_metadata_tool.description,
@@ -130,6 +159,7 @@ def create_server(disabled_tools_str: Optional[str] = None, enabled_beta_tools_s
             return str(result)
 
     if alation_sdk.is_tool_enabled(AlationTools.CHECK_JOB_STATUS):
+
         @mcp.tool(
             name=alation_sdk.check_job_status_tool.name,
             description=alation_sdk.check_job_status_tool.description,
@@ -139,6 +169,7 @@ def create_server(disabled_tools_str: Optional[str] = None, enabled_beta_tools_s
             return str(result)
 
     if alation_sdk.is_tool_enabled(AlationTools.LINEAGE):
+
         @mcp.tool(
             name=alation_sdk.lineage_tool.name,
             description=alation_sdk.lineage_tool.description,
@@ -175,6 +206,34 @@ def create_server(disabled_tools_str: Optional[str] = None, enabled_beta_tools_s
             )
             return str(result)
 
+    if alation_sdk.is_tool_enabled(AlationTools.DATA_QUALITY):
+
+        @mcp.tool(
+            name=alation_sdk.check_data_quality_tool.name,
+            description=alation_sdk.check_data_quality_tool.description,
+        )
+        def check_data_quality(
+            sql_query: Optional[str] = None,
+            output_format: Optional[str] = None,
+            table_ids: Optional[list[int]] = None,
+            db_uri: Optional[str] = None,
+            ds_id: Optional[int] = None,
+            bypassed_dq_sources: Optional[list[str]] = None,
+            default_schema_name: Optional[str] = None,
+            dq_score_threshold: Optional[int] = None,
+        ) -> str:
+            result = alation_sdk.check_data_quality(
+                table_ids=table_ids,
+                sql_query=sql_query,
+                db_uri=db_uri,
+                ds_id=ds_id,
+                bypassed_dq_sources=bypassed_dq_sources,
+                default_schema_name=default_schema_name,
+                output_format=output_format,
+                dq_score_threshold=dq_score_threshold,
+            )
+            return str(result)
+
     return mcp
 
 
@@ -184,8 +243,18 @@ mcp = None
 
 def run_server():
     parser = argparse.ArgumentParser(description="Alation MCP Server")
-    parser.add_argument("--disabled-tools", type=str, help="Comma-separated list of tools to disable", required=False)
-    parser.add_argument("--enabled-beta-tools", type=str, help="Comma-separated list of beta tools to enable", required=False)
+    parser.add_argument(
+        "--disabled-tools",
+        type=str,
+        help="Comma-separated list of tools to disable",
+        required=False,
+    )
+    parser.add_argument(
+        "--enabled-beta-tools",
+        type=str,
+        help="Comma-separated list of beta tools to enable",
+        required=False,
+    )
     # Uses parse_known_args() to prevent exit(2) when there are unknown arguments
     args = parser.parse_known_args()[0]
 
