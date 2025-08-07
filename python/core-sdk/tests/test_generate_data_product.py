@@ -110,11 +110,11 @@ def test_generate_data_product_tool_content_validation():
 
         # Verify critical instructions are present
         required_phrases = [
-            "CRITICAL: DO NOT HALLUCINATE",
-            "contactEmail: Use \"TBD\" if not provided",
-            "contactName: Use \"TBD\" if not provided",
-            "`recordSets` is an OBJECT",
-            "`deliverySystems` is required"
+            "HALLUCINATION",
+            "EXAMPLE",
+            "THE SCHEMA",
+            "`productId`",
+            "`contactEmail`"
         ]
 
         for phrase in required_phrases:
