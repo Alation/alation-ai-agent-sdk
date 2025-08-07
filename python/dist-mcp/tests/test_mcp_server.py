@@ -194,7 +194,7 @@ def test_create_server_disabled_tool_and_enabled_beta_tool_via_environment(
 
     mock_mcp_instance.reset_mock()
 
-    # The manage fixture is the source of the disbled tools as well as the enabled beta tools
+    # The manage fixture is the source of the disabled tools as well as the enabled beta tools
     mcp_result = server.create_server()
 
     mock_mcp_class.assert_called_once_with(name="Alation MCP Server")
