@@ -5,7 +5,6 @@ from typing import (
 )
 from .api import (
     AlationAPI,
-    AlationAPIError,
     AuthParams,
     CatalogAssetMetadataPayloadItem,
 )
@@ -16,6 +15,7 @@ from .tools import (
     AlationLineageTool,
     UpdateCatalogAssetMetadataTool,
     CheckJobStatusTool,
+    GenerateDataProductTool,
 )
 from .lineage import (
     LineageToolResponse,
@@ -39,6 +39,7 @@ class AlationTools:
     DATA_QUALITY = "data_quality"
     LINEAGE = "lineage"
     UPDATE_METADATA = "update_metadata"
+    GENERATE_DATA_PRODUCT = "generate_data_product"
 
 
 class AlationAIAgentSDK:
@@ -85,6 +86,7 @@ class AlationAIAgentSDK:
         self.data_product_tool = AlationGetDataProductTool(self.api)
         self.update_catalog_asset_metadata_tool = UpdateCatalogAssetMetadataTool(self.api)
         self.check_job_status_tool = CheckJobStatusTool(self.api)
+        self.generate_data_product_tool = GenerateDataProductTool(self.api)
         self.lineage_tool = AlationLineageTool(self.api)
 
     def is_tool_enabled(self, tool_name: str) -> bool:
@@ -268,6 +270,21 @@ class AlationAIAgentSDK:
         """
         return self.check_job_status_tool.run(job_id)
 
+    def generate_data_product(self) -> str:
+        """
+        Generate complete instructions for creating Alation Data Products.
+
+        Returns a comprehensive guide including:
+        - The current Alation Data Product schema
+        - A validated example following the schema
+        - Detailed instructions for converting user input to valid YAML
+
+        Returns:
+            str: Complete instruction set for data product creation
+        """
+        return self.generate_data_product_tool.run()
+
+
     def get_tools(self):
         tools = []
         if self.is_tool_enabled(AlationTools.AGGREGATED_CONTEXT):
@@ -282,4 +299,6 @@ class AlationAIAgentSDK:
             tools.append(self.check_job_status_tool)
         if self.is_tool_enabled(AlationTools.LINEAGE):
             tools.append(self.lineage_tool)
+        if self.is_tool_enabled(AlationTools.GENERATE_DATA_PRODUCT):
+            tools.append(self.generate_data_product_tool)
         return tools

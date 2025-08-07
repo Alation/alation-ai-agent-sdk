@@ -240,6 +240,27 @@ A tool to updates metadata for Alation catalog assets by modifying existing obje
 
 </details>
 
+### generate_data_product
+
+<details>
+<summary>
+A tool that provides complete instructions and schema for creating Alation Data Products.
+</summary>
+
+<br />
+
+**Functionality**
+- Fetches the current Alation Data Product schema dynamically from your instance
+- Includes detailed instructions for converting user input to valid YAML
+
+**Input Parameters**
+- No parameters required
+
+**Returns**
+- Complete instruction set with the latest schema from your Alation instance
+
+</details>
+
 ### lineage
 
 <details>

@@ -175,6 +175,14 @@ def create_server(disabled_tools_str: Optional[str] = None, enabled_beta_tools_s
             )
             return str(result)
 
+    @mcp.tool(
+        name=alation_sdk.generate_data_product_tool.name,
+        description=alation_sdk.generate_data_product_tool.description,
+    )
+    def generate_data_product() -> str:
+        result = alation_sdk.generate_data_product()
+        return result
+
     return mcp
 
 
