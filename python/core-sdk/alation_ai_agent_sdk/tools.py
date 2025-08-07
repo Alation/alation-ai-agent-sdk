@@ -747,7 +747,7 @@ class CheckDataQualityTool:
             **Parameter combinations:**
             1. sql_query + ds_id (recommended for SQL validation)
             2. sql_query + db_uri (when ds_id unknown)
-            3. table_ids + ds_id (for specific table validation)
+            3. table_ids (for specific table validation)
             
             Returns quality scores, issues, and recommendations in specified format. """
 
