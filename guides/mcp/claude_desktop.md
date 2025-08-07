@@ -233,3 +233,40 @@ In this example, you've provided two different signatures for different types of
 Question: Use the above signature to fetch endorsed tables
 
 Note: In bulk retrieval mode, the question is ignored. Results are based solely on the signature parameters. The question is shown only as an example of how to phrase such requests to ensure we call the right tool.
+
+### Example 5: Data Product Creation
+
+This example demonstrates a two-step workflow: first gathering catalog data, then creating a data product from that data.
+
+First, ask:
+```json
+{
+"table": {
+        "fields_required": ["name", "description", "common_joins", "columns"],
+        "search_filters": {
+            "fields": {
+                "domain_ids": 191  # This could be any other search criteria
+            }
+        },
+        "child_objects": {
+            "columns": {"fields": ["name", "data_type", "description"]}
+        },
+        "limit": 15
+},
+{
+    "query": {
+        "fields_required": ["title", "description", "content"],
+        "search_filters": {
+            "fields": {
+                "domain_ids": 191  # This could be any other search criteria
+            }
+        },
+        "limit": 5
+    }
+}
+}
+```
+Please fetch content from alation using bulk retrieval tool based on above signature
+
+
+Then, ask: Now use generate_data_product tool, use the above context and create a data product

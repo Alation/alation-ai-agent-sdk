@@ -169,8 +169,8 @@ def test_create_server_disabled_tool_and_enabled_beta_tool(
     mock_mcp_class.assert_called_once_with(name="Alation MCP Server")
     assert mcp_result is mock_mcp_instance
     # of 7 possible tools 6 tools are on by default with one 1 beta available
+    # So 6, -1 disabled tool, +1 enabled beta tool = 6 total tools
 
-    # So 6, -1 disabled tool, +1 enabled beta tool = 6 total tools (actual logic)
     assert mock_mcp_instance.tool.call_count == 6
 
     # NOTE: each distribution may refer to the tools differently. These should be standardized so we can
@@ -182,6 +182,7 @@ def test_create_server_disabled_tool_and_enabled_beta_tool(
     assert "update_catalog_asset_metadata" in mock_mcp_instance.tools
     assert "check_job_status" in mock_mcp_instance.tools
     assert "get_lineage" in mock_mcp_instance.tools
+    assert "generate_data_product" in mock_mcp_instance.tools
 
 
 def test_create_server_disabled_tool_and_enabled_beta_tool_via_environment(
@@ -199,8 +200,8 @@ def test_create_server_disabled_tool_and_enabled_beta_tool_via_environment(
     mock_mcp_class.assert_called_once_with(name="Alation MCP Server")
     assert mcp_result is mock_mcp_instance
     # of 7 possible tools 5 tools are on by default with one 1 beta available
+    # So 6, -1 disabled tool, +1 enabled beta tool = 6 total tools
 
-    # So 6, -1 disabled tool, +1 enabled beta tool = 6 total tools (actual logic)
     assert mock_mcp_instance.tool.call_count == 6
 
     # NOTE: each distribution may refer to the tools differently. These should be standardized so we can
@@ -212,6 +213,7 @@ def test_create_server_disabled_tool_and_enabled_beta_tool_via_environment(
     assert "update_catalog_asset_metadata" in mock_mcp_instance.tools
     assert "check_job_status" in mock_mcp_instance.tools
     assert "get_lineage" in mock_mcp_instance.tools
+    assert "generate_data_product" in mock_mcp_instance.tools
 
 
 def test_tool_registration(manage_environment_variables, mock_alation_sdk, mock_fastmcp):

@@ -9,6 +9,7 @@ from .tool import (
     get_alation_data_products_tool,
     get_update_catalog_asset_metadata_tool,
     get_check_job_status_tool,
+    get_generate_data_product_tool,
     get_alation_lineage_tool,
     get_check_data_quality_tool,
 )
@@ -30,4 +31,6 @@ def get_tools(sdk: AlationAIAgentSDK):
         tools.append(get_alation_lineage_tool(sdk))
     if sdk.is_tool_enabled(AlationTools.DATA_QUALITY):
         tools.append(get_check_data_quality_tool(sdk))
+    if sdk.is_tool_enabled(AlationTools.GENERATE_DATA_PRODUCT):
+        tools.append(get_generate_data_product_tool(sdk))
     return tools

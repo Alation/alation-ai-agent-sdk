@@ -233,6 +233,14 @@ def create_server(
                 dq_score_threshold=dq_score_threshold,
             )
             return str(result)
+          
+    @mcp.tool(
+        name=alation_sdk.generate_data_product_tool.name,
+        description=alation_sdk.generate_data_product_tool.description,
+    )
+    def generate_data_product() -> str:
+        result = alation_sdk.generate_data_product()
+        return result
 
     return mcp
 
