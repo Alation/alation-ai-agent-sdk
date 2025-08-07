@@ -210,7 +210,7 @@ def _call_ai_model(prompt: str, openai_client: openai.OpenAI) -> str:
                 }
             ],
             temperature=0.1,  # Lower temperature for more consistent, focused output
-            max_tokens=2000  # Increase it to allow for longer YAML responses
+            max_tokens=16000  # Increase it to allow for longer YAML responses
         )
 
         yaml_content = response.choices[0].message.content.strip()
