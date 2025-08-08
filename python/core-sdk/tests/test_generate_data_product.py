@@ -3,6 +3,7 @@ import time
 from unittest.mock import Mock, patch
 from alation_ai_agent_sdk.tools import GenerateDataProductTool
 from alation_ai_agent_sdk.api import AlationAPIError
+from alation_ai_agent_sdk.data_product import get_schema_content
 
 
 def test_generate_data_product_tool_initialization():
@@ -22,7 +23,7 @@ def test_generate_data_product_tool_run():
 
     # Mock successful schema fetch
     mock_schema_content = "type: object\ntitle: Test Schema"
-    with patch('requests.get') as mock_get:
+    with patch("requests.get") as mock_get:
         mock_response = Mock()
         mock_response.text = mock_schema_content
         mock_response.raise_for_status.return_value = None
@@ -42,7 +43,7 @@ def test_generate_data_product_tool_run():
         # Verify the dynamic schema was fetched
         mock_get.assert_called_once_with(
             "https://test.alation.com/static/swagger/specs/data_products/product_schema.yaml",
-            timeout=10
+            timeout=10,
         )
 
 
@@ -52,7 +53,7 @@ def test_generate_data_product_tool_run_with_fetch_failure():
     mock_api.base_url = "https://test.alation.com"
 
     # Mock failed schema fetch
-    with patch('requests.get', side_effect=Exception("Network error")):
+    with patch("requests.get", side_effect=Exception("Network error")):
         tool = GenerateDataProductTool(mock_api)
 
         # Should raise AlationAPIError when fetch fails
@@ -61,7 +62,6 @@ def test_generate_data_product_tool_run_with_fetch_failure():
 
         assert "Failed to fetch data product schema" in str(exc_info.value)
         assert exc_info.value.reason == "Schema Fetch Failed"
-
 
 
 def test_generate_data_product_tool_fetch_schema_success():
@@ -77,19 +77,20 @@ properties:
     type: object
 """
 
-    with patch('requests.get') as mock_get:
+    with patch("requests.get") as mock_get:
         mock_response = Mock()
         mock_response.text = mock_schema_content
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 
         tool = GenerateDataProductTool(mock_api)
-        result = tool._fetch_schema_from_instance()
+
+        result = get_schema_content(tool)
 
         assert result == mock_schema_content
         mock_get.assert_called_once_with(
             "https://test.alation.com/static/swagger/specs/data_products/product_schema.yaml",
-            timeout=10
+            timeout=10,
         )
 
 
@@ -99,9 +100,11 @@ def test_generate_data_product_tool_content_validation():
     mock_api.base_url = "https://test.alation.com"
 
     # Mock schema fetch to return a basic schema
-    with patch('requests.get') as mock_get:
+    with patch("requests.get") as mock_get:
         mock_response = Mock()
-        mock_response.text = "type: object\ntitle: Test Schema\nproperties:\n  product:\n    type: object"
+        mock_response.text = (
+            "type: object\ntitle: Test Schema\nproperties:\n  product:\n    type: object"
+        )
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 
@@ -114,7 +117,7 @@ def test_generate_data_product_tool_content_validation():
             "EXAMPLE",
             "THE SCHEMA",
             "`productId`",
-            "`contactEmail`"
+            "`contactEmail`",
         ]
 
         for phrase in required_phrases:
@@ -132,9 +135,11 @@ def test_cache_is_used_on_subsequent_calls():
     mock_api = Mock()
     mock_api.base_url = "https://test.alation.com"
 
-    with patch('requests.get') as mock_get:
+    with patch("requests.get") as mock_get:
         mock_response = Mock()
-        mock_response.text = "type: object\ntitle: Test Schema\nproperties:\n  product:\n    type: object"
+        mock_response.text = (
+            "type: object\ntitle: Test Schema\nproperties:\n  product:\n    type: object"
+        )
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 
@@ -157,9 +162,11 @@ def test_cache_expires_after_ttl():
     mock_api = Mock()
     mock_api.base_url = "https://test.alation.com"
 
-    with patch('requests.get') as mock_get:
+    with patch("requests.get") as mock_get:
         mock_response = Mock()
-        mock_response.text = "type: object\ntitle: Test Schema\nproperties:\n  product:\n    type: object"
+        mock_response.text = (
+            "type: object\ntitle: Test Schema\nproperties:\n  product:\n    type: object"
+        )
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 

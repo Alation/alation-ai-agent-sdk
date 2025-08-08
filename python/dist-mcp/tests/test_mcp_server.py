@@ -63,6 +63,7 @@ def manage_environment_variables(monkeypatch):
         else:
             monkeypatch.setenv(key, value)
 
+
 @pytest.fixture()
 def manage_disabled_tools_and_enabled_beta_tools_environment(monkeypatch):
     """
@@ -141,7 +142,7 @@ def test_create_server_success(manage_environment_variables, mock_alation_sdk, m
 
     mcp_result = server.create_server()
 
-    mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version="0.5.0")
+    mock_mcp_class.assert_called_once_with(name="Alation MCP Server")
     mock_sdk_class.assert_called_once_with(
         "https://mock-alation.com",
         "user_account",
@@ -152,19 +153,25 @@ def test_create_server_success(manage_environment_variables, mock_alation_sdk, m
     )
     assert mcp_result is mock_mcp_instance
 
-def test_create_server_disabled_tool_and_enabled_beta_tool(manage_environment_variables, mock_fastmcp):
+
+def test_create_server_disabled_tool_and_enabled_beta_tool(
+    manage_environment_variables, mock_fastmcp
+):
     mock_mcp_class, mock_mcp_instance = mock_fastmcp
 
     mock_mcp_instance.reset_mock()
 
-    mcp_result = server.create_server(disabled_tools_str=AlationTools.AGGREGATED_CONTEXT, enabled_beta_tools_str=AlationTools.LINEAGE)
+    mcp_result = server.create_server(
+        disabled_tools_str=AlationTools.AGGREGATED_CONTEXT,
+        enabled_beta_tools_str=AlationTools.LINEAGE,
+    )
 
-    mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version=server.MCP_SERVER_VERSION)
+    mock_mcp_class.assert_called_once_with(name="Alation MCP Server")
     assert mcp_result is mock_mcp_instance
-    # of 6 possible tools 5 tools are on by default with one 1 beta available
+    # of 8 possible tools 7 tools are on by default with one 1 beta available
+    # So 7, -1 disabled tool, +1 enabled beta tool = 7 total tools
 
-    # So 5, -1 disabled tool, +1 enabled beta tool = 5 total tools
-    assert mock_mcp_instance.tool.call_count == 6
+    assert mock_mcp_instance.tool.call_count == 7
 
     # NOTE: each distribution may refer to the tools differently. These should be standardized so we can
     # reuse a set of constants across all projects.
@@ -177,20 +184,25 @@ def test_create_server_disabled_tool_and_enabled_beta_tool(manage_environment_va
     assert "get_lineage" in mock_mcp_instance.tools
     assert "generate_data_product" in mock_mcp_instance.tools
 
-def test_create_server_disabled_tool_and_enabled_beta_tool_via_environment(manage_environment_variables, manage_disabled_tools_and_enabled_beta_tools_environment, mock_fastmcp):
+
+def test_create_server_disabled_tool_and_enabled_beta_tool_via_environment(
+    manage_environment_variables,
+    manage_disabled_tools_and_enabled_beta_tools_environment,
+    mock_fastmcp,
+):
     mock_mcp_class, mock_mcp_instance = mock_fastmcp
 
     mock_mcp_instance.reset_mock()
 
-    # The manage fixture is the source of the disbled tools as well as the enabled beta tools
+    # The manage fixture is the source of the disabled tools as well as the enabled beta tools
     mcp_result = server.create_server()
 
-    mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version=server.MCP_SERVER_VERSION)
+    mock_mcp_class.assert_called_once_with(name="Alation MCP Server")
     assert mcp_result is mock_mcp_instance
-    # of 6 possible tools 5 tools are on by default with one 1 beta available
+    # of 8 possible tools 7 tools are on by default with one 1 beta available
+    # So 7, -1 disabled tool, +1 enabled beta tool = 7 total tools
 
-    # So 5, -1 disabled tool, +1 enabled beta tool = 5 total tools
-    assert mock_mcp_instance.tool.call_count == 6
+    assert mock_mcp_instance.tool.call_count == 7
 
     # NOTE: each distribution may refer to the tools differently. These should be standardized so we can
     # reuse a set of constants across all projects.
@@ -305,7 +317,7 @@ def test_create_server_service_account(
 
     mcp_result = server.create_server()
 
-    mock_mcp_class.assert_called_once_with(name="Alation MCP Server", version="0.5.0")
+    mock_mcp_class.assert_called_once_with(name="Alation MCP Server")
     mock_sdk_class.assert_called_once_with(
         "https://mock-alation.com",
         "service_account",
@@ -315,6 +327,7 @@ def test_create_server_service_account(
         enabled_beta_tools=set(),
     )
     assert mcp_result is mock_mcp_instance
+
 
 @patch("alation_ai_agent_mcp.server.create_server")
 def test_run_server_cli_no_arguments(mock_create_server):
@@ -331,10 +344,8 @@ def test_run_server_cli_no_arguments(mock_create_server):
         server.run_server()
 
         mock_create_server.assert_called_once()
-        mock_create_server.assert_called_with(
-            disabled_tools_str=None,
-            enabled_beta_tools_str=None
-        )
+        mock_create_server.assert_called_with(disabled_tools_str=None, enabled_beta_tools_str=None)
+
 
 @patch("alation_ai_agent_mcp.server.create_server")
 def test_run_server_cli_with_arguments(mock_create_server):
@@ -343,8 +354,8 @@ def test_run_server_cli_with_arguments(mock_create_server):
         mock_argparse.ArgumentParser.return_value = arg_parser
         known_args_instance = MagicMock()
         arg_parser.parse_known_args.return_value = (known_args_instance,)
-        known_args_instance.disabled_tools = 'tool1,tool2'
-        known_args_instance.enabled_beta_tools = 'tool3'
+        known_args_instance.disabled_tools = "tool1,tool2"
+        known_args_instance.enabled_beta_tools = "tool3"
 
         server.mcp = None  # Reset global before test
 
@@ -352,6 +363,5 @@ def test_run_server_cli_with_arguments(mock_create_server):
 
         mock_create_server.assert_called_once()
         mock_create_server.assert_called_with(
-            disabled_tools_str='tool1,tool2',
-            enabled_beta_tools_str='tool3'
+            disabled_tools_str="tool1,tool2", enabled_beta_tools_str="tool3"
         )
