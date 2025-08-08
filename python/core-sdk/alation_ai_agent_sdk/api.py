@@ -186,13 +186,12 @@ class AlationAPI:
 
         status_code = getattr(exception.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR)
         response_text = getattr(exception.response, "text", "No response received from server")
-        try:
-            parsed = (
-                exception.response.json()
-                if exception.response is not None
-                else {"error": response_text}
-            )
-        except (json.JSONDecodeError, ValueError) as parse_exc:
+        if exception.response is not None:
+            try:
+                parsed = exception.response.json()
+            except (json.JSONDecodeError, ValueError) as parse_exc:
+                parsed = {"error": response_text}
+        else:
             parsed = {"error": response_text}
         meta = AlationErrorClassifier.classify_catalog_error(status_code, parsed)
         raise AlationAPIError(
