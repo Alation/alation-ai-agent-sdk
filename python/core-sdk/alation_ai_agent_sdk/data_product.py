@@ -78,79 +78,79 @@ def get_schema_content(self) -> str:
 def get_example_content() -> str:
     return """
 product:
-    productId: "marketing.db.customer_360_view"
-    version: "1.0"
-    contactEmail: "data-gov-team@alation.com"
-    contactName: "Data Governance Team"
-    en:
+  productId: "marketing.db.customer_360_view"
+  version: "1.0"
+  contactEmail: "data-gov-team@alation.com"
+  contactName: "Data Governance Team"
+  en:
     name: "Customer 360 View"
     shortDescription: "Comprehensive view of active customers combining CRM, sales, and support data"
     description: |
-        A comprehensive, 360-degree view of our active customers. This product combines data from our CRM, sales, and support systems to provide a unified customer profile. It is the gold standard for all customer-related analytics.
+      A comprehensive, 360-degree view of our active customers. This product combines data from our CRM, sales, and support systems to provide a unified customer profile. It is the gold standard for all customer-related analytics.
 
-        ## Key Concepts
-        - **Active Customer:** A customer who has made a purchase in the last 12 months.
-        - **Data Quality Note:** Customer names are not guaranteed to be unique. Use customer_id for joins.
+      ## Key Concepts
+      - **Active Customer:** A customer who has made a purchase in the last 12 months.
+      - **Data Quality Note:** Customer names are not guaranteed to be unique. Use customer_id for joins.
 
-        ## Relationships
-        - `customer_profile(customer_id)` -> `customer_monthly_spend(customer_id)`
+      ## Relationships
+      - `customer_profile(customer_id)` -> `customer_monthly_spend(customer_id)`
 
-    deliverySystems:
+  deliverySystems:
     snowflake_prod:
-        type: sql
-        uri: "snowflake://company.snowflakecomputing.com/PROD_DB"
+      type: sql
+      uri: "snowflake://company.snowflakecomputing.com/PROD_DB"
 
-    recordSets:
+  recordSets:
     customer_profile:
-        name: "customer_profile"
-        displayName: "Customer Profile"
-        description: "Core customer information and attributes"
-        schema:
+      name: "customer_profile"
+      displayName: "Customer Profile"
+      description: "Core customer information and attributes"
+      schema:
         - name: "customer_id"
-            displayName: "Customer ID"
-            type: "integer"
-            description: "Unique identifier for the customer."
+          displayName: "Customer ID"
+          type: "integer"
+          description: "Unique identifier for the customer."
         - name: "full_name"
-            displayName: "Full Name"
-            type: "string"
-            description: "Full name of the customer."
+          displayName: "Full Name"
+          type: "string"
+          description: "Full name of the customer."
         - name: "email"
-            displayName: "Email Address"
-            type: "string"
-            description: "Primary email address for the customer."
-        dataAccess:
+          displayName: "Email Address"
+          type: "string"
+          description: "Primary email address for the customer."
+      dataAccess:
         - type: "sql"
-            qualifiedName:
+          qualifiedName:
             schema: "marketing"
             table: "customer_profile"
 
     customer_monthly_spend:
-        name: "customer_monthly_spend"
-        displayName: "Customer Monthly Spend"
-        description: "Monthly spending patterns per customer"
-        schema:
+      name: "customer_monthly_spend"
+      displayName: "Customer Monthly Spend"
+      description: "Monthly spending patterns per customer"
+      schema:
         - name: "customer_id"
-            displayName: "Customer ID"
-            type: "integer"
-            description: "Foreign key to the customer_profile record set."
+          displayName: "Customer ID"
+          type: "integer"
+          description: "Foreign key to the customer_profile record set."
         - name: "month_year"
-            displayName: "Month Year"
-            type: "date"
-            description: "The month and year for this spending record."
+          displayName: "Month Year"
+          type: "date"
+          description: "The month and year for this spending record."
         - name: "total_spend_usd"
-            displayName: "Total Spend (USD)"
-            type: "number"
-            description: "Total amount spent by the customer in that month, in USD."
-        sample:
+          displayName: "Total Spend (USD)"
+          type: "number"
+          description: "Total amount spent by the customer in that month, in USD."
+      sample:
         type: "mock"
         data: |
-            customer_id,month_year,total_spend_usd
-            123,2024-01-01,1250.50
-            124,2024-01-01,890.25
-            123,2024-02-01,1100.00
-        dataAccess:
+          customer_id,month_year,total_spend_usd
+          123,2024-01-01,1250.50
+          124,2024-01-01,890.25
+          123,2024-02-01,1100.00
+      dataAccess:
         - type: "sql"
-            qualifiedName:
+          qualifiedName:
             schema: "marketing"
             table: "customer_monthly_spend"
 """
