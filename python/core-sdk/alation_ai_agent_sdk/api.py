@@ -11,6 +11,7 @@ from alation_ai_agent_sdk.lineage_filtering import filter_graph
 from .types import (
     UserAccountAuthParams,
     ServiceAccountAuthParams,
+    BearerTokenAuthParams,
     AuthParams,
     CatalogAssetMetadataPayloadItem,
 )
@@ -33,6 +34,7 @@ from alation_ai_agent_sdk.lineage import (
 
 AUTH_METHOD_USER_ACCOUNT = "user_account"
 AUTH_METHOD_SERVICE_ACCOUNT = "service_account"
+AUTH_METHOD_BEARER_TOKEN = "bearer_token"
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +93,7 @@ class AlationAPI:
 
     Attributes:
         base_url (str): Base URL for the Alation instance
-        auth_method (str): Authentication method ("user_account" or "service_account")
+        auth_method (str): Authentication method ("user_account", "service_account", or "bearer_token")
         auth_params (AuthParams): Parameters required for the chosen authentication method
     """
 
@@ -125,9 +127,16 @@ class AlationAPI:
                     "For 'service_account' authentication, provide a tuple with (client_id: str, client_secret: str)."
                 )
             self.client_id, self.client_secret = auth_params
-
+        elif auth_method == AUTH_METHOD_BEARER_TOKEN:
+            if not isinstance(auth_params, BearerTokenAuthParams):
+                raise ValueError(
+                    "For 'bearer_token' authentication, provide a tuple with (token: str)."
+                )
+            self.access_token = auth_params.token
         else:
-            raise ValueError("auth_method must be either 'user_account' or 'service_account'.")
+            raise ValueError(
+                "auth_method must be 'user_account', 'service_account', or 'bearer_token'."
+            )
 
         logger.debug(f"AlationAPI initialized with auth method: {self.auth_method}")
 
@@ -419,7 +428,10 @@ class AlationAPI:
         """
         Ensures a valid access token is available, generating one if needed.
         Check validity on server (other services can revoke and invalidate tokens)
+        For 'bearer_token' the validation is done at MCP server request layer, so we can skip it here
         """
+        if self.auth_method == AUTH_METHOD_BEARER_TOKEN:
+            return
         try:
             if self.access_token and self._token_is_valid_on_server():
                 logger.debug("Access token is valid on server")
