@@ -9,7 +9,7 @@ from typing_extensions import TypedDict
 
 AUTH_METHOD_USER_ACCOUNT = "user_account"
 AUTH_METHOD_SERVICE_ACCOUNT = "service_account"
-
+AUTH_METHOD_BEARER_TOKEN = "bearer_token"
 logger = logging.getLogger(__name__)
 
 
@@ -144,7 +144,11 @@ class ServiceAccountAuthParams(NamedTuple):
     client_secret: str
 
 
-AuthParams = Union[UserAccountAuthParams, ServiceAccountAuthParams]
+class BearerTokenAuthParams(NamedTuple):
+    token: str
+
+
+AuthParams = Union[UserAccountAuthParams, ServiceAccountAuthParams, BearerTokenAuthParams]
 
 
 class CatalogAssetMetadataPayloadItem(TypedDict):
@@ -208,7 +212,7 @@ class AlationAPI:
 
     Attributes:
         base_url (str): Base URL for the Alation instance
-        auth_method (str): Authentication method ("user_account" or "service_account")
+        auth_method (str): Authentication method ("user_account" or "service_account" or "bearer_token")
         auth_params (AuthParams): Parameters required for the chosen authentication method
     """
 
@@ -238,9 +242,18 @@ class AlationAPI:
             self.client_id, self.client_secret = auth_params
 
         else:
-            raise ValueError("auth_method must be either 'user_account' or 'service_account'.")
-
-        logger.debug(f"AlationAPI initialized with auth method: {self.auth_method}")
+            if auth_method == AUTH_METHOD_BEARER_TOKEN:
+                if not isinstance(auth_params, BearerTokenAuthParams):
+                    raise ValueError(
+                        "For 'bearer_token' authentication, provide a tuple with (token: str)."
+                    )
+                self.access_token = auth_params.token
+                print("token initialized")
+                logger.debug("Bearer token authentication initialized.")
+            else:
+                raise ValueError(
+                    "auth_method must be 'user_account', 'service_account', or 'bearer_token'."
+                )
 
     def _handle_request_error(self, exception: requests.RequestException, context: str):
         """Utility function to handle request exceptions."""
@@ -479,8 +492,12 @@ class AlationAPI:
     def _with_valid_token(self):
         """
         Ensures a valid access token is available, generating one if needed.
-        Check validity on server (other services can revoke and invalidate tokens)
+        For 'bearer_token' auth method, no validation is required.
         """
+        if self.auth_method == AUTH_METHOD_BEARER_TOKEN:
+            logger.debug("Bearer token authentication does not require token validation.")
+            return
+
         try:
             if self.access_token and self._token_is_valid_on_server():
                 logger.debug("Access token is valid on server")

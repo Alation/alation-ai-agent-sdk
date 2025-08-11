@@ -182,8 +182,16 @@ class AlationBulkRetrievalTool:
 class UpdateCatalogAssetMetadataTool:
     def __init__(self, api: AlationAPI):
         self.api = api
-        self.name = "update_catalog_asset_metadata"
-        self.description = """
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "update_catalog_asset_metadata"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
             Updates metadata for Alation catalog assets by modifying existing objects.
 
             Supported object types:
@@ -239,8 +247,16 @@ class UpdateCatalogAssetMetadataTool:
 class CheckJobStatusTool:
     def __init__(self, api: AlationAPI):
         self.api = api
-        self.name = "check_job_status"
-        self.description = """
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "check_job_status"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
         Check the status of a bulk metadata job in Alation by job ID.
 
         Parameters:
