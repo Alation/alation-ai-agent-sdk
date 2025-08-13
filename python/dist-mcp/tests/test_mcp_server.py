@@ -168,10 +168,9 @@ def test_create_server_disabled_tool_and_enabled_beta_tool(
 
     mock_mcp_class.assert_called_once_with(name="Alation MCP Server")
     assert mcp_result is mock_mcp_instance
-    # of 8 possible tools 7 tools are on by default with one 1 beta available
-    # So 7, -1 disabled tool, +1 enabled beta tool = 7 total tools
+    # of 10 possible tools 9 tools are on by default with one 1 beta available
 
-    assert mock_mcp_instance.tool.call_count == 7
+    assert mock_mcp_instance.tool.call_count == 9
 
     # NOTE: each distribution may refer to the tools differently. These should be standardized so we can
     # reuse a set of constants across all projects.
@@ -199,10 +198,8 @@ def test_create_server_disabled_tool_and_enabled_beta_tool_via_environment(
 
     mock_mcp_class.assert_called_once_with(name="Alation MCP Server")
     assert mcp_result is mock_mcp_instance
-    # of 8 possible tools 7 tools are on by default with one 1 beta available
-    # So 7, -1 disabled tool, +1 enabled beta tool = 7 total tools
 
-    assert mock_mcp_instance.tool.call_count == 7
+    assert mock_mcp_instance.tool.call_count == 9
 
     # NOTE: each distribution may refer to the tools differently. These should be standardized so we can
     # reuse a set of constants across all projects.
