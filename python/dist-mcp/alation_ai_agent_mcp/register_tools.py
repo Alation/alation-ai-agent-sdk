@@ -16,7 +16,7 @@ Authentication Patterns:
 Each tool is conditionally registered based on the enabled_tools_dict configuration.
 """
 
-from typing import Dict
+from typing import Any, Dict
 from dataclasses import dataclass
 import logging
 
@@ -92,7 +92,7 @@ TOOL_REGISTRY = {
 
 
 def get_enabled_tools(
-    disabled_tools: Set[str], enabled_beta_tools: Set[str]
+    disabled_tools: set[str], enabled_beta_tools: set[str]
 ) -> Dict[str, ToolMetadata]:
     """
     Get the list of enabled tools based on configuration.
@@ -178,7 +178,7 @@ def register_tools(
         metadata = enabled_tools_dict[AlationTools.AGGREGATED_CONTEXT]
 
         @mcp.tool(name=metadata.name, description=metadata.description)
-        def alation_context(question: str, signature: dict = None) -> str:
+        def alation_context(question: str, signature: Dict[str, Any] | None = None) -> str:
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.get_context(question)
             return str(result)

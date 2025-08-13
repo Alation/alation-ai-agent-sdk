@@ -43,6 +43,9 @@ MCP_SERVER_VERSION = "0.5.0"
 def create_fastmcp_server(
     base_url: str,
     transport_mode: str = "stdio",
+    host: str = "localhost",
+    port: int = 8000,
+    external_url: Optional[str] = None,
 ) -> FastMCP:
     """
     Create a FastMCP server instance based on transport mode.
@@ -53,6 +56,9 @@ def create_fastmcp_server(
     Args:
         base_url: Alation instance base URL
         transport_mode: Either "stdio" or "http"
+        host: Host for HTTP server (only used in HTTP mode)
+        port: Port for HTTP server (only used in HTTP mode)
+        external_url: External URL for OAuth resource_server_url (use for production hosted MCP server)
 
     Returns:
         FastMCP server instance configured for the specified transport
@@ -63,14 +69,12 @@ def create_fastmcp_server(
 
     elif transport_mode == "http":
         # HTTP mode: Server with OAuth authentication
-        auth = AuthSettings(
-            issuer_url=AnyHttpUrl(base_url),
-        resource_server_url = f"http://{host}:{port}"
-        auth = AuthSettings(
-            issuer_url=AnyHttpUrl(base_url),
-            resource_server_url=AnyHttpUrl(resource_server_url),  # Updated at runtime
-        )
+        # Determine the resource server URL (external URL vs internal binding)
+        resource_server_url = external_url if external_url else f"http://{host}:{port}"
 
+        auth = AuthSettings(
+            issuer_url=AnyHttpUrl(base_url), resource_server_url=AnyHttpUrl(resource_server_url)
+        )
         return FastMCP(
             name="Alation MCP Server",
             json_response=True,
@@ -87,6 +91,9 @@ def create_server(
     base_url: Optional[str] = None,
     disabled_tools_str: Optional[str] = None,
     enabled_beta_tools_str: Optional[str] = None,
+    host: str = "localhost",
+    port: int = 8000,
+    external_url: Optional[str] = None,
 ) -> FastMCP:
     """
     Create and configure an MCP server for the specified transport mode.
@@ -96,6 +103,9 @@ def create_server(
         base_url: Optional Alation instance base URL (overrides environment variable)
         disabled_tools_str: Optional comma-separated string of disabled tools
         enabled_beta_tools_str: Optional comma-separated string of enabled beta tools
+        host: Host for HTTP server (only used in HTTP mode)
+        port: Port for HTTP server (only used in HTTP mode)
+        external_url: External URL for OAuth resource_server_url (only used in HTTP mode)
 
     Returns:
         Configured FastMCP server instance
@@ -106,7 +116,7 @@ def create_server(
     )
 
     # Create FastMCP server based on transport mode
-    mcp = create_fastmcp_server(base_url, transport)
+    mcp = create_fastmcp_server(base_url, transport, host, port, external_url)
 
     if transport == "stdio":
         # STDIO mode: Create shared SDK instance with environment-based auth
@@ -144,9 +154,13 @@ def run_server() -> None:
     """Entry point for running the MCP server."""
     setup_logging()
 
-    transport, base_url, disabled_tools_str, enabled_beta_tools_str, host, port = parse_arguments()
+    transport, base_url, disabled_tools_str, enabled_beta_tools_str, host, port, external_url = (
+        parse_arguments()
+    )
 
-    mcp = create_server(transport, base_url, disabled_tools_str, enabled_beta_tools_str)
+    mcp = create_server(
+        transport, base_url, disabled_tools_str, enabled_beta_tools_str, host, port, external_url
+    )
 
     if transport == "stdio":
         logging.info(f"Starting Alation MCP STDIO Server")

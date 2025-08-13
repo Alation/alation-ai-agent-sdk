@@ -54,12 +54,14 @@ def get_base_url(base_url_override: Optional[str] = None) -> str:
     return base_url
 
 
-def parse_arguments() -> Tuple[str, Optional[str], Optional[str], Optional[str], str, int]:
+def parse_arguments() -> (
+    Tuple[str, Optional[str], Optional[str], Optional[str], str, int, Optional[str]]
+):
     """
     Parse command-line arguments for the MCP server.
 
     Returns:
-        Tuple of (transport, base_url, disabled_tools_str, enabled_beta_tools_str, http_host, http_port)
+        Tuple of (transport, base_url, disabled_tools_str, enabled_beta_tools_str, http_host, http_port, external_url)
     """
     parser = argparse.ArgumentParser(description="Alation MCP Server")
     parser.add_argument(
@@ -99,8 +101,17 @@ def parse_arguments() -> Tuple[str, Optional[str], Optional[str], Optional[str],
         default=8000,
         help="Port to bind HTTP server to (default: 8000)",
     )
+    parser.add_argument(
+        "--external-url",
+        type=str,
+        help="External URL for the MCP server (for OAuth resource_server_url). Can also be set via MCP_EXTERNAL_URL env var. If not provided, defaults to http://host:port",
+        required=False,
+    )
     # Uses parse_known_args() to prevent exit(2) when there are unknown arguments
     args = parser.parse_known_args()[0]
+
+    # Get external URL from CLI arg or environment variable
+    external_url = args.external_url or os.getenv("MCP_EXTERNAL_URL")
 
     return (
         args.transport,
@@ -109,6 +120,7 @@ def parse_arguments() -> Tuple[str, Optional[str], Optional[str], Optional[str],
         args.enabled_beta_tools,
         args.host,
         args.port,
+        external_url,
     )
 
 
