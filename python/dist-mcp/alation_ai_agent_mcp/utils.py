@@ -1,10 +1,21 @@
-"""Utility functions for Alation MCP Server."""
+"""
+Utility functions for Alation MCP Server.
+
+This module provides common utilities used across the MCP server:
+
+- Argument parsing and configuration management
+- Logging setup and server validation
+- Tool configuration parsing (disabled/enabled tools)
+- Environment variable handling
+
+The utilities are designed to be transport-agnostic and work for both
+STDIO and HTTP modes of the MCP server.
+"""
 
 import os
 import argparse
 import logging
 from typing import Optional, Tuple
-from alation_ai_agent_sdk import AlationAIAgentSDK
 
 from alation_ai_agent_sdk import (
     AlationAIAgentSDK,
@@ -43,14 +54,21 @@ def get_base_url(base_url_override: Optional[str] = None) -> str:
     return base_url
 
 
-def parse_arguments() -> Tuple[Optional[str], Optional[str], Optional[str]]:
+def parse_arguments() -> Tuple[str, Optional[str], Optional[str], Optional[str], str, int]:
     """
     Parse command-line arguments for the MCP server.
 
     Returns:
-        Tuple of (base_url, disabled_tools_str, enabled_beta_tools_str)
+        Tuple of (transport, base_url, disabled_tools_str, enabled_beta_tools_str, http_host, http_port)
     """
     parser = argparse.ArgumentParser(description="Alation MCP Server")
+    parser.add_argument(
+        "--transport",
+        type=str,
+        choices=["stdio", "http"],
+        default="stdio",
+        help="Transport mode: 'stdio' for MCP clients or 'http' for web server (default: stdio)",
+    )
     parser.add_argument(
         "--base-url",
         type=str,
@@ -69,10 +87,29 @@ def parse_arguments() -> Tuple[Optional[str], Optional[str], Optional[str]]:
         help="Comma-separated list of beta tools to enable",
         required=False,
     )
+    parser.add_argument(
+        "--host",
+        type=str,
+        default="127.0.0.1",
+        help="Host to bind HTTP server to (default: 127.0.0.1)",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8000,
+        help="Port to bind HTTP server to (default: 8000)",
+    )
     # Uses parse_known_args() to prevent exit(2) when there are unknown arguments
     args = parser.parse_known_args()[0]
 
-    return args.base_url, args.disabled_tools, args.enabled_beta_tools
+    return (
+        args.transport,
+        args.base_url,
+        args.disabled_tools,
+        args.enabled_beta_tools,
+        args.host,
+        args.port,
+    )
 
 
 def validate_cloud_instance(alation_sdk: AlationAIAgentSDK) -> None:
@@ -130,3 +167,30 @@ def get_tool_configuration(
     )
 
     return tools_disabled, beta_tools_enabled
+
+
+def prepare_server_config(
+    base_url: Optional[str] = None,
+    disabled_tools_str: Optional[str] = None,
+    enabled_beta_tools_str: Optional[str] = None,
+) -> tuple[str, list, list]:
+    """
+    Prepare common server configuration.
+
+    Args:
+        base_url: Optional Alation instance base URL
+        disabled_tools_str: Optional comma-separated string of disabled tools
+        enabled_beta_tools_str: Optional comma-separated string of enabled beta tools
+
+    Returns:
+        Tuple of (base_url, tools_disabled, beta_tools_enabled)
+    """
+    # Load server configuration
+    base_url = get_base_url(base_url)
+
+    # Get tool configuration
+    tools_disabled, beta_tools_enabled = get_tool_configuration(
+        disabled_tools_str, enabled_beta_tools_str
+    )
+
+    return base_url, tools_disabled, beta_tools_enabled
