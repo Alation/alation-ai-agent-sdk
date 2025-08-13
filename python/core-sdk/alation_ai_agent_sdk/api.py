@@ -428,7 +428,7 @@ class AlationAPI:
         """
         Ensures a valid access token is available, generating one if needed.
         Check validity on server (other services can revoke and invalidate tokens)
-        For 'bearer_token' the validation is done at MCP server request layer, so we can skip it here
+        For bearer_token authentication, validation is done at the MCP server request layer, so we can skip it here.
         """
         if self.auth_method == AUTH_METHOD_BEARER_TOKEN:
             return
