@@ -144,7 +144,7 @@ def log_initialization_info(alation_sdk: AlationAIAgentSDK, mcp_server_version: 
 
 def get_tool_configuration(
     disabled_tools_str: Optional[str] = None, enabled_beta_tools_str: Optional[str] = None
-) -> tuple[list, list]:
+) -> tuple[list[str], list[str]]:
     """
     Get tool configuration from environment variables or provided parameters.
 
