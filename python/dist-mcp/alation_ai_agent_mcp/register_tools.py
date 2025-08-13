@@ -178,7 +178,7 @@ def register_tools(
         metadata = enabled_tools_dict[AlationTools.AGGREGATED_CONTEXT]
 
         @mcp.tool(name=metadata.name, description=metadata.description)
-        def alation_context(question: str) -> str:
+        def alation_context(question: str, signature: dict = None) -> str:
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.get_context(question)
             return str(result)
