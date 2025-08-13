@@ -173,7 +173,7 @@ def prepare_server_config(
     base_url: Optional[str] = None,
     disabled_tools_str: Optional[str] = None,
     enabled_beta_tools_str: Optional[str] = None,
-) -> tuple[str, list, list]:
+) -> tuple[str, list[str], list[str]]:
     """
     Prepare common server configuration.
 
