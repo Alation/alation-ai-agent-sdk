@@ -65,7 +65,10 @@ def create_fastmcp_server(
         # HTTP mode: Server with OAuth authentication
         auth = AuthSettings(
             issuer_url=AnyHttpUrl(base_url),
-            resource_server_url=AnyHttpUrl("http://localhost:8000"),  # Updated at runtime
+        resource_server_url = f"http://{host}:{port}"
+        auth = AuthSettings(
+            issuer_url=AnyHttpUrl(base_url),
+            resource_server_url=AnyHttpUrl(resource_server_url),  # Updated at runtime
         )
 
         return FastMCP(
