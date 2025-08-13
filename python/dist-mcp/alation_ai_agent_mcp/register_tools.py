@@ -92,7 +92,7 @@ TOOL_REGISTRY = {
 
 
 def get_enabled_tools(
-    disabled_tools: set[str], enabled_beta_tools: set[str]
+    disabled_tools: Set[str], enabled_beta_tools: Set[str]
 ) -> Dict[str, ToolMetadata]:
     """
     Get the list of enabled tools based on configuration.
