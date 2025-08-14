@@ -1,24 +1,9 @@
 import logging
 from typing import Any, Dict, List
 
+from alation_ai_agent_sdk.fields import get_built_in_section
+
 logger = logging.getLogger(__name__)
-
-
-def filter_field_properties(raw_fields: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Filter custom fields to essential properties only."""
-    filtered_fields = []
-    selected_properties = [
-        'id', 'name_singular', 'field_type', 'allowed_otypes',
-        'options', 'tooltip_text', 'allow_multiple', 'name_plural'
-    ]
-
-    for field in raw_fields:
-        filtered_field = {}
-        for prop in selected_properties:
-            filtered_field[prop] = field.get(prop)
-        filtered_fields.append(filtered_field)
-
-    return filtered_fields
 
 def build_optimized_instructions(custom_fields: List[Dict[str, Any]]) -> str:
     """Build optimized instruction set with better organization and less redundancy."""
@@ -101,12 +86,7 @@ Objects must be grouped by hierarchy into separate CSV files:
 def build_csv_format_section(custom_fields: List[Dict[str, Any]]) -> str:
     """Build concise CSV format section."""
 
-    built_in_section = """
-### Built-in Fields (Available to All Users)
-- **Title**: `3|title` (NOT allowed for BI objects)
-- **Description**: `4|description`
-- **Steward**: `8|steward:user (if its a user), 8|steward:groupprofile (if its a group profile)`
-"""
+    built_in_section = get_built_in_section()
 
     if not custom_fields:
         custom_section = """
@@ -115,7 +95,6 @@ No custom fields available (requires admin permissions).
 """
     else:
         custom_section = "\n### Custom Fields:\n"
-        # Show only first 5 custom fields to avoid overwhelming
         display_fields = custom_fields
         for field in display_fields:
             field_id = field.get('id')
@@ -164,7 +143,8 @@ def build_focused_examples(custom_fields: List[Dict[str, Any]]) -> str:
     """Build focused examples showing key patterns."""
 
     base_examples = """
-### RDBMS Example (Tables + Columns Together)
+### RDBMS Example (Tables + Columns Together) 
+Note: Columns are referred to as Attributes.
 ```csv
 al_datadict_item_properties,3|title,4|description
 oid=41;otype=table,Customer Master,Main customer information table

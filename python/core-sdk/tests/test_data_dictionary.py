@@ -1,54 +1,11 @@
 import pytest
 
 from alation_ai_agent_sdk.data_dict import (
-    filter_field_properties,
     build_optimized_instructions,
     build_process_steps,
     build_hierarchy_rules,
     build_quick_reference
 )
-
-
-def test_filter_field_properties():
-    """Test the field filtering function."""
-    raw_fields = [
-        {
-            "id": 10001,
-            "name_singular": "Test Field",
-            "field_type": "TEXT",
-            "allowed_otypes": ["table"],
-            "options": None,
-            "tooltip_text": "Test tooltip",
-            "allow_multiple": False,
-            "name_plural": "Test Fields",
-            "unwanted_field": "should_be_removed",
-            "another_unwanted": 12345
-        }
-    ]
-
-    filtered = filter_field_properties(raw_fields)
-
-    assert len(filtered) == 1
-    field = filtered[0]
-
-    # Should have exactly 8 properties
-    assert len(field) == 8
-
-    # Should have required properties
-    expected_props = ['id', 'name_singular', 'field_type', 'allowed_otypes',
-                      'options', 'tooltip_text', 'allow_multiple', 'name_plural']
-    for prop in expected_props:
-        assert prop in field
-
-    # Should not have unwanted properties
-    assert "unwanted_field" not in field
-    assert "another_unwanted" not in field
-
-
-def test_filter_field_properties_empty_list():
-    """Test field filtering with empty list."""
-    result = filter_field_properties([])
-    assert result == []
 
 
 def test_build_quick_reference():
@@ -76,6 +33,7 @@ def test_build_optimized_instructions_with_custom_fields():
             "id": 10001,
             "name_singular": "Test Field",
             "field_type": "TEXT",
+            "allowed_otypes": None,
             "allowed_otypes": None,
             "options": None,
             "tooltip_text": None,

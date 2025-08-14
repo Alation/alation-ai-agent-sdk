@@ -60,9 +60,9 @@ def test_get_custom_field_definitions_tool_run_success(get_custom_field_definiti
     assert "extra_field" not in first_field
 
 
-def test_get_custom_field_definitions_tool_run_api_error(get_custom_field_definitions_tool, mock_api):
-    """Test handling of API errors."""
-    # Mock API error
+def test_get_custom_field_definitions_tool_run_403_returns_builtin_fields(get_custom_field_definitions_tool, mock_api):
+    """Test handling of 403 errors - should return built-in fields."""
+    # Mock 403 API error
     api_error = AlationAPIError(
         message="Forbidden",
         status_code=403,
@@ -76,11 +76,41 @@ def test_get_custom_field_definitions_tool_run_api_error(get_custom_field_defini
     # Verify API was called
     mock_api.get_custom_fields.assert_called_once()
 
-    # Verify error handling
+    # Verify built-in fields are returned instead of error
+    assert "custom_fields" in result
+    assert "usage_guide" in result
+    assert "message" in result
+    assert "Admin permissions required" in result["message"]
+
+    # Verify built-in fields are present
+    assert len(result["custom_fields"]) == 3  # title, description, steward
+    field_ids = [field["id"] for field in result["custom_fields"]]
+    assert 3 in field_ids  # title
+    assert 4 in field_ids  # description
+    assert 8 in field_ids  # steward
+
+
+def test_get_custom_field_definitions_tool_run_non_403_api_error(get_custom_field_definitions_tool, mock_api):
+    """Test handling of non-403 API errors - should return error."""
+    # Mock non-403 API error
+    api_error = AlationAPIError(
+        message="Internal Server Error",
+        status_code=500,
+        reason="Internal Server Error",
+        resolution_hint="Server error occurred"
+    )
+    mock_api.get_custom_fields.side_effect = api_error
+
+    result = get_custom_field_definitions_tool.run()
+
+    # Verify API was called
+    mock_api.get_custom_fields.assert_called_once()
+
+    # Verify error is returned for non-403 errors
     assert "error" in result
-    assert result["error"]["message"] == "Forbidden"
-    assert result["error"]["status_code"] == 403
-    assert result["error"]["reason"] == "Forbidden"
+    assert result["error"]["message"] == "Internal Server Error"
+    assert result["error"]["status_code"] == 500
+    assert result["error"]["reason"] == "Internal Server Error"
 
 
 def test_get_custom_field_definitions_tool_run_empty_response(get_custom_field_definitions_tool, mock_api):

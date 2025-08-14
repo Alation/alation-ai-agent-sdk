@@ -36,8 +36,13 @@ from alation_ai_agent_sdk.data_product import (
 )
 
 from alation_ai_agent_sdk.data_dict import (
-    filter_field_properties,
     build_optimized_instructions
+)
+
+from alation_ai_agent_sdk.fields import (
+    filter_field_properties,
+    get_built_in_fields_structured,
+    get_built_in_usage_guide
 )
 
 logger = logging.getLogger(__name__)
@@ -604,7 +609,8 @@ class GetCustomFieldsDefinitionsTool:
         - Before generating data dictionary files that need to include custom field updates
 
         IMPORTANT NOTES:
-        - Requires admin permissions - non-admin users will receive a 403 Forbidden error
+        - Admin permissions provide access to all custom fields created by the organization
+        - Non-admin users will receive built-in fields only (title, description, steward) with appropriate messaging
         - Returns both user-created custom fields and some built-in fields
         - Use the 'allowed_otypes' field to understand which object types each field supports
         - Field types include: RICH_TEXT, MULTI_PICKER, SINGLE_PICKER, DATE, PEOPLE_PICKER, etc.
@@ -624,6 +630,9 @@ class GetCustomFieldsDefinitionsTool:
         - tooltip_text: Optional description explaining the field's purpose (null if not provided)
         - allow_multiple: Whether the field accepts multiple values
         - name_plural: Display name shown in the UI (plural form, empty string if not applicable)
+        
+        Admin users: Returns all custom fields plus built-in fields
+        Non-admin users: Returns only built-in fields (id: 3 (title), 4 (description), 8 (steward))
         """
 
     def run(self) -> Dict[str, Any]:
@@ -633,16 +642,17 @@ class GetCustomFieldsDefinitionsTool:
         Returns:
             Dict containing either:
             - Success: {"custom_fields": [...], "usage_guide": {...}} with filtered field definitions and guidance
+            - For non-admin users (403): Built-in fields only with appropriate messaging
             - Error: {"error": {...}} with error details
         """
         try:
             raw_custom_fields = self.api.get_custom_fields()
-            filtered_custom_fields = self._filter_field_properties(raw_custom_fields)
+            filtered_custom_fields = filter_field_properties(raw_custom_fields)
 
             return {
                 "custom_fields": filtered_custom_fields,
                 "usage_guide": {
-                    "object_compatibility": "The 'allowed_otypes' field determines which object types this field can be applied to. If null, the field applies to all object types (global field). If an array like ['table', 'attribute'], the field only applies to those specific object types. Use this to validate field compatibility before including in data dictionary CSVs.",
+                    "object_compatibility": "For Object Set fields, the 'allowed_otypes' array specifies what type of Alation objects can be selected as the value for this field. For example, a 'Business Owner' field would have ['user', 'groupprofile'] as its allowed otypes because only users or groups can be assigned as the value. This does not control which objects the field can be applied to.",
                     "value_validation": "For PICKER and MULTI_PICKER fields, the 'options' array contains all valid values that can be entered. For other field types, 'options' is null. The 'allow_multiple' field indicates whether a single value or multiple values can be provided. MULTI_PICKER fields always allow multiple values, OBJECT_SET fields vary based on 'allow_multiple', and TEXT/RICH_TEXT/PICKER/DATE fields are always single-value.",
                     "display_names": "Use 'name_singular' for field labels and column headers in user interfaces. Use 'name_plural' when displaying fields that have multiple values selected (when 'allow_multiple' is true). If 'name_plural' is empty, fall back to 'name_singular' or add 's' for pluralization.",
                     "field_types": "TEXT = single line text, RICH_TEXT = formatted text with HTML, PICKER = single selection dropdown, MULTI_PICKER = multiple selection checkboxes, OBJECT_SET = references to users/groups/objects, DATE = date picker. Use 'field_type' to determine appropriate input validation and UI controls.",
@@ -650,39 +660,24 @@ class GetCustomFieldsDefinitionsTool:
                 }
             }
         except AlationAPIError as e:
-            return {"error": e.to_dict()}
+            if e.status_code == 403:
+                logger.info("Non-admin user detected, providing built-in fields only")
+                return self._get_built_in_fields_response()
+            else:
+                return {"error": e.to_dict()}
 
-    def _filter_field_properties(self, raw_fields: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _get_built_in_fields_response(self) -> Dict[str, Any]:
         """
-        Filter each field to include only the 8 required properties.
-
-        Args:
-            raw_fields: Full field objects from the API
+        Return built-in field definitions for non-admin users using shared fields functions.
 
         Returns:
-            List of field objects with only the 8 selected properties
+            Dict containing built-in fields and usage guidance for non-admin users
         """
-        filtered_fields = []
-
-        # The 8 properties we want to keep
-        selected_properties = [
-            'id',
-            'name_singular',
-            'field_type',
-            'allowed_otypes',
-            'options',
-            'tooltip_text',
-            'allow_multiple',
-            'name_plural'
-        ]
-
-        for field in raw_fields:
-            filtered_field = {}
-            for prop in selected_properties:
-                filtered_field[prop] = field.get(prop)
-            filtered_fields.append(filtered_field)
-
-        return filtered_fields
+        return {
+            "custom_fields": get_built_in_fields_structured(),
+            "message": "Admin permissions required for custom fields. Showing built-in fields only.",
+            "usage_guide": get_built_in_usage_guide()
+        }
 
 
 class GetDataDictionaryInstructionsTool:
