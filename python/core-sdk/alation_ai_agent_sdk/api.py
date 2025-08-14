@@ -842,7 +842,7 @@ class AlationAPI:
         """
         Retrieve all custom field definitions from the Alation instance.
 
-        Requires admin permissions.
+        Requires Catalog or Server admin permissions.
 
         Returns:
             List[Dict[str, Any]]: List of custom field objects
