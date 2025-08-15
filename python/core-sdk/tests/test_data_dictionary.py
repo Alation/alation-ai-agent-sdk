@@ -34,7 +34,6 @@ def test_build_optimized_instructions_with_custom_fields():
             "name_singular": "Test Field",
             "field_type": "TEXT",
             "allowed_otypes": None,
-            "allowed_otypes": None,
             "options": None,
             "tooltip_text": None,
             "allow_multiple": False,

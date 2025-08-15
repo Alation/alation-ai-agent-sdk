@@ -21,7 +21,7 @@ def get_built_in_fields_structured() -> List[Dict[str, Any]]:
             "id": 3,
             "name_singular": "title",
             "field_type": "TEXT",
-            "allowed_otypes": None,  # Global field
+            "allowed_otypes": None,
             "tooltip_text": "Object title or display name. NOT allowed for BI objects.",
             "allow_multiple": False,
             "name_plural": ""
@@ -30,7 +30,7 @@ def get_built_in_fields_structured() -> List[Dict[str, Any]]:
             "id": 4,
             "name_singular": "description",
             "field_type": "RICH_TEXT",
-            "allowed_otypes": None,  # Global field
+            "allowed_otypes": None,
             "tooltip_text": "Detailed description of the object. Supports HTML formatting.",
             "allow_multiple": False,
             "name_plural": ""

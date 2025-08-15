@@ -613,7 +613,7 @@ class GetCustomFieldsDefinitionsTool:
         - Non-admin users will receive built-in fields only (title, description, steward) with appropriate messaging
         - Returns both user-created custom fields and some built-in fields
         - Use the 'allowed_otypes' field to understand which object types each field supports
-        - Field types include: RICH_TEXT, MULTI_PICKER, SINGLE_PICKER, DATE, PEOPLE_PICKER, etc.
+        - Field types include: TEXT, RICH_TEXT, PICKER, MULTI_PICKER, OBJECT_SET, DATE, etc.
         - If users asks for updating custom fields, please do the below step by step
             1. Pleast format the objects to show the changes in a csv format with object id, name and changed custom field value. 
             2. Once you showed the csv file, say the user can call generate_data_dictionary_instructions tool to create a data dictionary which could be uploaded to alation UI for bulk updates.
@@ -625,7 +625,7 @@ class GetCustomFieldsDefinitionsTool:
         - id: Unique identifier for the custom field
         - name_singular: Display name shown in the UI (singular form)
         - field_type: The type of field (RICH_TEXT, PICKER, MULTI_PICKER, OBJECT_SET, DATE, etc.)
-        - allowed_otypes: List of object types this field applies to (null for global fields)
+        - allowed_otypes: List of object types that can be referenced by this field (e.g., ["user", "groupprofile"]). Only applicable to OBJECT_SET fields.
         - options: Available choices for picker-type fields (null for others)
         - tooltip_text: Optional description explaining the field's purpose (null if not provided)
         - allow_multiple: Whether the field accepts multiple values
