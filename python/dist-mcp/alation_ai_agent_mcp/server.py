@@ -242,6 +242,24 @@ def create_server(
         result = alation_sdk.generate_data_product()
         return result
 
+    if alation_sdk.is_tool_enabled(AlationTools.GET_CUSTOM_FIELDS_DEFINITIONS):
+        @mcp.tool(
+            name=alation_sdk.get_custom_fields_definitions_tool.name,
+            description=alation_sdk.get_custom_fields_definitions_tool.description,
+        )
+        def get_custom_fields() -> str:
+            result = alation_sdk.get_custom_fields_definitions()
+            return str(result)
+
+    if alation_sdk.is_tool_enabled(AlationTools.GET_DATA_DICTIONARY_INSTRUCTIONS):
+        @mcp.tool(
+            name=alation_sdk.get_data_dictionary_instructions_tool.name,
+            description=alation_sdk.get_data_dictionary_instructions_tool.description,
+        )
+        def generate_data_dictionary_instructions() -> str:
+            result = alation_sdk.get_data_dictionary_instructions()
+            return str(result)
+
     return mcp
 
 

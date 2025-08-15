@@ -207,3 +207,29 @@ def get_check_data_quality_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
         func=run_with_args,
         args_schema=None,
     )
+
+def get_custom_fields_definitions_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
+    custom_fields_definitions_tool = sdk.get_custom_fields_definitions_tool
+
+    def run_with_no_args():
+        return custom_fields_definitions_tool.run()
+
+    return StructuredTool.from_function(
+        name=custom_fields_definitions_tool.name,
+        description=custom_fields_definitions_tool.description,
+        func=run_with_no_args,
+        args_schema=None,
+    )
+
+def get_data_dictionary_instructions_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
+    data_dict_tool = sdk.get_data_dictionary_instructions_tool
+
+    def run_with_no_args():
+        return data_dict_tool.run()
+
+    return StructuredTool.from_function(
+        name=data_dict_tool.name,
+        description=data_dict_tool.description,
+        func=run_with_no_args,
+        args_schema=None,
+    )

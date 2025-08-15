@@ -296,6 +296,58 @@ A lineage retrieval tool to identify upstream or downstream objects relative to 
 - (dict) An object containing the lineage graph, the direction, and any pagination values.
 </details>
 
+### get_custom_fields_definitions
+<details>
+<summary>
+A retrieval tool that fetches all custom field definitions from the Alation instance.
+</summary>
+<br />
+
+**Functionality**
+
+- Retrieves all custom field definitions created by the organization
+- Provides metadata about field types, allowed values, and object compatibility
+- Returns built-in fields for non-admin users with appropriate messaging
+- Includes usage guidance for implementing custom fields in applications
+
+
+**Input Parameters**
+
+No parameters required
+
+**Returns**
+
+- Admin users: JSON-formatted response with all custom fields plus built-in fields
+- Non-admin users: Built-in fields only (title, description, steward) with informational message
+</details>
+
+
+### get_data_dictionary_instructions
+<details>
+<summary>
+A tool that generates comprehensive instructions for creating Alation Data Dictionary CSV files.
+</summary>
+<br />
+
+**Functionality**
+
+- Dynamically fetches current custom field definitions from your instance
+- Provides complete CSV format specifications with required headers
+- Includes object hierarchy grouping requirements and validation rules
+- Generates field-specific examples and transformation guidelines
+- Returns ready-to-use instructions for LLMs and developers
+
+
+**Input Parameters**
+
+No parameters required
+
+**Returns**
+
+Complete instruction set with custom fields and examples for generating data dictionary.
+
+</details>
+
 
 ## Shape the SDK to your needs
 
