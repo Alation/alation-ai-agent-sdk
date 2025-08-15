@@ -34,6 +34,11 @@ export ALATION_REFRESH_TOKEN="your-refresh-token"
 export ALATION_AUTH_METHOD="service_account"
 export ALATION_CLIENT_ID="your-client-id"
 export ALATION_CLIENT_SECRET="your-client-secret"
+
+# Optional configuration
+export ALATION_DISABLED_TOOLS="tool1,tool2"  # Disable specific tools
+export ALATION_ENABLED_BETA_TOOLS="LINEAGE"  # Enable beta tools
+export MCP_EXTERNAL_URL="https://your-lb.com"  # For HTTP mode load balancing
 ```
 
 To run the Alation MCP Server, use [uvx](https://docs.astral.sh/uv/guides/tools/) (recommend), use the following command:

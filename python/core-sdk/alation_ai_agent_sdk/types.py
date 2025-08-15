@@ -12,7 +12,11 @@ class ServiceAccountAuthParams(NamedTuple):
     client_secret: str
 
 
-AuthParams = Union[UserAccountAuthParams, ServiceAccountAuthParams]
+class BearerTokenAuthParams(NamedTuple):
+    token: str
+
+
+AuthParams = Union[UserAccountAuthParams, ServiceAccountAuthParams, BearerTokenAuthParams]
 
 
 class CatalogAssetMetadataPayloadItem(TypedDict):
