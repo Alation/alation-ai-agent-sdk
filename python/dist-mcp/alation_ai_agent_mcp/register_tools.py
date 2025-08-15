@@ -13,8 +13,8 @@ Authentication Patterns:
 - STDIO mode: Uses a shared, pre-configured AlationAIAgentSDK instance
 - HTTP mode: Creates per-request SDK instances using FastMCP's get_access_token()
 
-Each tool is conditionally registered based on SDK configuration. Tools use their own
-_get_name() and _get_description() class methods for metadata.
+Each tool is conditionally registered based on SDK configuration. Tools use the
+get_tool_metadata() utility function for consistent metadata retrieval.
 """
 
 from typing import Any, Dict
@@ -109,32 +109,27 @@ def register_tools(
             return result
 
     if is_tool_enabled(AlationTools.DATA_PRODUCT, config_disabled, config_enabled_beta):
+        metadata = get_tool_metadata(AlationGetDataProductTool)
 
-        @mcp.tool(
-            name=AlationGetDataProductTool._get_name(),
-            description=AlationGetDataProductTool._get_description(),
-        )
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
         def get_data_products(product_id: str | None = None, query: str | None = None):
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.get_data_products(product_id, query)
             return result
 
     if is_tool_enabled(AlationTools.UPDATE_METADATA, config_disabled, config_enabled_beta):
+        metadata = get_tool_metadata(UpdateCatalogAssetMetadataTool)
 
-        @mcp.tool(
-            name=UpdateCatalogAssetMetadataTool._get_name(),
-            description=UpdateCatalogAssetMetadataTool._get_description(),
-        )
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
         def update_catalog_asset_metadata(custom_field_values: list):
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.update_catalog_asset_metadata(custom_field_values)
             return result
 
     if is_tool_enabled(AlationTools.CHECK_JOB_STATUS, config_disabled, config_enabled_beta):
+        metadata = get_tool_metadata(CheckJobStatusTool)
 
-        @mcp.tool(
-            name=CheckJobStatusTool._get_name(), description=CheckJobStatusTool._get_description()
-        )
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
         def check_job_status(job_id: int):
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.check_job_status(job_id)
@@ -153,9 +148,9 @@ def register_tools(
             LineageTimestampType,
         )
 
-        @mcp.tool(
-            name=AlationLineageTool._get_name(), description=AlationLineageTool._get_description()
-        )
+        metadata = get_tool_metadata(AlationLineageTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
         def get_lineage(
             root_node: LineageRootNode,
             direction: LineageDirectionType,
@@ -190,11 +185,9 @@ def register_tools(
             return result
 
     if is_tool_enabled(AlationTools.DATA_QUALITY, config_disabled, config_enabled_beta):
+        metadata = get_tool_metadata(CheckDataQualityTool)
 
-        @mcp.tool(
-            name=CheckDataQualityTool._get_name(),
-            description=CheckDataQualityTool._get_description(),
-        )
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
         def check_data_quality(
             table_ids: list | None = None,
             sql_query: str | None = None,
@@ -219,11 +212,9 @@ def register_tools(
             return result
 
     if is_tool_enabled(AlationTools.GENERATE_DATA_PRODUCT, config_disabled, config_enabled_beta):
+        metadata = get_tool_metadata(GenerateDataProductTool)
 
-        @mcp.tool(
-            name=GenerateDataProductTool._get_name(),
-            description=GenerateDataProductTool._get_description(),
-        )
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
         def generate_data_product() -> str:
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.generate_data_product()
