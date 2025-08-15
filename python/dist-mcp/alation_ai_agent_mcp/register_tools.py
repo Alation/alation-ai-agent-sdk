@@ -112,7 +112,7 @@ def get_enabled_tools(
             continue
 
         # Check if it's a beta tool that needs explicit enabling
-        beta_tools = {AlationTools.DATA_QUALITY, AlationTools.GENERATE_DATA_PRODUCT}
+        beta_tools = {AlationTools.LINEAGE}
         if tool_enum in beta_tools and tool_enum not in enabled_beta_tools:
             continue
 
@@ -170,54 +170,58 @@ def register_tools(
             return AlationAIAgentSDK(
                 base_url=base_url, auth_method="bearer_token", auth_params=auth_params
             )
+        except ValueError as e:
+            logger.error(f"Authentication error in HTTP mode: {e}")
+            raise  # Re-raise ValueError as-is
         except Exception as e:
             logger.error(f"Failed to create HTTP SDK: {e}")
-            raise RuntimeError(f"Authentication required: {e}") from e
+            raise RuntimeError(f"SDK initialization failed: {e}") from e
 
     if AlationTools.AGGREGATED_CONTEXT in enabled_tools_dict:
         metadata = enabled_tools_dict[AlationTools.AGGREGATED_CONTEXT]
 
         @mcp.tool(name=metadata.name, description=metadata.description)
-        def alation_context(question: str, signature: Dict[str, Any] | None = None) -> str:
+        def alation_context(question: str, signature: Dict[str, Any] | None = None):
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.get_context(question)
-            return str(result)
+            # Return structured data as-is for better LLM consumption
+            return result
 
     if AlationTools.BULK_RETRIEVAL in enabled_tools_dict:
         metadata = enabled_tools_dict[AlationTools.BULK_RETRIEVAL]
 
         @mcp.tool(name=metadata.name, description=metadata.description)
-        def alation_bulk_retrieval(signature: dict) -> str:
+        def alation_bulk_retrieval(signature: dict):
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.get_bulk_objects(signature)
-            return str(result)
+            return result
 
     if AlationTools.DATA_PRODUCT in enabled_tools_dict:
         metadata = enabled_tools_dict[AlationTools.DATA_PRODUCT]
 
         @mcp.tool(name=metadata.name, description=metadata.description)
-        def get_data_products(product_id: str | None = None, query: str | None = None) -> str:
+        def get_data_products(product_id: str | None = None, query: str | None = None):
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.get_data_products(product_id, query)
-            return str(result)
+            return result
 
     if AlationTools.UPDATE_METADATA in enabled_tools_dict:
         metadata = enabled_tools_dict[AlationTools.UPDATE_METADATA]
 
         @mcp.tool(name=metadata.name, description=metadata.description)
-        def update_catalog_asset_metadata(custom_field_values: list) -> str:
+        def update_catalog_asset_metadata(custom_field_values: list):
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.update_catalog_asset_metadata(custom_field_values)
-            return str(result)
+            return result
 
     if AlationTools.CHECK_JOB_STATUS in enabled_tools_dict:
         metadata = enabled_tools_dict[AlationTools.CHECK_JOB_STATUS]
 
         @mcp.tool(name=metadata.name, description=metadata.description)
-        def check_job_status(job_id: int) -> str:
+        def check_job_status(job_id: int):
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.check_job_status(job_id)
-            return str(result)
+            return result
 
     if AlationTools.LINEAGE in enabled_tools_dict:
         from alation_ai_agent_sdk.lineage import (
@@ -249,7 +253,7 @@ def register_tools(
             allowed_otypes: LineageOTypeFilterType | None = None,
             time_from: LineageTimestampType | None = None,
             time_to: LineageTimestampType | None = None,
-        ) -> str:
+        ):
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.get_lineage(
                 root_node=root_node,
@@ -266,7 +270,7 @@ def register_tools(
                 time_from=time_from,
                 time_to=time_to,
             )
-            return str(result)
+            return result
 
     if AlationTools.DATA_QUALITY in enabled_tools_dict:
         metadata = enabled_tools_dict[AlationTools.DATA_QUALITY]
@@ -281,7 +285,7 @@ def register_tools(
             default_schema_name: str | None = None,
             output_format: str | None = None,
             dq_score_threshold: int | None = None,
-        ) -> str:
+        ) -> dict | str:
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.check_data_quality(
                 table_ids=table_ids,
@@ -293,7 +297,7 @@ def register_tools(
                 output_format=output_format,
                 dq_score_threshold=dq_score_threshold,
             )
-            return str(result)
+            return result
 
     if AlationTools.GENERATE_DATA_PRODUCT in enabled_tools_dict:
         metadata = enabled_tools_dict[AlationTools.GENERATE_DATA_PRODUCT]
@@ -302,7 +306,7 @@ def register_tools(
         def generate_data_product() -> str:
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.generate_data_product()
-            return str(result)
+            return result
 
 
 def get_enabled_tools_from_sdk(alation_sdk: AlationAIAgentSDK) -> Dict[str, ToolMetadata]:

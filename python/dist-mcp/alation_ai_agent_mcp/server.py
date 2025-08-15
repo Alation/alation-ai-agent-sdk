@@ -23,7 +23,7 @@ import uvicorn
 
 from alation_ai_agent_sdk import AlationAIAgentSDK
 
-from .auth import get_auth_params, AlationTokenVerifier
+from .auth import get_stdio_auth_params, AlationTokenVerifier
 from .register_tools import (
     register_tools,
     get_enabled_tools,
@@ -77,7 +77,7 @@ def create_fastmcp_server(
         )
         return FastMCP(
             name="Alation MCP Server",
-            json_response=True,
+            stateless_http=True,
             auth=auth,
             token_verifier=AlationTokenVerifier(base_url),
         )
@@ -121,7 +121,7 @@ def create_server(
     if transport == "stdio":
         # STDIO mode: Create shared SDK instance with environment-based auth
         # This SDK is reused for all tool calls to avoid repeated authentication
-        auth_method, auth_params = get_auth_params()
+        auth_method, auth_params = get_stdio_auth_params()
 
         alation_sdk = AlationAIAgentSDK(
             base_url,
