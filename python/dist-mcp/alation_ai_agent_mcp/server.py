@@ -26,8 +26,6 @@ from alation_ai_agent_sdk import AlationAIAgentSDK
 from .auth import get_stdio_auth_params, AlationTokenVerifier
 from .register_tools import (
     register_tools,
-    get_enabled_tools,
-    get_enabled_tools_from_sdk,
 )
 from .utils import (
     validate_cloud_instance,
@@ -128,21 +126,29 @@ def create_server(
             auth_method,
             auth_params,
             dist_version=f"mcp-{MCP_SERVER_VERSION}",
-            disabled_tools=set(tools_disabled),
-            enabled_beta_tools=set(beta_tools_enabled),
         )
 
         validate_cloud_instance(alation_sdk)
         log_initialization_info(alation_sdk, MCP_SERVER_VERSION)
 
-        enabled_tools_dict = get_enabled_tools_from_sdk(alation_sdk)
-        register_tools(mcp, alation_sdk=alation_sdk, enabled_tools_dict=enabled_tools_dict)
+        # Register tools with explicit tool configuration (same as HTTP mode)
+        register_tools(
+            mcp,
+            alation_sdk=alation_sdk,
+            disabled_tools=set(tools_disabled),
+            enabled_beta_tools=set(beta_tools_enabled),
+        )
 
     elif transport == "http":
         # HTTP mode: No shared SDK - each tool call creates its own SDK instance
         # Authentication happens per-request via FastMCP's get_access_token()
-        enabled_tools_dict = get_enabled_tools(set(tools_disabled), set(beta_tools_enabled))
-        register_tools(mcp, enabled_tools_dict=enabled_tools_dict, base_url=base_url)
+        # Register tools with explicit tool configuration
+        register_tools(
+            mcp,
+            base_url=base_url,
+            disabled_tools=set(tools_disabled),
+            enabled_beta_tools=set(beta_tools_enabled),
+        )
 
     else:
         raise ValueError(f"Unknown transport mode: {transport}")
