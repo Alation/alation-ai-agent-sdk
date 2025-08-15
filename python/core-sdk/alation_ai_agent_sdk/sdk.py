@@ -339,4 +339,3 @@ class AlationAIAgentSDK:
         ):
             tools.append(self.generate_data_product_tool)
         return tools
-        return tools
