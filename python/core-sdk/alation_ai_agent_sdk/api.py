@@ -227,11 +227,10 @@ class AlationAPI:
             return response.json()
 
         headers = {}
-        if "X-Entitlement-Limit" in response.headers:
-            headers["X-Entitlement-Limit"] = response.headers["X-Entitlement-Limit"]
-        if "X-Entitlement-Usage" in response.headers:
-            headers["X-Entitlement-Usage"] = response.headers["X-Entitlement-Usage"]
         if "X-Entitlement-Warning" in response.headers:
+            # Only include the limit and usage when the warning is issued.
+            headers["X-Entitlement-Limit"] = response.headers["X-Entitlement-Limit"]
+            headers["X-Entitlement-Usage"] = response.headers["X-Entitlement-Usage"]
             headers["X-Entitlement-Warning"] = response.headers["X-Entitlement-Warning"]
         meta = {}
         if headers:

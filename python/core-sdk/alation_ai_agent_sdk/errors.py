@@ -27,9 +27,8 @@ class AlationAPIError(Exception):
         self.help_links = help_links or []
         self.alation_release_name = alation_release_name
         self.dist_version = dist_version
-        if is_retryable is not None:
-            self.is_retryable = is_retryable
-        else:
+        self.is_retryable = is_retryable
+        if self.is_retryable is None and status_code is not None:
             self.is_retryable = status_code in [
                 HTTPStatus.TOO_MANY_REQUESTS,
                 HTTPStatus.INTERNAL_SERVER_ERROR,
