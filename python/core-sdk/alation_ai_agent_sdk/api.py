@@ -221,24 +221,31 @@ class AlationAPI:
         """
         Format a successful response from the Alation API.
         Returns:
-            Union[Dict[str, Any], str]: The formatted response data
+            Union[Dict[str, Any], str]: The formatted response data with entitlement info injected
         """
         if response.status_code != 200:
             return response.json()
 
-        headers = {}
-        if "X-Entitlement-Warning" in response.headers:
-            # Only include the limit and usage when the warning is issued.
-            headers["X-Entitlement-Limit"] = response.headers["X-Entitlement-Limit"]
-            headers["X-Entitlement-Usage"] = response.headers["X-Entitlement-Usage"]
-            headers["X-Entitlement-Warning"] = response.headers["X-Entitlement-Warning"]
-        meta = {}
-        if headers:
-            meta["headers"] = headers
-        # This is backward incompatible change because it changes the response format.
-        # Alternatively I can inject the "meta" field into the response data itself
-        # data = response.json(); data["meta"] = meta; return data
-        return {"data": response.json(), "meta": meta}
+        data = response.json()
+
+        # Check for entitlement headers and inject meta information if present
+        if "X-Entitlement-Warning" in getattr(response, "headers", {}):
+            # Only inject limit and usage information if warning is issued.
+            entitlement_meta = {
+                "X-Entitlement-Limit": response.headers.get("X-Entitlement-Limit"),
+                "X-Entitlement-Usage": response.headers.get("X-Entitlement-Usage"),
+                "X-Entitlement-Warning": response.headers["X-Entitlement-Warning"],
+            }
+
+            # Maintain backward compatibility by injecting meta into the existing response structure
+            if isinstance(data, dict):
+                # If response is a dict, add _meta field (underscore prefix to avoid conflicts)
+                data["_meta"] = {"headers": entitlement_meta}
+            elif isinstance(data, list):
+                # If response is a list, wrap it to include meta information
+                data = {"results": data, "_meta": {"headers": entitlement_meta}}
+
+        return data
 
     def _generate_access_token_with_refresh_token(self):
         """
