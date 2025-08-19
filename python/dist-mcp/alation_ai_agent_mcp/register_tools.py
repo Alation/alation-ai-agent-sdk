@@ -31,6 +31,8 @@ from alation_ai_agent_sdk.tools import (
     AlationLineageTool,
     CheckDataQualityTool,
     GenerateDataProductTool,
+    GetCustomFieldsDefinitionsTool,
+    GetDataDictionaryInstructionsTool,
 )
 from mcp.server.fastmcp import FastMCP
 from fastmcp.server.dependencies import get_access_token
@@ -218,4 +220,22 @@ def register_tools(
         def generate_data_product() -> str:
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.generate_data_product()
+            return result
+
+    if is_tool_enabled(AlationTools.GET_CUSTOM_FIELDS_DEFINITIONS, config_disabled, config_enabled_beta):
+        metadata = get_tool_metadata(GetCustomFieldsDefinitionsTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def get_custom_fields_definitions():
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.get_custom_fields_definitions()
+            return result
+
+    if is_tool_enabled(AlationTools.GET_DATA_DICTIONARY_INSTRUCTIONS, config_disabled, config_enabled_beta):
+        metadata = get_tool_metadata(GetDataDictionaryInstructionsTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def get_data_dictionary_instructions():
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.get_data_dictionary_instructions()
             return result

@@ -363,8 +363,8 @@ class AlationAIAgentSDK:
             AlationTools.GENERATE_DATA_PRODUCT, self.disabled_tools, self.enabled_beta_tools
         ):
             tools.append(self.generate_data_product_tool)
-        if self.is_tool_enabled(AlationTools.GET_CUSTOM_FIELDS_DEFINITIONS):
+        if is_tool_enabled(AlationTools.GET_CUSTOM_FIELDS_DEFINITIONS, self.disabled_tools, self.enabled_beta_tools):
             tools.append(self.get_custom_fields_definitions_tool)
-        if self.is_tool_enabled(AlationTools.GET_DATA_DICTIONARY_INSTRUCTIONS):
+        if is_tool_enabled(AlationTools.GET_DATA_DICTIONARY_INSTRUCTIONS, self.disabled_tools, self.enabled_beta_tools):
             tools.append(self.get_data_dictionary_instructions_tool)
         return tools
