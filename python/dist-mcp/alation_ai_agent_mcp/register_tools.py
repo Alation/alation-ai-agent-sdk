@@ -222,7 +222,9 @@ def register_tools(
             result = alation_sdk.generate_data_product()
             return result
 
-    if is_tool_enabled(AlationTools.GET_CUSTOM_FIELDS_DEFINITIONS, config_disabled, config_enabled_beta):
+    if is_tool_enabled(
+        AlationTools.GET_CUSTOM_FIELDS_DEFINITIONS, config_disabled, config_enabled_beta
+    ):
         metadata = get_tool_metadata(GetCustomFieldsDefinitionsTool)
 
         @mcp.tool(name=metadata["name"], description=metadata["description"])
@@ -231,7 +233,9 @@ def register_tools(
             result = alation_sdk.get_custom_fields_definitions()
             return result
 
-    if is_tool_enabled(AlationTools.GET_DATA_DICTIONARY_INSTRUCTIONS, config_disabled, config_enabled_beta):
+    if is_tool_enabled(
+        AlationTools.GET_DATA_DICTIONARY_INSTRUCTIONS, config_disabled, config_enabled_beta
+    ):
         metadata = get_tool_metadata(GetDataDictionaryInstructionsTool)
 
         @mcp.tool(name=metadata["name"], description=metadata["description"])
