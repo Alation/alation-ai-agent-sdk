@@ -13,6 +13,8 @@ from .tool import (
     get_generate_data_product_tool,
     get_alation_lineage_tool,
     get_check_data_quality_tool,
+    get_custom_fields_definitions_tool,
+    get_data_dictionary_instructions_tool
 )
 
 
@@ -36,4 +38,8 @@ def get_tools(sdk: AlationAIAgentSDK):
         AlationTools.GENERATE_DATA_PRODUCT, sdk.disabled_tools, sdk.enabled_beta_tools
     ):
         tools.append(get_generate_data_product_tool(sdk))
+    if sdk.is_tool_enabled(AlationTools.GET_CUSTOM_FIELDS_DEFINITIONS):
+        tools.append(get_custom_fields_definitions_tool(sdk))
+    if sdk.is_tool_enabled(AlationTools.GET_DATA_DICTIONARY_INSTRUCTIONS):
+        tools.append(get_data_dictionary_instructions_tool(sdk))
     return tools

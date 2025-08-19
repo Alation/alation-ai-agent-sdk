@@ -35,6 +35,16 @@ from alation_ai_agent_sdk.data_product import (
     get_schema_content,
 )
 
+from alation_ai_agent_sdk.data_dict import (
+    build_optimized_instructions
+)
+
+from alation_ai_agent_sdk.fields import (
+    filter_field_properties,
+    get_built_in_fields_structured,
+    get_built_in_usage_guide
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -580,6 +590,193 @@ class CheckDataQualityTool:
         except AlationAPIError as e:
             return {"error": e.to_dict()}
 
+
+class GetCustomFieldsDefinitionsTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "get_custom_fields_definitions"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
+        Retrieves all custom field definitions from the Alation instance.
+
+        Custom fields are user-defined metadata fields that organizations create to capture 
+        business-specific information beyond Alation's standard fields (title, description, stewards).
+
+        Common examples of custom fields include:
+        - Data Classification (e.g., "Public", "Internal", "Confidential", "Restricted")
+        - Business Owner or Data Owner
+        - Data Retention Period
+        - Business Glossary Terms
+        - Compliance Tags
+        - Source System
+        - Update Frequency
+        - Business Purpose
+
+        WHEN TO USE:
+        - To understand what custom metadata fields are available in the instance
+        - To validate custom field names and types before bulk updates
+        - Before generating data dictionary files that need to include custom field updates
+
+        IMPORTANT NOTES:
+        - Admin permissions provide access to all custom fields created by the organization
+        - Non-admin users will receive built-in fields only (title, description, steward) with appropriate messaging
+        - Returns both user-created custom fields and some built-in fields
+        - Use the 'allowed_otypes' field to understand which object types each field supports
+        - Field types include: TEXT, RICH_TEXT, PICKER, MULTI_PICKER, OBJECT_SET, DATE, etc.
+        - If users asks for updating custom fields, please do the below step by step
+            1. Pleast format the objects to show the changes in a csv format with object id, name and changed custom field value. 
+            2. Once you showed the csv file, say the user can call generate_data_dictionary_instructions tool to create a data dictionary which could be uploaded to alation UI for bulk updates.
+
+        No parameters required - returns all custom field definitions for the instance.
+
+        Returns:
+        List of custom field objects with exactly these properties:
+        - id: Unique identifier for the custom field
+        - name_singular: Display name shown in the UI (singular form)
+        - field_type: The type of field (RICH_TEXT, PICKER, MULTI_PICKER, OBJECT_SET, DATE, etc.)
+        - allowed_otypes: List of object types that can be referenced by this field (e.g., ["user", "groupprofile"]). Only applicable to OBJECT_SET fields.
+        - options: Available choices for picker-type fields (null for others)
+        - tooltip_text: Optional description explaining the field's purpose (null if not provided)
+        - allow_multiple: Whether the field accepts multiple values
+        - name_plural: Display name shown in the UI (plural form, empty string if not applicable)
+        
+        Admin users: Returns all custom fields plus built-in fields
+        Non-admin users: Returns only built-in fields (id: 3 (title), 4 (description), 8 (steward))
+        """
+
+    def run(self) -> Dict[str, Any]:
+        """
+        Retrieve all custom field definitions from the Alation instance.
+
+        Returns:
+            Dict containing either:
+            - Success: {"custom_fields": [...], "usage_guide": {...}} with filtered field definitions and guidance
+            - For non-admin users (403): Built-in fields only with appropriate messaging
+            - Error: {"error": {...}} with error details
+        """
+        try:
+            raw_custom_fields = self.api.get_custom_fields()
+            filtered_custom_fields = filter_field_properties(raw_custom_fields)
+
+            return {
+                "custom_fields": filtered_custom_fields,
+                "usage_guide": {
+                    "object_compatibility": "For Object Set fields, the 'allowed_otypes' array specifies what type of Alation objects can be selected as the value for this field. For example, a 'Business Owner' field would have ['user', 'groupprofile'] as its allowed otypes because only users or groups can be assigned as the value. This does not control which objects the field can be applied to.",
+                    "value_validation": "For PICKER and MULTI_PICKER fields, the 'options' array contains all valid values that can be entered. For other field types, 'options' is null. The 'allow_multiple' field indicates whether a single value or multiple values can be provided. MULTI_PICKER fields always allow multiple values, OBJECT_SET fields vary based on 'allow_multiple', and TEXT/RICH_TEXT/PICKER/DATE fields are always single-value.",
+                    "display_names": "Use 'name_singular' for field labels and column headers in user interfaces. Use 'name_plural' when displaying fields that have multiple values selected (when 'allow_multiple' is true). If 'name_plural' is empty, fall back to 'name_singular' or add 's' for pluralization.",
+                    "field_types": "TEXT = single line text, RICH_TEXT = formatted text with HTML, PICKER = single selection dropdown, MULTI_PICKER = multiple selection checkboxes, OBJECT_SET = references to users/groups/objects, DATE = date picker. Use 'field_type' to determine appropriate input validation and UI controls.",
+                    "csv_headers": "For data dictionary CSV files, use a combination of the field's ID and name for the column headers. The required format is id|field_name (e.g., 4|description or 10020|Business Owner). This is required for Alation to recognize which field to update."
+                }
+            }
+        except AlationAPIError as e:
+            if e.status_code == 403:
+                logger.info("Non-admin user detected, providing built-in fields only")
+                return self._get_built_in_fields_response()
+            else:
+                return {"error": e.to_dict()}
+
+    def _get_built_in_fields_response(self) -> Dict[str, Any]:
+        """
+        Return built-in field definitions for non-admin users using shared fields functions.
+
+        Returns:
+            Dict containing built-in fields and usage guidance for non-admin users
+        """
+        return {
+            "custom_fields": get_built_in_fields_structured(),
+            "message": "Admin permissions required for custom fields. Showing built-in fields only.",
+            "usage_guide": get_built_in_usage_guide()
+        }
+
+
+class GetDataDictionaryInstructionsTool:
+    """
+    Generates comprehensive instructions for creating Alation Data Dictionary CSV files.
+
+    This tool provides LLMs with complete formatting rules, validation schemas, and examples
+    for transforming object metadata into properly formatted data dictionary CSVs.
+    """
+
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "get_data_dictionary_instructions"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
+        Generates comprehensive instructions for creating Alation Data Dictionary CSV files.
+
+        Automatically fetches current custom field definitions and provides:
+        - Complete CSV format specifications with required headers
+        - Custom field formatting rules and validation schemas
+        - Object hierarchy grouping requirements
+        - Field-specific validation rules and examples
+        - Ready-to-use transformation instructions for LLMs
+
+        WHEN TO USE:
+        - Before generating data dictionary CSV files for bulk metadata upload
+        - To understand proper formatting for different object types and custom fields
+        - When transforming catalog objects and metadata into upload-ready format
+
+        WORKFLOW:
+        1. Call this tool to get comprehensive formatting instructions
+        2. Use the instructions to transform your object data into properly formatted CSV
+        3. Upload the CSV file to Alation using the Data Dictionary interface
+
+        OBJECT HIERARCHY REQUIREMENTS:
+        - RDBMS objects (data, schema, table, attribute) must be in ONE CSV file together
+        - BI objects (bi_server, bi_folder, bi_datasource, bi_datasource_column, bi_report, bi_report_column) need separate CSV
+        - Documentation objects (glossary_v3, glossary_term) need separate CSV
+        - Title field is NOT supported for BI objects (read-only from source system)
+
+        No parameters required - returns complete instruction set with latest schema.
+
+        Returns:
+        Complete instruction set with formatting rules, validation schemas, and examples
+        """
+
+    def run(self) -> str:
+        """
+        Generate comprehensive data dictionary CSV formatting instructions.
+
+        Automatically fetches current custom field definitions and provides complete
+        formatting rules, validation schemas, and examples.
+
+        Returns:
+            str: Complete instruction set for creating data dictionary CSV files
+        """
+        try:
+            # Always fetch fresh custom fields
+            custom_fields = []
+            try:
+                custom_fields_response = self.api.get_custom_fields()
+                custom_fields = filter_field_properties(custom_fields_response)
+            except AlationAPIError as e:
+                # Non-admin users will get 403 - provide instructions without custom fields
+                if e.status_code == 403:
+                    logger.info("Non-admin user detected, providing built-in fields only")
+                    custom_fields = []
+                else:
+                    raise
+
+            # Generate the comprehensive instructions
+            instructions = build_optimized_instructions(custom_fields)
+            return instructions
+
+        except AlationAPIError as e:
+            return f"Error generating instructions: {e}"
 
 def csv_str_to_tool_list(tool_env_var: Optional[str] = None) -> List[str]:
     if tool_env_var is None:

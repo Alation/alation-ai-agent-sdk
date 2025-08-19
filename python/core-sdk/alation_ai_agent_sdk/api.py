@@ -849,3 +849,32 @@ class AlationAPI:
                 resolution_hint="The server returned a non-JSON response. Contact support if this persists.",
                 help_links=["https://developer.alation.com/"],
             )
+
+    def get_custom_fields(self) -> List[Dict[str, Any]]:
+        """
+        Retrieve all custom field definitions from the Alation instance.
+
+        Requires Catalog or Server admin permissions.
+
+        Returns:
+            List[Dict[str, Any]]: List of custom field objects
+
+        Raises:
+            AlationAPIError: On network, API, authentication, or authorization errors
+        """
+        self._with_valid_token()
+
+        headers = {
+            "Token": self.access_token,
+            "Accept": "application/json",
+        }
+
+        url = f"{self.base_url}/integration/v2/custom_field/"
+
+        try:
+            response = requests.get(url, headers=headers, timeout=60)
+            response.raise_for_status()
+            return response.json()
+
+        except requests.RequestException as e:
+            self._handle_request_error(e, "custom fields retrieval")

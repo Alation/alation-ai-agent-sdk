@@ -3,6 +3,7 @@ from typing import (
     Dict,
     Optional,
     Union,
+    List,
 )
 
 from alation_ai_agent_sdk.errors import AlationAPIError
@@ -20,6 +21,8 @@ from .tools import (
     CheckJobStatusTool,
     CheckDataQualityTool,
     GenerateDataProductTool,
+    GetCustomFieldsDefinitionsTool,
+    GetDataDictionaryInstructionsTool
 )
 from .lineage import (
     LineageToolResponse,
@@ -45,6 +48,8 @@ class AlationTools:
     LINEAGE = "lineage"
     UPDATE_METADATA = "update_metadata"
     GENERATE_DATA_PRODUCT = "generate_data_product"
+    GET_CUSTOM_FIELDS_DEFINITIONS = "get_custom_fields_definitions"
+    GET_DATA_DICTIONARY_INSTRUCTIONS = "get_data_dictionary_instructions"
 
 
 class AlationAIAgentSDK:
@@ -93,6 +98,8 @@ class AlationAIAgentSDK:
         self.generate_data_product_tool = GenerateDataProductTool(self.api)
         self.lineage_tool = AlationLineageTool(self.api)
         self.check_data_quality_tool = CheckDataQualityTool(self.api)
+        self.get_custom_fields_definitions_tool = GetCustomFieldsDefinitionsTool(self.api)
+        self.get_data_dictionary_instructions_tool = GetDataDictionaryInstructionsTool(self.api)
 
     BETA_TOOLS = {AlationTools.LINEAGE}
 
@@ -308,6 +315,24 @@ class AlationAIAgentSDK:
         """
         return self.generate_data_product_tool.run()
 
+    def get_custom_fields_definitions(self) -> Dict[str, Any]:
+        """
+        Retrieve all custom field definitions from the Alation instance.
+
+        Custom fields are user-defined metadata fields. This method requires admin permissions.
+        """
+        return self.get_custom_fields_definitions_tool.run()
+
+    def get_data_dictionary_instructions(
+            self) -> str:
+        """
+        Generate comprehensive instructions for creating data dictionary CSV files.
+
+        Returns:
+            Complete instruction set for data dictionary CSV generation
+        """
+        return self.get_data_dictionary_instructions_tool.run()
+
     def get_tools(self):
         from .utils import is_tool_enabled
 
@@ -338,4 +363,8 @@ class AlationAIAgentSDK:
             AlationTools.GENERATE_DATA_PRODUCT, self.disabled_tools, self.enabled_beta_tools
         ):
             tools.append(self.generate_data_product_tool)
+        if self.is_tool_enabled(AlationTools.GET_CUSTOM_FIELDS_DEFINITIONS):
+            tools.append(self.get_custom_fields_definitions_tool)
+        if self.is_tool_enabled(AlationTools.GET_DATA_DICTIONARY_INSTRUCTIONS):
+            tools.append(self.get_data_dictionary_instructions_tool)
         return tools

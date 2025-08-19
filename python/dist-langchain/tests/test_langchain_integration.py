@@ -73,6 +73,14 @@ def get_sdk_mock():
     mock_sdk.lineage_tool.name = "GetLineageToolFromSDK"
     mock_sdk.lineage_tool.description = "Provides lineage from SDK"
 
+    mock_sdk.get_custom_fields_definitions_tool = MagicMock()
+    mock_sdk.get_custom_fields_definitions_tool.name = "get_custom_fields_definitions"
+    mock_sdk.get_custom_fields_definitions_tool.description = "Gets custom field definitions"
+
+    mock_sdk.get_data_dictionary_instructions_tool = MagicMock()
+    mock_sdk.get_data_dictionary_instructions_tool.name = "get_data_dictionary_instructions"
+    mock_sdk.get_data_dictionary_instructions_tool.description = "Gets data dictionary instructions"
+
     # Patch .run for StructuredTool.func compatibility
     def run_with_signature(*args, **kwargs):
         return mock_sdk.context_tool.run(*args, **kwargs)
