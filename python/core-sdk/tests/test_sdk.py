@@ -218,7 +218,7 @@ def test_sdk_valid_initialization_service_account(mock_requests_post, mock_reque
         (
             "invalid_method",
             (MOCK_USER_ID, MOCK_REFRESH_TOKEN),
-            "auth_method must be either 'user_account' or 'service_account'",
+            "auth_method must be 'user_account', 'service_account', or 'bearer_token'",
         ),
     ],
 )

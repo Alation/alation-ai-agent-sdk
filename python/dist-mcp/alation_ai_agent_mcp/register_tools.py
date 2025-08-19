@@ -96,7 +96,7 @@ def register_tools(
         @mcp.tool(name=metadata["name"], description=metadata["description"])
         def alation_context(question: str, signature: Dict[str, Any] | None = None):
             alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.get_context(question)
+            result = alation_sdk.get_context(question, signature)
             return result
 
     if is_tool_enabled(AlationTools.BULK_RETRIEVAL, config_disabled, config_enabled_beta):
