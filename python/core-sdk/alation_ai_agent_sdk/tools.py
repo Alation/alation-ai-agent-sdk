@@ -35,14 +35,12 @@ from alation_ai_agent_sdk.data_product import (
     get_schema_content,
 )
 
-from alation_ai_agent_sdk.data_dict import (
-    build_optimized_instructions
-)
+from alation_ai_agent_sdk.data_dict import build_optimized_instructions
 
 from alation_ai_agent_sdk.fields import (
     filter_field_properties,
     get_built_in_fields_structured,
-    get_built_in_usage_guide
+    get_built_in_usage_guide,
 )
 
 logger = logging.getLogger(__name__)
@@ -84,12 +82,16 @@ def min_alation_version(min_version: str):
 def is_version_supported(current: str, minimum: str) -> bool:
     """
     Compare Alation version strings (e.g., '2025.1.5' >= '2025.1.2'). Returns True if current >= minimum.
+    Handles versions with 2 or 3 components (e.g., '2025.3' or '2025.1.2').
     """
 
     def parse(ver):
-        match = re.search(r"(\d+\.\d+\.\d+)", ver)
-        ver = match.group(1) if match else ver
+        # Match 2 or 3 component versions: major.minor or major.minor.patch
+        match = re.search(r"(\d+\.\d+(?:\.\d+)?)", ver)
+        if match:
+            ver = match.group(1)
         parts = [int(p) for p in ver.split(".")]
+        # Normalize to 3 components: pad with zeros
         return tuple(parts + [0] * (3 - len(parts)))
 
     try:
@@ -672,8 +674,8 @@ class GetCustomFieldsDefinitionsTool:
                     "value_validation": "For PICKER and MULTI_PICKER fields, the 'options' array contains all valid values that can be entered. For other field types, 'options' is null. The 'allow_multiple' field indicates whether a single value or multiple values can be provided. MULTI_PICKER fields always allow multiple values, OBJECT_SET fields vary based on 'allow_multiple', and TEXT/RICH_TEXT/PICKER/DATE fields are always single-value.",
                     "display_names": "Use 'name_singular' for field labels and column headers in user interfaces. Use 'name_plural' when displaying fields that have multiple values selected (when 'allow_multiple' is true). If 'name_plural' is empty, fall back to 'name_singular' or add 's' for pluralization.",
                     "field_types": "TEXT = single line text, RICH_TEXT = formatted text with HTML, PICKER = single selection dropdown, MULTI_PICKER = multiple selection checkboxes, OBJECT_SET = references to users/groups/objects, DATE = date picker. Use 'field_type' to determine appropriate input validation and UI controls.",
-                    "csv_headers": "For data dictionary CSV files, use a combination of the field's ID and name for the column headers. The required format is id|field_name (e.g., 4|description or 10020|Business Owner). This is required for Alation to recognize which field to update."
-                }
+                    "csv_headers": "For data dictionary CSV files, use a combination of the field's ID and name for the column headers. The required format is id|field_name (e.g., 4|description or 10020|Business Owner). This is required for Alation to recognize which field to update.",
+                },
             }
         except AlationAPIError as e:
             if e.status_code == 403:
@@ -692,7 +694,7 @@ class GetCustomFieldsDefinitionsTool:
         return {
             "custom_fields": get_built_in_fields_structured(),
             "message": "Admin permissions required for custom fields. Showing built-in fields only.",
-            "usage_guide": get_built_in_usage_guide()
+            "usage_guide": get_built_in_usage_guide(),
         }
 
 
@@ -777,6 +779,7 @@ class GetDataDictionaryInstructionsTool:
 
         except AlationAPIError as e:
             return f"Error generating instructions: {e}"
+
 
 def csv_str_to_tool_list(tool_env_var: Optional[str] = None) -> List[str]:
     if tool_env_var is None:
