@@ -4,6 +4,8 @@ from typing import (
     Optional,
     Union,
 )
+
+from alation_ai_agent_sdk.errors import AlationAPIError
 from .api import (
     AlationAPI,
     AuthParams,
@@ -72,7 +74,6 @@ class AlationAIAgentSDK:
         if not auth_method or not isinstance(auth_method, str):
             raise ValueError("auth_method must be a non-empty string.")
 
-        self.beta_tools = {AlationTools.LINEAGE}
         self.disabled_tools = disabled_tools or set()
         self.enabled_beta_tools = enabled_beta_tools or set()
 
@@ -93,20 +94,7 @@ class AlationAIAgentSDK:
         self.lineage_tool = AlationLineageTool(self.api)
         self.check_data_quality_tool = CheckDataQualityTool(self.api)
 
-    def is_tool_enabled(self, tool_name: str) -> bool:
-        if tool_name in self.disabled_tools:
-            return False
-        if tool_name not in self.beta_tools:
-            return True
-        if tool_name in self.enabled_beta_tools:
-            return True
-        return False
-
-    def set_enabled_beta_tools(self, tools: set[str]):
-        self.enabled_beta_tools = tools
-
-    def set_disabled_tools(self, tools: set[str]):
-        self.disabled_tools = tools
+    BETA_TOOLS = {AlationTools.LINEAGE}
 
     def get_context(
         self, question: str, signature: Optional[Dict[str, Any]] = None
@@ -305,7 +293,7 @@ class AlationAIAgentSDK:
             )
         except AlationAPIError as e:
             return {"error": e.to_dict()}
-          
+
     def generate_data_product(self) -> str:
         """
         Generate complete instructions for creating Alation Data Products.
@@ -321,21 +309,33 @@ class AlationAIAgentSDK:
         return self.generate_data_product_tool.run()
 
     def get_tools(self):
+        from .utils import is_tool_enabled
+
         tools = []
-        if self.is_tool_enabled(AlationTools.AGGREGATED_CONTEXT):
+        if is_tool_enabled(
+            AlationTools.AGGREGATED_CONTEXT, self.disabled_tools, self.enabled_beta_tools
+        ):
             tools.append(self.context_tool)
-        if self.is_tool_enabled(AlationTools.BULK_RETRIEVAL):
+        if is_tool_enabled(
+            AlationTools.BULK_RETRIEVAL, self.disabled_tools, self.enabled_beta_tools
+        ):
             tools.append(self.bulk_retrieval_tool)
-        if self.is_tool_enabled(AlationTools.DATA_PRODUCT):
+        if is_tool_enabled(AlationTools.DATA_PRODUCT, self.disabled_tools, self.enabled_beta_tools):
             tools.append(self.data_product_tool)
-        if self.is_tool_enabled(AlationTools.UPDATE_METADATA):
+        if is_tool_enabled(
+            AlationTools.UPDATE_METADATA, self.disabled_tools, self.enabled_beta_tools
+        ):
             tools.append(self.update_catalog_asset_metadata_tool)
-        if self.is_tool_enabled(AlationTools.CHECK_JOB_STATUS):
+        if is_tool_enabled(
+            AlationTools.CHECK_JOB_STATUS, self.disabled_tools, self.enabled_beta_tools
+        ):
             tools.append(self.check_job_status_tool)
-        if self.is_tool_enabled(AlationTools.LINEAGE):
+        if is_tool_enabled(AlationTools.LINEAGE, self.disabled_tools, self.enabled_beta_tools):
             tools.append(self.lineage_tool)
-        if self.is_tool_enabled(AlationTools.DATA_QUALITY):
+        if is_tool_enabled(AlationTools.DATA_QUALITY, self.disabled_tools, self.enabled_beta_tools):
             tools.append(self.check_data_quality_tool)
-        if self.is_tool_enabled(AlationTools.GENERATE_DATA_PRODUCT):
+        if is_tool_enabled(
+            AlationTools.GENERATE_DATA_PRODUCT, self.disabled_tools, self.enabled_beta_tools
+        ):
             tools.append(self.generate_data_product_tool)
         return tools
