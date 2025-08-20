@@ -28,4 +28,5 @@ jobs:
 
   summary:
     needs: [test-sdk, test-mcp, test-langchain]
+    if: always()
     uses: ./.github/workflows/summary.yml

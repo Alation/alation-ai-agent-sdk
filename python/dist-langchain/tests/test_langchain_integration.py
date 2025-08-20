@@ -1,4 +1,5 @@
 from alation_ai_agent_sdk.sdk import AlationTools
+from alation_ai_agent_sdk.utils import is_tool_enabled
 import pytest
 from unittest.mock import Mock, MagicMock
 
@@ -9,6 +10,10 @@ from alation_ai_agent_sdk import AlationAIAgentSDK
 
 def get_sdk_mock():
     mock_sdk = Mock(spec=AlationAIAgentSDK if "AlationAIAgentSDK" in globals() else object)
+
+    # Add the required attributes for tool enablement logic
+    mock_sdk.disabled_tools = set()
+    mock_sdk.enabled_beta_tools = set()
 
     mock_sdk.context_tool = MagicMock()
     mock_sdk.context_tool.name = "AlationContextToolFromSDK"
@@ -132,7 +137,7 @@ def test_get_langchain_tools_skips_beta_tools_by_default():
         skip_instance_info=True,  # No need to fetch for this test
     )
     assert len(sdk.enabled_beta_tools) == 0
-    assert sdk.is_tool_enabled(AlationTools.LINEAGE) is False
+    assert is_tool_enabled(AlationTools.LINEAGE, sdk.disabled_tools, sdk.enabled_beta_tools) is False
 
     tools_list = get_langchain_tools(sdk)
     assert all(t.name != AlationTools.LINEAGE for t in tools_list), "Beta tools should be skipped."
@@ -150,7 +155,7 @@ def test_get_langchain_tools_skips_disabled_tools():
         skip_instance_info=True,  # No need to fetch for this test
     )
     assert len(sdk.disabled_tools) == 1
-    assert sdk.is_tool_enabled(AlationTools.AGGREGATED_CONTEXT) is False
+    assert is_tool_enabled(AlationTools.AGGREGATED_CONTEXT, sdk.disabled_tools, sdk.enabled_beta_tools) is False
 
     tools_list = get_langchain_tools(sdk)
     assert all(
