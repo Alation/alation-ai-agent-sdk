@@ -34,7 +34,7 @@ This component integrates the SDK with the LangChain framework, enabling the cre
 
 ### MCP Integration (`alation-ai-agent-mcp`)
 
-The MCP integration provides an MCP-compatible server that exposes Alation's context capabilities to any MCP client.
+The MCP integration provides an MCP-compatible server that exposes Alation's context capabilities to any MCP client. Supports both traditional STDIO mode for direct MCP client connections and HTTP mode for web applications and API integrations.
 
 [Learn more about the MCP Integration](https://github.com/Alation/alation-ai-agent-sdk/tree/main/python/dist-mcp/)
 

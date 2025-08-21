@@ -3,6 +3,7 @@ from .api import (
     AlationAPIError,
     UserAccountAuthParams,
     ServiceAccountAuthParams,
+    BearerTokenAuthParams,
 )
 from .sdk import (
     AlationAIAgentSDK,
@@ -17,5 +18,6 @@ __all__ = [
     "AlationAPIError",
     "UserAccountAuthParams",
     "ServiceAccountAuthParams",
+    "BearerTokenAuthParams",
     "csv_str_to_tool_list",
 ]
