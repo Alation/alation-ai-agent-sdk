@@ -55,7 +55,7 @@ To recap here are a few concrete examples:
 
 ### Analyzing a SQL Query
 
-The data query tool may by used to classify an individual SQL query. It does this by resolving the mentioned tables to catalog objects and their data quality.
+The data query tool may be used to classify an individual SQL query. It does this by resolving the mentioned tables to catalog objects and their data quality.
 
 As part of table resolution we need a reference to the data source. A `ds_id` or a `db_uri` is mandatory to ensure we can locate the correct table. And knowing the data source means we can parse the SQL query using the appropriate SQL dialect.
 
