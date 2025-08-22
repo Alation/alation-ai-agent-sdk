@@ -34,7 +34,7 @@ The data quality summary follows a one bad apple principle. For instance, imagin
 
 We add warnings any time a referenced table cannot be resolved within the tool. It could be they aren't part of the data catalog. Perhaps they were never added or removed at some point. Or table names may not be fully qualified entities. Likewise certain tables are only visible to specific users.
 
-We classify responses as unknown if there are no results to draw conclusions from. And even with many positive results a single unresolvable tableis all it takes for the unknown status.
+We classify responses as unknown if there are no results to draw conclusions from. And even with many positive results a single unresolvable table is all it takes for the unknown status.
 
 To recap here are a few concrete examples:
 
