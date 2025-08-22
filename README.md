@@ -385,8 +385,9 @@ For more information about signatures, refer to
 - <a href="https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta#supported-object-types-and-default-object-type-fields" target="blank">Supported Object Types and Default Object Fields</a> - See which objects are supported.
 - <a href="https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature#supported-object-fields" target="blank">Supported Object Fields</a> - A comprehensive reference for each supported object.
 
-#### Data Quality Tools
+#### Other Tools
 - [Data Quality: Check SQL Query](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/tools/data_quality_tool.md) - Indentifies data quality issues within a SQL query.
+- [Lineage](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/tools/lineage.md) - Resolve upstream and downstream graphs.
 
 
 ### Core SDK

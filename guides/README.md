@@ -15,12 +15,9 @@ Here are a handful of guides & examples to show you how to work with the Alation
 
 <!-- #### Data Products Tools -->
 
-#### Data Quality Tools
-
+#### Other Tools
 - [Data Quality: Check SQL Query](./tools/data_quality_tool.md)
-
-<!-- #### Lineage Tool -->
-
+- [Lineage](./tools/lineage.md)
 
 ## Model Context Protocol (MCP)
 
