@@ -48,7 +48,7 @@ To recap here are a few concrete examples:
 - Ten positive data quality items + one data quality warning
 
 #### High data quality
-- One ore more positive data quality items
+- One or more positive data quality items
 
 
 ## Examples
