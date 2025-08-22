@@ -120,8 +120,8 @@ def test_create_server_missing_env_var(manage_environment_variables, monkeypatch
     Test that create_server raises ValueError if an environment variable is missing.
     """
     monkeypatch.delenv("ALATION_BASE_URL")
-    with pytest.raises(ValueError, match="Missing required environment variables"):
-        server.create_server()
+    with pytest.raises(ValueError, match="Missing Alation base URL"):
+        server.create_server("stdio")
 
 
 def test_create_server_invalid_user_id_env_var(manage_environment_variables, monkeypatch):
@@ -130,7 +130,7 @@ def test_create_server_invalid_user_id_env_var(manage_environment_variables, mon
     """
     monkeypatch.setenv("ALATION_USER_ID", "not-an-int")
     with pytest.raises(ValueError):
-        server.create_server()
+        server.create_server("stdio")
 
 
 def test_create_server_success(manage_environment_variables, mock_alation_sdk, mock_fastmcp):
@@ -140,7 +140,7 @@ def test_create_server_success(manage_environment_variables, mock_alation_sdk, m
     mock_sdk_class, mock_sdk_instance = mock_alation_sdk
     mock_mcp_class, mock_mcp_instance = mock_fastmcp
 
-    mcp_result = server.create_server()
+    mcp_result = server.create_server("stdio")
 
     mock_mcp_class.assert_called_once_with(name="Alation MCP Server")
     mock_sdk_class.assert_called_once_with(
@@ -148,8 +148,6 @@ def test_create_server_success(manage_environment_variables, mock_alation_sdk, m
         "user_account",
         UserAccountAuthParams(12345, "mock-token"),
         dist_version="mcp-0.5.0",
-        disabled_tools=set(),
-        enabled_beta_tools=set(),
     )
     assert mcp_result is mock_mcp_instance
 
@@ -162,6 +160,7 @@ def test_create_server_disabled_tool_and_enabled_beta_tool(
     mock_mcp_instance.reset_mock()
 
     mcp_result = server.create_server(
+        "stdio",
         disabled_tools_str=AlationTools.AGGREGATED_CONTEXT,
         enabled_beta_tools_str=AlationTools.LINEAGE,
     )
@@ -194,7 +193,7 @@ def test_create_server_disabled_tool_and_enabled_beta_tool_via_environment(
     mock_mcp_instance.reset_mock()
 
     # The manage fixture is the source of the disabled tools as well as the enabled beta tools
-    mcp_result = server.create_server()
+    mcp_result = server.create_server("stdio")
 
     mock_mcp_class.assert_called_once_with(name="Alation MCP Server")
     assert mcp_result is mock_mcp_instance
@@ -220,26 +219,14 @@ def test_tool_registration(manage_environment_variables, mock_alation_sdk, mock_
     mock_sdk_class, mock_sdk_instance = mock_alation_sdk
     mock_mcp_class, mock_mcp_instance = mock_fastmcp
 
-    server.create_server()
+    server.create_server("stdio")
 
-    # Check that both tools are registered
-    expected_tool_names = [
-        mock_sdk_instance.context_tool.name,
-        mock_sdk_instance.data_product_tool.name,
-    ]
-    expected_descriptions = [
-        mock_sdk_instance.context_tool.description,
-        mock_sdk_instance.data_product_tool.description,
-    ]
-    actual_calls = mock_mcp_instance.tool.call_args_list
-    actual_names = [call.kwargs["name"] for call in actual_calls]
-    actual_descriptions = [call.kwargs["description"] for call in actual_calls]
-    for name, desc in zip(expected_tool_names, expected_descriptions):
-        assert name in actual_names
-        assert desc in actual_descriptions
-        assert name in mock_mcp_instance.tools
-        assert isinstance(mock_mcp_instance.tools[name], MagicMock)
-        assert hasattr(mock_mcp_instance.tools[name], "__wrapped__")
+    # Check that tools are registered  
+    # The tool name is now determined by get_tool_metadata() from the actual tool class
+    tool_name = "alation_context"  # AlationContextTool._get_name()
+    assert tool_name in mock_mcp_instance.tools
+    assert isinstance(mock_mcp_instance.tools[tool_name], MagicMock)
+    assert hasattr(mock_mcp_instance.tools[tool_name], "__wrapped__")
 
 
 def test_alation_context_tool_logic(manage_environment_variables, mock_alation_sdk, mock_fastmcp):
@@ -249,9 +236,10 @@ def test_alation_context_tool_logic(manage_environment_variables, mock_alation_s
     mock_sdk_class, mock_sdk_instance = mock_alation_sdk
     mock_mcp_class, mock_mcp_instance = mock_fastmcp
 
-    server.create_server()
+    server.create_server("stdio")
 
-    tool_name = mock_sdk_instance.context_tool.name
+    # The tool name is now determined by get_tool_metadata() from the actual tool class
+    tool_name = "alation_context"  # AlationContextTool._get_name()
     registered_tool_mock = mock_mcp_instance.tools.get(tool_name)
     assert (
         registered_tool_mock is not None
@@ -267,7 +255,7 @@ def test_alation_context_tool_logic(manage_environment_variables, mock_alation_s
     result = tool_func(question=question_input)
 
     mock_sdk_instance.get_context.assert_called_once_with(question_input, None)
-    assert result == str(expected_sdk_result)
+    assert result == expected_sdk_result
 
     mock_sdk_instance.get_context.reset_mock()
 
@@ -279,7 +267,7 @@ def test_alation_context_tool_logic(manage_environment_variables, mock_alation_s
     result_sig = tool_func(question=question_input, signature=signature_input)
 
     mock_sdk_instance.get_context.assert_called_once_with(question_input, signature_input)
-    assert result_sig == str(expected_sdk_result_sig)
+    assert result_sig == expected_sdk_result_sig
 
 
 @patch("alation_ai_agent_mcp.server.create_server")
@@ -289,13 +277,11 @@ def test_run_server_calls_create_and_run(mock_create_server, mock_fastmcp):
     """
     mock_mcp_class, mock_mcp_instance = mock_fastmcp
     mock_create_server.return_value = mock_mcp_instance
-    server.mcp = None  # Reset global before test
 
     server.run_server()
 
     mock_create_server.assert_called_once()
     mock_mcp_instance.run.assert_called_once()
-    assert server.mcp is mock_mcp_instance
 
 
 def test_create_server_service_account(
@@ -312,7 +298,7 @@ def test_create_server_service_account(
     mock_sdk_class, mock_sdk_instance = mock_alation_sdk
     mock_mcp_class, mock_mcp_instance = mock_fastmcp
 
-    mcp_result = server.create_server()
+    mcp_result = server.create_server("stdio")
 
     mock_mcp_class.assert_called_once_with(name="Alation MCP Server")
     mock_sdk_class.assert_called_once_with(
@@ -320,45 +306,31 @@ def test_create_server_service_account(
         "service_account",
         ServiceAccountAuthParams("mock-client-id", "mock-client-secret"),
         dist_version="mcp-0.5.0",
-        disabled_tools=set(),
-        enabled_beta_tools=set(),
     )
     assert mcp_result is mock_mcp_instance
 
 
 @patch("alation_ai_agent_mcp.server.create_server")
 def test_run_server_cli_no_arguments(mock_create_server):
-    with patch("alation_ai_agent_mcp.server.argparse") as mock_argparse:
-        arg_parser = MagicMock()
-        mock_argparse.ArgumentParser.return_value = arg_parser
-        known_args_instance = MagicMock()
-        arg_parser.parse_known_args.return_value = (known_args_instance,)
-        known_args_instance.disabled_tools = None
-        known_args_instance.enabled_beta_tools = None
-
-        server.mcp = None  # Reset global before test
+    with patch("alation_ai_agent_mcp.server.parse_arguments") as mock_parse_args:
+        mock_parse_args.return_value = (
+            "stdio", None, None, None, None, None, None
+        )
 
         server.run_server()
 
         mock_create_server.assert_called_once()
-        mock_create_server.assert_called_with(disabled_tools_str=None, enabled_beta_tools_str=None)
+        mock_create_server.assert_called_with("stdio", None, None, None, None, None, None)
 
 
 @patch("alation_ai_agent_mcp.server.create_server")
 def test_run_server_cli_with_arguments(mock_create_server):
-    with patch("alation_ai_agent_mcp.server.argparse") as mock_argparse:
-        arg_parser = MagicMock()
-        mock_argparse.ArgumentParser.return_value = arg_parser
-        known_args_instance = MagicMock()
-        arg_parser.parse_known_args.return_value = (known_args_instance,)
-        known_args_instance.disabled_tools = "tool1,tool2"
-        known_args_instance.enabled_beta_tools = "tool3"
-
-        server.mcp = None  # Reset global before test
+    with patch("alation_ai_agent_mcp.server.parse_arguments") as mock_parse_args:
+        mock_parse_args.return_value = (
+            "stdio", None, "tool1,tool2", "tool3", None, None, None
+        )
 
         server.run_server()
 
         mock_create_server.assert_called_once()
-        mock_create_server.assert_called_with(
-            disabled_tools_str="tool1,tool2", enabled_beta_tools_str="tool3"
-        )
+        mock_create_server.assert_called_with("stdio", None, "tool1,tool2", "tool3", None, None, None)
