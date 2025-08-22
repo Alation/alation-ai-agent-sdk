@@ -386,7 +386,7 @@ For more information about signatures, refer to
 - <a href="https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature#supported-object-fields" target="blank">Supported Object Fields</a> - A comprehensive reference for each supported object.
 
 #### Data Quality Tools
-- [Data Quality: Check SQL Query](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/data_quality_tool.md) - Indentifies data quality issues within a SQL query.
+- [Data Quality: Check SQL Query](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/tools/data_quality_tool.md) - Indentifies data quality issues within a SQL query.
 
 
 ### Core SDK

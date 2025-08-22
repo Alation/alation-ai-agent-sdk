@@ -17,7 +17,7 @@ Here are a handful of guides & examples to show you how to work with the Alation
 
 #### Data Quality Tools
 
-- [Data Quality: Check SQL Query](./data_quality_tool.md)
+- [Data Quality: Check SQL Query](./tools/data_quality_tool.md)
 
 <!-- #### Lineage Tool -->
 
