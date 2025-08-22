@@ -2,18 +2,17 @@
 
 ### Background
 
-Extending LLM capabilities through tool use can result in extraordinary feats previously thought impossible.
+Extending LLM capabilities with tools can result in extraordinary feats.
 
-You'd think adding even more tools continues to improve what the LLM can do, right? Unfortunately this is only true to a point where beyond that diminishing returns take over.
+You'd think adding even more tools would continue improving what the LLM can do, right? This is true to a point then diminishing returns take over.
 
-It's been documented that LLMs run into trouble when given too many tools. While the exact limits are debatable, and may vary from one model to the next, it is a best practice to keep an eye on the overall number AND to understand the purpose of each tool.
-
+LLMs run into trouble when given too many tools. While exact limits are debatable it is best to track the number and understand the purpose of each tool.
 
 ### Context Overload
 <details>
 <summary>Expand description</summary>
 <br>
-One issue relates to tools providing lengthy descriptions for what they do, when they should be used, along with documenting example usage. Each registered tool takes a chunk out of the context window. It's been shown that as context length increases accuracy plateaus before it drops off as LLMs start to hallucinate. Frontier models suffer less from this than before but it's still a good idea to only load what you need.
+Lengthy tool descriptions are common place for a few reasons. For instance, descriptions must describe what a tool is capable of.  And the best descriptions contain usage examples. Each tool takes a chunk out of the context window.  At larger sizes LLMs may hallucinate impacting accuracy. Frontier models suffer less from this than earlier but it's still a good idea to only load what you need.
 </details>
 
 ### Tool belt vs Tool chest
@@ -21,10 +20,11 @@ One issue relates to tools providing lengthy descriptions for what they do, when
 <summary>Expand description</summary>
 <br>
 <p>
-When tools are limited it's easier to identify and communicate the one you need. Imagine a friend helping you with a small home improvement project where they wear a tool belt. Perhaps they have a hammer, two screwdrivers (flat, phillips), and a tape measure. It should be pretty straightfoward for you to ask for a particular tool. While there may be some ambiguity with the screwdrivers, there are only two to choose from.</p>
-<p>If we contrast that to a case where your friend is in charge of a tool chest, results can be comically bad if the language used to request them isn't precise. Say you asked for a screwdriver and now instead of two to choose from there are twelve. One in twelve aren't great odds.</p>
-<p>
-LLMs can be placed in the same situation when there are many tools that overlap in their purpose. They can be used correctly when given detailed enough instructions but when it is ambiguous the LLM might simply pick the wrong tool. And frankly speaking, nobody enjoys writing verbose instructions on a routine basis. That affects the ergonomics of chatbot usage and even agent development.</p>
+Using fewer tools makes it's easier to identify and communicate the one you need. Imagine a friend helping you with a small home improvement project where they wear a tool belt. Let's assume they have a hammer, two screwdrivers (Flat Head, Phillips), and a tape measure. It should be pretty straightforward for you to ask for a particular tool. While there may be some ambiguity with the screwdrivers, there are only two to choose from.</p>
+
+<p>Now imagine your friend is in charge of an entire tool chest. Getting the right tool can be painful if the language used to request them isn't precise. Say you asked for a screwdriver and now instead of two to choose from there are twelve. One in twelve aren't great odds.</p>
+
+<p>LLMs suffer the same issue when there are many tools that overlap in purpose. It's possible to use them but they need detailed instructions. Ambiguous cases may result in the LLM picking the wrong tool. Nobody enjoys writing verbose instructions on a routine basis. That affects the ergonomics of chatbot usage and even agent development.</p>
 </details>
 
 ### Tools specific to User Role
@@ -32,11 +32,11 @@ LLMs can be placed in the same situation when there are many tools that overlap 
 <summary>Expand description</summary>
 <br>
 <p>
-Certain tools may have API implementations that require a specific user role like Server Admin or Catalog Admin to function correctly.</p>
+Some tools use APIs that require a specific user role like Server Admin or Catalog Admin to function.</p>
 
 <p>Enforcing these permissions is important to maintaining the integrity of the catalog. At the same time, users may see these tools as enabled or available despite not being able to use them. This can lead to mismatched expectations despite there being no risk.</p>
 
-<p>This is something we'd like to improve by introspecting users accounts and filtering tools down to only those they can actualy use.</p>
+<p>Ideally the only tools listed are the ones users can actually use.</p>
 </details>
 
 ### Tool Selection
@@ -45,12 +45,10 @@ The good news is you likely already have the ability to enable or disable a tool
 
 ### Enabling Beta Tools
 
-There may be times where you'd like to take advantage of a new feature that hasn't hit GA yet or if there is an experiemental tool you'd like to try. Beta tools aren't enabled by default and require an explict opt-in to make use of.
+You may want to take advantage of a new feature that hasn't hit GA yet. Beta tools aren't enabled by default so they need an opt-in. The follow are tools in Beta:
+- `AlationTools.LINEAGE` or `lineage`
 
-<blockquote>
-IMPORTANT: While you can enable a beta tool within the SDK it's important to understand your Alation instance may need the appropriate feature flags enabled before the corresponding tool calls will work.
-</blockquote>
-
+> **IMPORTANT:** Certain features must be enabled on the Alation instance. Enabling a beta tool within the SDK won't change your Alation instance's settings.
 
 ## Examples
 
@@ -58,7 +56,7 @@ IMPORTANT: While you can enable a beta tool within the SDK it's important to und
 
 #### Command Line Arguments (recommended)
 
-Command line arguments are the most explicit way to achieve this effect and make it consistently reproducible. Executed commands are introspectable in the process list and get added to your history where they can be referenced later.
+Command line arguments are the best, most explicit, way to control tools. Command line arguments make executions reproducible. As a bonus they show up in process lists and persist in your shell history.
 
 ```bash
 python -m alation_ai_agent_mcp --disabled-tools="update_metadata,generate_data_product" --enabled-beta-tools="lineage"
@@ -66,7 +64,7 @@ python -m alation_ai_agent_mcp --disabled-tools="update_metadata,generate_data_p
 
 #### Environment Variables
 
-You can use environment variables to achieve the same result. We recommend CLI arguments as env variables can frequently be overlooked and may not be set etc.
+You can use environment variables to achieve the same result. We recommend against them as they are not as visible and easy to forget.
 
 ```bash
 export ALATION_DISABLED_TOOLS="update_metadata,generate_data_product"
@@ -78,7 +76,7 @@ python -m alation_ai_agent_mcp
 
 ### Code
 
-If you're using `alation-ai-agent-sdk` and are instantiating `AlationAIAgentSDK` you may use either the `disabled_tools` or `enabled_beta_tools` kwarg to pass a set of `AlationTools` items.
+You may use the `disabled_tools` or `enabled_beta_tools` kwarg to pass a set of `AlationTools` items into `AlationAIAgentSDK`.
 
 ```python
 from alation_ai_agent_sdk import AlationAIAgentSDK, AlationTools

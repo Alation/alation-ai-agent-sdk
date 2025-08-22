@@ -5,10 +5,22 @@ Here are a handful of guides & examples to show you how to work with the Alation
 ## General
 
 - [Authentication](./authentication.md)
+- [Tool Management](./tool_management.md)
+
+#### Aggregated Context / Bulk Retrieval Tool
 - [Integration Planning](./planning.md)
 - <a href="https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature" target="blank"> Using Signatures </a>
-- <a href="https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta#supported-object-types-and-object-type-fields" target="blank">Supported Object Types and Fields </a>
-- [Tool Management](./tool_management.md)
+- <a href="https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta#supported-object-types-and-default-object-type-fields" target="blank">Supported Object Types and Default Object Fields</a>
+- <a href="https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature#supported-object-fields" target="blank">Supported Object Fields</a>
+
+<!-- #### Data Products Tools -->
+
+#### Data Quality Tools
+
+- [Data Quality: Check SQL Query](./data_quality_tool.md)
+
+<!-- #### Lineage Tool -->
+
 
 ## Model Context Protocol (MCP)
 
