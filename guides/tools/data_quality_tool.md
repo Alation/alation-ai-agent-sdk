@@ -16,7 +16,7 @@ Furthermore, it calls into question any analysis which depends on tables of conc
 
 ## Responses
 
-The data quality tool's response contains two things. First it contains individual tables grouped by their data quality status. Second it includes an data quality summary for the entire request.
+The data quality tool's response contains two things. First it contains individual tables grouped by their data quality status. Second it includes a data quality summary for the entire request.
 
 It supports a yaml / markdown mode for more compact responses which saves tokens.
 
