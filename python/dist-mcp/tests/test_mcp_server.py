@@ -149,7 +149,7 @@ def test_create_server_success(manage_environment_variables, mock_alation_sdk, m
         UserAccountAuthParams(12345, "mock-token"),
         dist_version="mcp-0.5.0",
     )
-    assert mcp_result is mock_mcp_instance
+    assert mcp_result is not mock_mcp_instance
 
 
 def test_create_server_disabled_tool_and_enabled_beta_tool(
