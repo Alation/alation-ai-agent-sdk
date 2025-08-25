@@ -30,7 +30,7 @@ Use the lineage tool to get downstream objects. Filter them down to affected `bi
 
 ### Propagate a custom field value to downstream objects
 
-Imagine a scenario we need to establish wether a column contains PII or not. Our classifier indicates it does not and we've done some spot checks to be sure. It's straight forward to visit the column object in the catalog and change the custom field to not PII.
+Imagine a scenario where we need to establish wether a column contains PII or not. Our classifier indicates it does not and we've done some spot checks to be sure. It's straight forward to visit the column object in the catalog and change the custom field to not PII.
 
 At the same time we know there are other tables that use columns derived from these values.
 
