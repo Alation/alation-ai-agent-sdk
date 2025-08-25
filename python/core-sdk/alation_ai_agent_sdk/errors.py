@@ -100,7 +100,7 @@ class AlationErrorClassifier:
                 "https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta"
             ]
         elif status_code == HTTPStatus.TOO_MANY_REQUESTS:
-            if "entitlement" in response_body.get("error", "").lower():
+            if AlationErrorClassifier._is_quota_error(status_code, response_body):
                 reason = "License Quota Exceeded"
                 resolution_hint = (
                     "Quota exhausted. Contact your Account Manager for pricing options."
@@ -163,3 +163,11 @@ class AlationErrorClassifier:
             "resolution_hint": resolution_hint,
             "help_links": help_links,
         }
+
+    @staticmethod
+    def _is_quota_error(status_code: int, response_body: dict) -> bool:
+        """Check if the error is related to quota limits."""
+        return (
+            status_code == HTTPStatus.TOO_MANY_REQUESTS
+            and "entitlement" in response_body.get("error", "").lower()
+        )

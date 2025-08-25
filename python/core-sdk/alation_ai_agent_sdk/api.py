@@ -230,7 +230,7 @@ class AlationAPI:
         Returns:
             Union[Dict[str, Any], str]: The formatted response data with entitlement info injected
         """
-        if response.status_code != 200:
+        if not (200 <= response.status_code < 300):
             return response.json()
 
         data = response.json()

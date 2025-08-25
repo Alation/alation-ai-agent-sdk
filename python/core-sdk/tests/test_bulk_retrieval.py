@@ -246,7 +246,7 @@ def test_bulk_retrieval_tool_run_no_entitlement_warning(
     assert len(result["relevant_tables"]) == 1
     assert result["relevant_tables"][0]["name"] == "customers"
 
-    # Check that no _meta field was added since there are no entitlement headers
+    # Check that no _meta field was added since there is no entitlement warning header
     assert "_meta" not in result
 
 
