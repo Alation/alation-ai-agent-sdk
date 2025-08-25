@@ -58,7 +58,9 @@ class CatalogAssetMetadataPayloadBuilder:
         if missing:
             raise ValueError(f"Missing required fields: {missing}")
         if obj["otype"] not in cls.ALLOWED_OTYPES:
-            raise ValueError(f"Invalid otype: {obj['otype']}. Allowed: {cls.ALLOWED_OTYPES}")
+            raise ValueError(
+                f"Invalid otype: {obj['otype']}. Allowed: {cls.ALLOWED_OTYPES}"
+            )
         if obj["field_id"] not in cls.FIELD_ID_TYPE_MAP:
             raise ValueError(
                 f"Invalid field_id: {obj['field_id']}. Allowed: {list(cls.FIELD_ID_TYPE_MAP.keys())}"
@@ -193,8 +195,12 @@ class AlationAPI:
                 dist_version=dist_version,
             )
 
-        status_code = getattr(exception.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR)
-        response_text = getattr(exception.response, "text", "No response received from server")
+        status_code = getattr(
+            exception.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR
+        )
+        response_text = getattr(
+            exception.response, "text", "No response received from server"
+        )
         if exception.response is not None:
             try:
                 parsed = exception.response.json()
@@ -213,7 +219,40 @@ class AlationAPI:
             help_links=meta["help_links"],
             alation_release_name=alation_release_name,
             dist_version=dist_version,
+            is_retryable=meta.get("is_retryable"),
         )
+
+    def _format_successful_response(
+        self, response: requests.Response
+    ) -> Union[Dict[str, Any], str]:
+        """
+        Format a successful response from the Alation API.
+        Returns:
+            Union[Dict[str, Any], str]: The formatted response data with entitlement info injected
+        """
+        if not (200 <= response.status_code < 300):
+            return response.json()
+
+        data = response.json()
+
+        # Check for entitlement headers and inject meta information if present
+        if "X-Entitlement-Warning" in getattr(response, "headers", {}):
+            # Only inject limit and usage information if warning is issued.
+            entitlement_meta = {
+                "X-Entitlement-Limit": response.headers.get("X-Entitlement-Limit"),
+                "X-Entitlement-Usage": response.headers.get("X-Entitlement-Usage"),
+                "X-Entitlement-Warning": response.headers["X-Entitlement-Warning"],
+            }
+
+            # Maintain backward compatibility by injecting meta into the existing response structure
+            if isinstance(data, dict):
+                # If response is a dict, add _meta field (underscore prefix to avoid conflicts)
+                data["_meta"] = {"headers": entitlement_meta}
+            elif isinstance(data, list):
+                # If response is a list, wrap it to include meta information
+                data = {"results": data, "_meta": {"headers": entitlement_meta}}
+
+        return data
 
     def _generate_access_token_with_refresh_token(self):
         """
@@ -225,7 +264,9 @@ class AlationAPI:
             "user_id": self.user_id,
             "refresh_token": self.refresh_token,
         }
-        logger.debug(f"Generating access token using refresh token for user_id: {self.user_id}")
+        logger.debug(
+            f"Generating access token using refresh token for user_id: {self.user_id}"
+        )
 
         try:
             response = requests.post(url, json=payload, timeout=60)
@@ -246,7 +287,9 @@ class AlationAPI:
             )
 
         if data.get("status") == "failed" or "api_access_token" not in data:
-            meta = AlationErrorClassifier.classify_token_error(response.status_code, data)
+            meta = AlationErrorClassifier.classify_token_error(
+                response.status_code, data
+            )
             raise AlationAPIError(
                 f"Logical failure or missing token in access token response from {url}",
                 status_code=response.status_code,
@@ -294,7 +337,9 @@ class AlationAPI:
             )
 
         if "access_token" not in data:
-            meta = AlationErrorClassifier.classify_token_error(response.status_code, data)
+            meta = AlationErrorClassifier.classify_token_error(
+                response.status_code, data
+            )
             raise AlationAPIError(
                 f"Access token missing in JWT API response from {url}",
                 status_code=response.status_code,
@@ -311,7 +356,9 @@ class AlationAPI:
 
     def _generate_new_token(self):
 
-        logger.info("Access token is invalid or expired. Attempting to generate a new one.")
+        logger.info(
+            "Access token is invalid or expired. Attempting to generate a new one."
+        )
         if self.auth_method == AUTH_METHOD_USER_ACCOUNT:
             self._generate_access_token_with_refresh_token()
         elif self.auth_method == AUTH_METHOD_SERVICE_ACCOUNT:
@@ -338,12 +385,16 @@ class AlationAPI:
             response = requests.post(url, json=payload, headers=headers, timeout=60)
             response.raise_for_status()
         except requests.RequestException as e:
-            status_code = getattr(e.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR)
+            status_code = getattr(
+                e.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR
+            )
 
             if status_code is HTTPStatus.UNAUTHORIZED:
                 return False
 
-            response_text = getattr(e.response, "text", "No response received from server")
+            response_text = getattr(
+                e.response, "text", "No response received from server"
+            )
             parsed = {"error": response_text}
             meta = AlationErrorClassifier.classify_token_error(status_code, parsed)
 
@@ -391,8 +442,12 @@ class AlationAPI:
             data = response.json()
             return data.get("active", False)
         except requests.RequestException as e:
-            status_code = getattr(e.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR)
-            response_text = getattr(e.response, "text", "No response received from server")
+            status_code = getattr(
+                e.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR
+            )
+            response_text = getattr(
+                e.response, "text", "No response received from server"
+            )
             parsed = {"error": response_text}
             meta = AlationErrorClassifier.classify_token_error(status_code, parsed)
 
@@ -441,7 +496,9 @@ class AlationAPI:
 
         self._generate_new_token()
 
-    def get_context_from_catalog(self, query: str, signature: Optional[Dict[str, Any]] = None):
+    def get_context_from_catalog(
+        self, query: str, signature: Optional[Dict[str, Any]] = None
+    ):
         """
         Retrieve contextual information from the Alation catalog based on a natural language query and signature.
         """
@@ -470,7 +527,7 @@ class AlationAPI:
             self._handle_request_error(e, "catalog search")
 
         try:
-            return response.json()
+            return self._format_successful_response(response)
         except ValueError:
             raise AlationAPIError(
                 message="Invalid JSON in catalog response",
@@ -496,7 +553,10 @@ class AlationAPI:
             "Accept": "application/json",
         }
 
-        params = {"mode": "bulk", "signature": json.dumps(signature, separators=(",", ":"))}
+        params = {
+            "mode": "bulk",
+            "signature": json.dumps(signature, separators=(",", ":")),
+        }
 
         encoded_params = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
         url = f"{self.base_url}/integration/v2/context/?{encoded_params}"
@@ -509,7 +569,7 @@ class AlationAPI:
             self._handle_request_error(e, "bulk catalog retrieval")
 
         try:
-            return response.json()
+            return self._format_successful_response(response)
         except ValueError:
             raise AlationAPIError(
                 message="Invalid JSON in bulk catalog response",
@@ -517,7 +577,9 @@ class AlationAPI:
                 response_body=response.text,
                 reason="Malformed Response",
                 resolution_hint="The server returned a non-JSON response. Contact support if this persists.",
-                help_links=["https://developer.alation.com/dev/reference/getaggregatedcontext"],
+                help_links=[
+                    "https://developer.alation.com/dev/reference/getaggregatedcontext"
+                ],
             )
 
     def _fetch_marketplace_id(self, headers: Dict[str, str]) -> str:
@@ -580,7 +642,9 @@ class AlationAPI:
                     "results": [],
                 }
             except requests.RequestException as e:
-                self._handle_request_error(e, f"fetching data product by id: {product_id}")
+                self._handle_request_error(
+                    e, f"fetching data product by id: {product_id}"
+                )
 
         elif query:
             # Fetch marketplace ID if not cached
@@ -604,10 +668,12 @@ class AlationAPI:
                     results = [
                         {
                             "id": product["product"]["product_id"],
-                            "name": product["product"]["spec_json"]["product"]["en"]["name"],
-                            "description": product["product"]["spec_json"]["product"]["en"][
-                                "description"
+                            "name": product["product"]["spec_json"]["product"]["en"][
+                                "name"
                             ],
+                            "description": product["product"]["spec_json"]["product"][
+                                "en"
+                            ]["description"],
                             "url": f"{self.base_url}/app/marketplace/{self.marketplace_id}/data-product/{product['product']['product_id']}/",
                         }
                         for product in response_data
@@ -618,7 +684,9 @@ class AlationAPI:
                     "results": [],
                 }
             except requests.RequestException as e:
-                self._handle_request_error(e, f"searching data products with query: {query}")
+                self._handle_request_error(
+                    e, f"searching data products with query: {query}"
+                )
 
         else:
             raise ValueError(
@@ -674,11 +742,18 @@ class AlationAPI:
             raise ValueError("limit cannot exceed 1,000.")
         if allowed_otypes is not None:
             if processing_mode != LineageGraphProcessingOptions.COMPLETE:
-                raise ValueError("allowed_otypes is only supported in 'complete' processing mode.")
+                raise ValueError(
+                    "allowed_otypes is only supported in 'complete' processing mode."
+                )
             if len(allowed_otypes) == 0:
                 raise ValueError("allowed_otypes cannot be empty list.")
-        if pagination is not None and processing_mode == LineageGraphProcessingOptions.COMPLETE:
-            raise ValueError("pagination is only supported in 'chunked' processing mode.")
+        if (
+            pagination is not None
+            and processing_mode == LineageGraphProcessingOptions.COMPLETE
+        ):
+            raise ValueError(
+                "pagination is only supported in 'chunked' processing mode."
+            )
 
         self._with_valid_token()
 
@@ -713,7 +788,9 @@ class AlationAPI:
             lineage_request_dict["filters"]["temp_filter"] = show_temporal_objects
         url = f"{self.base_url}/integration/v2/bulk_lineage/"
         try:
-            response = requests.post(url, headers=headers, json=lineage_request_dict, timeout=60)
+            response = requests.post(
+                url, headers=headers, json=lineage_request_dict, timeout=60
+            )
             response.raise_for_status()
             response_data = response.json()
             if (
@@ -753,7 +830,9 @@ class AlationAPI:
         Updates metadata for one or more Alation catalog assets via custom field values.
         Validates payload before sending to API.
         """
-        validated_payload = CatalogAssetMetadataPayloadBuilder.build(custom_field_values)
+        validated_payload = CatalogAssetMetadataPayloadBuilder.build(
+            custom_field_values
+        )
         self._with_valid_token()
         headers = {
             "Token": self.access_token,
@@ -762,7 +841,9 @@ class AlationAPI:
         }
         url = f"{self.base_url}/integration/v2/custom_field_value/async/"
         try:
-            response = requests.put(url, headers=headers, json=validated_payload, timeout=60)
+            response = requests.put(
+                url, headers=headers, json=validated_payload, timeout=60
+            )
             response.raise_for_status()
             return response.json()
         except requests.RequestException as e:
