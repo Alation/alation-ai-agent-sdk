@@ -56,12 +56,12 @@ jobs:
           if [ -f summaries/sdk/sdk-test-summary.md ] && grep -q '\*\*❌ Failed Tests Details:' summaries/sdk/sdk-test-summary.md; then
             echo "" >> test-summary.md
             echo "## 🚨 SDK Test Failures" >> test-summary.md
-            sed -n '/\*\*❌ Failed Tests Details:/,/```$/p' summaries/sdk/sdk-test-summary.md >> test-summary.md
+            awk '/Failed Tests Details:/{flag=1; print} flag && !/Failed Tests Details:/ && !/^\*\*/{print; if(/^```$/) count++; if(count==2) {flag=0; count=0}}' summaries/sdk/sdk-test-summary.md >> test-summary.md
             
             # Add test summary if available
             if grep -q '\*\*📋 Test Summary:' summaries/sdk/sdk-test-summary.md; then
               echo "" >> test-summary.md
-              sed -n '/\*\*📋 Test Summary:/,/```$/p' summaries/sdk/sdk-test-summary.md >> test-summary.md
+              awk '/Test Summary:/{flag=1; print} flag && !/Test Summary:/ && !/^\*\*/{print; if(/^```$/) count++; if(count==2) {flag=0; count=0}}' summaries/sdk/sdk-test-summary.md >> test-summary.md
             fi
             TOTAL_FAILURES=$((TOTAL_FAILURES + 1))
           fi
@@ -70,12 +70,12 @@ jobs:
           if [ -f summaries/mcp/mcp-test-summary.md ] && grep -q '\*\*❌ Failed Tests Details:' summaries/mcp/mcp-test-summary.md; then
             echo "" >> test-summary.md
             echo "## 🚨 MCP Test Failures" >> test-summary.md
-            sed -n '/\*\*❌ Failed Tests Details:/,/```$/p' summaries/mcp/mcp-test-summary.md >> test-summary.md
+            awk '/Failed Tests Details:/{flag=1; print} flag && !/Failed Tests Details:/ && !/^\*\*/{print; if(/^```$/) count++; if(count==2) {flag=0; count=0}}' summaries/mcp/mcp-test-summary.md >> test-summary.md
             
             # Add test summary if available
             if grep -q '\*\*📋 Test Summary:' summaries/mcp/mcp-test-summary.md; then
               echo "" >> test-summary.md
-              sed -n '/\*\*📋 Test Summary:/,/```$/p' summaries/mcp/mcp-test-summary.md >> test-summary.md
+              awk '/Test Summary:/{flag=1; print} flag && !/Test Summary:/ && !/^\*\*/{print; if(/^```$/) count++; if(count==2) {flag=0; count=0}}' summaries/mcp/mcp-test-summary.md >> test-summary.md
             fi
             TOTAL_FAILURES=$((TOTAL_FAILURES + 1))
           fi
@@ -84,12 +84,12 @@ jobs:
           if [ -f summaries/langchain/langchain-test-summary.md ] && grep -q '\*\*❌ Failed Tests Details:' summaries/langchain/langchain-test-summary.md; then
             echo "" >> test-summary.md
             echo "## 🚨 LangChain Test Failures" >> test-summary.md
-            sed -n '/\*\*❌ Failed Tests Details:/,/```$/p' summaries/langchain/langchain-test-summary.md >> test-summary.md
+            awk '/Failed Tests Details:/{flag=1; print} flag && !/Failed Tests Details:/ && !/^\*\*/{print; if(/^```$/) count++; if(count==2) {flag=0; count=0}}' summaries/langchain/langchain-test-summary.md >> test-summary.md
             
             # Add test summary if available
             if grep -q '\*\*📋 Test Summary:' summaries/langchain/langchain-test-summary.md; then
               echo "" >> test-summary.md
-              sed -n '/\*\*📋 Test Summary:/,/```$/p' summaries/langchain/langchain-test-summary.md >> test-summary.md
+              awk '/Test Summary:/{flag=1; print} flag && !/Test Summary:/ && !/^\*\*/{print; if(/^```$/) count++; if(count==2) {flag=0; count=0}}' summaries/langchain/langchain-test-summary.md >> test-summary.md
             fi
             TOTAL_FAILURES=$((TOTAL_FAILURES + 1))
           fi
