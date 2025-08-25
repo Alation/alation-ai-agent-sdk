@@ -376,9 +376,19 @@ For more information about signatures, refer to
 ## Guides and Example Agents
 
 ### General
+- [Authentication](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/authentication.md) - How to get access.
+- [Tool Management](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/tool_management.md) - Controls for enabling or disabling specific tools.
+
+#### Aggregated Context / Bulk Retrieval Tool
 - [Planning an Integration](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/planning.md) - Practical considerations for getting the most out of your agents and the Alation Data Catalog.
 - <a href="https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature" target="blank"> Using Signatures </a> - How to customize your agent with concrete examples.
-- <a href="https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta#supported-object-types-and-object-type-fields" target="blank">Supported Object Types and Fields </a> - See what's available.
+- <a href="https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta#supported-object-types-and-default-object-type-fields" target="blank">Supported Object Types and Default Object Fields</a> - See which objects are supported.
+- <a href="https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature#supported-object-fields" target="blank">Supported Object Fields</a> - A comprehensive reference for each supported object.
+
+#### Other Tools
+- [Data Quality: Check SQL Query](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/tools/data_quality_tool.md) - Identifies data quality issues within a SQL query.
+- [Lineage](https://github.com/Alation/alation-ai-agent-sdk/tree/main/guides/tools/lineage.md) - Resolve upstream and downstream graphs.
+
 
 ### Core SDK
 
