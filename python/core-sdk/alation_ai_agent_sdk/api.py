@@ -1,4 +1,3 @@
-import datetime
 import logging
 import urllib.parse
 import json
@@ -198,7 +197,7 @@ class AlationAPI:
         if exception.response is not None:
             try:
                 parsed = exception.response.json()
-            except (json.JSONDecodeError, ValueError) as parse_exc:
+            except (json.JSONDecodeError, ValueError):
                 parsed = {"error": response_text}
         else:
             parsed = {"error": response_text}
