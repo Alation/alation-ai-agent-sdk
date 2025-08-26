@@ -136,13 +136,26 @@ cmd_pipe_version_line_count_to_shell_exit_code = (
 
 def is_pyproject_version_bump_needed(pyproject_file_path: str):
     local_branch_name = get_local_branch_name()
-    result = subprocess.run(
-        f"git diff --no-color --name-only $(git merge-base main {local_branch_name}) {pyproject_file_path} | {cmd_pipe_version_line_count_to_shell_exit_code}",
-        shell=True,
+    # Get the merge base between main and the local branch
+    merge_base_result = subprocess.run(
+        ["git", "merge-base", "main", local_branch_name],
         capture_output=True,
         text=True,
+        check=True,
     )
-    return result.returncode != 0
+    merge_base = merge_base_result.stdout.strip()
+    # Get the diff for the pyproject_file_path
+    diff_result = subprocess.run(
+        ["git", "diff", "--no-color", merge_base, "--", pyproject_file_path],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    # Check if any line in the diff adds a version line
+    version_line_count = sum(
+        1 for line in diff_result.stdout.splitlines() if line.startswith("+version")
+    )
+    return version_line_count == 0
 
 
 monitored_file_suffixes = set([".py", "Dockerfile", "LICENSE", ".toml"])
