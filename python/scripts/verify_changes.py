@@ -56,8 +56,7 @@ def ruff_check_all_projects():
 def ruff_format_all_projects():
     for project in sdk_project_dirs:
         result = subprocess.run(
-            f"ruff format {project}",
-            shell=True,
+            ["ruff", "format", project],
             capture_output=True,
             text=True,
         )
