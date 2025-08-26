@@ -2,6 +2,7 @@
 """
 Context Aggregation Agent: intelligently selects and fetches tables based on query relevance.
 """
+
 import json
 import ast
 from langchain_openai import ChatOpenAI
@@ -20,9 +21,18 @@ def get_catalog_tables():
     Get all relevant tables/views needed for this agent
     """
     return [
-        {"name": "vw_customer_purchase_history", "title": "Customer Purchase History View"},
-        {"name": "vw_customer_membership_benefits", "title": "Customer Membership Benefits View"},
-        {"name": "vw_customer_product_warranties", "title": "Customer Product Warranties View"}
+        {
+            "name": "vw_customer_purchase_history",
+            "title": "Customer Purchase History View",
+        },
+        {
+            "name": "vw_customer_membership_benefits",
+            "title": "Customer Membership Benefits View",
+        },
+        {
+            "name": "vw_customer_product_warranties",
+            "title": "Customer Product Warranties View",
+        },
     ]
 
 
@@ -56,10 +66,15 @@ def select_relevant_tables(available_tables, query):
         available_table_names = [table.get("name") for table in available_tables]
 
         # Validate that all selected tables exist in available tables
-        validated_tables = [table for table in selected_tables if table in available_table_names]
+        validated_tables = [
+            table for table in selected_tables if table in available_table_names
+        ]
 
         # Fallback: If no tables were selected or validation removed all selections
-        if not validated_tables and "vw_customer_purchase_history" in available_table_names:
+        if (
+            not validated_tables
+            and "vw_customer_purchase_history" in available_table_names
+        ):
             validated_tables.append("vw_customer_purchase_history")
 
         return validated_tables
@@ -77,18 +92,20 @@ def create_context_agent(selected_table_names):
     tables_list = ", ".join(selected_table_names)
 
     # Get Alation context tool and SQL execution tool
-    if USE_MOCK_DATA == 'true':
+    if USE_MOCK_DATA == "true":
         from mocks.alation_mocks import mock_alation_context
         from langchain.tools import Tool
 
         def mock_alation_wrapper(question: str):
             return mock_alation_context(question, signature=CUSTOMER_DATA_SIGNATURE)
 
-        tools = [Tool(
-            name="alation_context",
-            description="Mocked Alation catalog context",
-            func=mock_alation_wrapper
-        )]
+        tools = [
+            Tool(
+                name="alation_context",
+                description="Mocked Alation catalog context",
+                func=mock_alation_wrapper,
+            )
+        ]
     else:
         # Get Alation tools
         tools = get_alation_tools()
@@ -97,7 +114,7 @@ def create_context_agent(selected_table_names):
     sql_tool = Tool(
         name="execute_sql",
         description="Execute SQL queries against the database. Returns JSON results.",
-        func=execute_sql
+        func=execute_sql,
     )
 
     tools.append(sql_tool)
@@ -124,18 +141,16 @@ def create_context_agent(selected_table_names):
 """
 
     # Create the prompt with direct string instead of using formatting
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", system_message),
-        ("human", "Customer ID: {customer_id}"),
-        MessagesPlaceholder(variable_name="agent_scratchpad"),
-    ])
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", system_message),
+            ("human", "Customer ID: {customer_id}"),
+            MessagesPlaceholder(variable_name="agent_scratchpad"),
+        ]
+    )
 
     # Create the agent
-    agent = create_openai_functions_agent(
-        llm=llm,
-        tools=tools,
-        prompt=prompt
-    )
+    agent = create_openai_functions_agent(llm=llm, tools=tools, prompt=prompt)
 
     return AgentExecutor(agent=agent, tools=tools, verbose=False)
 
@@ -153,9 +168,13 @@ def create_context_agent(selected_table_names):
 def customer_context_node(state: CustomerState) -> CustomerState:
     """Determine which tables to query based on context and fetch data."""
     # Get customer ID
-    customer_id = state.get("customer_info", {}).get("customer_id") or state.get("customer_info", {}).get("id")
+    customer_id = state.get("customer_info", {}).get("customer_id") or state.get(
+        "customer_info", {}
+    ).get("id")
     if not customer_id:
-        state.setdefault("agent_notes", []).append("No customer_id; skipping context gathering.")
+        state.setdefault("agent_notes", []).append(
+            "No customer_id; skipping context gathering."
+        )
         state["context_data"] = {}
         state["current_phase"] = "eligibility"
         return state
@@ -170,7 +189,9 @@ def customer_context_node(state: CustomerState) -> CustomerState:
     selected_table_names = select_relevant_tables(all_tables, query)
 
     if not selected_table_names:
-        state.setdefault("agent_notes", []).append("No relevant tables selected; skipping context gathering.")
+        state.setdefault("agent_notes", []).append(
+            "No relevant tables selected; skipping context gathering."
+        )
         state["context_data"] = {}
         state["current_phase"] = "eligibility"
         return state
@@ -179,9 +200,7 @@ def customer_context_node(state: CustomerState) -> CustomerState:
     agent = create_context_agent(selected_table_names)
 
     # Prepare input
-    input_data = {
-        "customer_id": customer_id
-    }
+    input_data = {"customer_id": customer_id}
 
     # Run the agent
     result = agent.invoke(input_data)
@@ -190,14 +209,15 @@ def customer_context_node(state: CustomerState) -> CustomerState:
     state.setdefault("context_data", {})
 
     # Process the agent result
-    output = result.get('output', '')
+    output = result.get("output", "")
 
     try:
         # Try to parse JSON directly from the output
         if isinstance(output, str):
             # Remove any text before or after the JSON
             import re
-            json_match = re.search(r'({.*})', output, re.DOTALL)
+
+            json_match = re.search(r"({.*})", output, re.DOTALL)
             if json_match:
                 json_str = json_match.group(1).strip()
                 parsed_result = json.loads(json_str)

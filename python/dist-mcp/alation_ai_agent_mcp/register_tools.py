@@ -92,7 +92,9 @@ def register_tools(
             logger.error(f"Failed to create HTTP SDK: {e}")
             raise RuntimeError(f"SDK initialization failed: {e}") from e
 
-    if is_tool_enabled(AlationTools.AGGREGATED_CONTEXT, config_disabled, config_enabled_beta):
+    if is_tool_enabled(
+        AlationTools.AGGREGATED_CONTEXT, config_disabled, config_enabled_beta
+    ):
         metadata = get_tool_metadata(AlationContextTool)
 
         @mcp.tool(name=metadata["name"], description=metadata["description"])
@@ -101,7 +103,9 @@ def register_tools(
             result = alation_sdk.get_context(question, signature)
             return result
 
-    if is_tool_enabled(AlationTools.BULK_RETRIEVAL, config_disabled, config_enabled_beta):
+    if is_tool_enabled(
+        AlationTools.BULK_RETRIEVAL, config_disabled, config_enabled_beta
+    ):
         metadata = get_tool_metadata(AlationBulkRetrievalTool)
 
         @mcp.tool(name=metadata["name"], description=metadata["description"])
@@ -119,7 +123,9 @@ def register_tools(
             result = alation_sdk.get_data_products(product_id, query)
             return result
 
-    if is_tool_enabled(AlationTools.UPDATE_METADATA, config_disabled, config_enabled_beta):
+    if is_tool_enabled(
+        AlationTools.UPDATE_METADATA, config_disabled, config_enabled_beta
+    ):
         metadata = get_tool_metadata(UpdateCatalogAssetMetadataTool)
 
         @mcp.tool(name=metadata["name"], description=metadata["description"])
@@ -128,7 +134,9 @@ def register_tools(
             result = alation_sdk.update_catalog_asset_metadata(custom_field_values)
             return result
 
-    if is_tool_enabled(AlationTools.CHECK_JOB_STATUS, config_disabled, config_enabled_beta):
+    if is_tool_enabled(
+        AlationTools.CHECK_JOB_STATUS, config_disabled, config_enabled_beta
+    ):
         metadata = get_tool_metadata(CheckJobStatusTool)
 
         @mcp.tool(name=metadata["name"], description=metadata["description"])
@@ -213,7 +221,9 @@ def register_tools(
             )
             return result
 
-    if is_tool_enabled(AlationTools.GENERATE_DATA_PRODUCT, config_disabled, config_enabled_beta):
+    if is_tool_enabled(
+        AlationTools.GENERATE_DATA_PRODUCT, config_disabled, config_enabled_beta
+    ):
         metadata = get_tool_metadata(GenerateDataProductTool)
 
         @mcp.tool(name=metadata["name"], description=metadata["description"])
@@ -234,7 +244,9 @@ def register_tools(
             return result
 
     if is_tool_enabled(
-        AlationTools.GET_DATA_DICTIONARY_INSTRUCTIONS, config_disabled, config_enabled_beta
+        AlationTools.GET_DATA_DICTIONARY_INSTRUCTIONS,
+        config_disabled,
+        config_enabled_beta,
     ):
         metadata = get_tool_metadata(GetDataDictionaryInstructionsTool)
 

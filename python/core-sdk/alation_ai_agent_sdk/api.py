@@ -354,7 +354,6 @@ class AlationAPI:
         logger.debug("JWT token generated from client ID and secret")
 
     def _generate_new_token(self):
-
         logger.info(
             "Access token is invalid or expired. Attempting to generate a new one."
         )
@@ -780,7 +779,9 @@ class AlationAPI:
             "batch_size": (
                 limit
                 if processing_mode == LineageGraphProcessingOptions.COMPLETE
-                else pagination.get("batch_size", limit) if pagination else batch_size
+                else pagination.get("batch_size", limit)
+                if pagination
+                else batch_size
             ),
         }
         if show_temporal_objects:

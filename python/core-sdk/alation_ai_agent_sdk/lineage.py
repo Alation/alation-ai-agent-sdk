@@ -1,22 +1,27 @@
 from typing import List, Literal, Optional, Union
 from typing_extensions import TypedDict
 
+
 class LineageDesignTimeOptions:
     ONLY_DESIGN_TIME = 1
     ONLY_RUN_TIME = 2
     EITHER_DESIGN_OR_RUN_TIME = 3
 
+
 class LineageDirectionOptions:
-    UPSTREAM = 'upstream'
-    DOWNSTREAM = 'downstream'
+    UPSTREAM = "upstream"
+    DOWNSTREAM = "downstream"
+
 
 class LineageGraphProcessingOptions:
-    CHUNKED = 'chunked'
-    COMPLETE = 'complete'
+    CHUNKED = "chunked"
+    COMPLETE = "complete"
+
 
 class LineageRootNode(TypedDict):
     id: Union[str, int]
     otype: str
+
 
 class LineagePagination(TypedDict):
     cursor: int
@@ -31,10 +36,11 @@ LineageTimestampType = str
 LineageKeyTypeType = Literal["id", "fully_qualified_name"]
 LineageDesignTimeType = Literal[1, 2, 3]
 LineageOTypeFilterType = Optional[List[str]]
-LineageGraphProcessingType = Literal['chunked', 'complete']
+LineageGraphProcessingType = Literal["chunked", "complete"]
 LineageBatchSizeType = int
 
 LineageResponseRequestIdType = str
+
 
 class LineageResponseGraphNeighborNode(TypedDict):
     id: Union[str, int]
@@ -44,6 +50,7 @@ class LineageResponseGraphNeighborNode(TypedDict):
     is_external: bool
     is_temp: bool
 
+
 class LineageResponseGraphNode(TypedDict):
     id: Union[str, int]
     otype: str
@@ -52,6 +59,7 @@ class LineageResponseGraphNode(TypedDict):
     is_external: bool
     is_temp: bool
     neighbors: List[LineageResponseGraphNeighborNode]
+
 
 class LineageToolResponse(TypedDict):
     graph: List[LineageResponseGraphNode]
@@ -107,7 +115,11 @@ def make_lineage_kwargs(
     if time_to is None:
         time_to = ""
 
-    key_type = "fully_qualified_name" if isinstance(root_node.get("id"), str) and '.' in root_node.get("id") else "id"
+    key_type = (
+        "fully_qualified_name"
+        if isinstance(root_node.get("id"), str) and "." in root_node.get("id")
+        else "id"
+    )
     return {
         "processing_mode": processing_mode,
         "show_temporal_objects": show_temporal_objects,

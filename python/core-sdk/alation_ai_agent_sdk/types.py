@@ -16,7 +16,9 @@ class BearerTokenAuthParams(NamedTuple):
     token: str
 
 
-AuthParams = Union[UserAccountAuthParams, ServiceAccountAuthParams, BearerTokenAuthParams]
+AuthParams = Union[
+    UserAccountAuthParams, ServiceAccountAuthParams, BearerTokenAuthParams
+]
 
 
 class CatalogAssetMetadataPayloadItem(TypedDict):

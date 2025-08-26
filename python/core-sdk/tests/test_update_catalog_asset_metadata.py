@@ -1,6 +1,7 @@
 import requests
 from unittest.mock import MagicMock
 from alation_ai_agent_sdk import AlationAIAgentSDK, ServiceAccountAuthParams
+from alation_ai_agent_sdk.api import CatalogAssetMetadataPayloadItem
 
 # Global network call mocks for all tests
 import pytest
@@ -40,9 +41,6 @@ def global_network_mocks(monkeypatch):
     monkeypatch.setattr(requests, "get", mock_get)
 
 
-from alation_ai_agent_sdk.api import CatalogAssetMetadataPayloadItem
-
-
 def test_update_catalog_asset_metadata(monkeypatch):
     sdk = AlationAIAgentSDK(
         base_url="https://mock-alation-instance.com",
@@ -54,7 +52,9 @@ def test_update_catalog_asset_metadata(monkeypatch):
     mock_response = {"job_id": 105}
     monkeypatch.setattr(sdk.api, "_with_valid_token", lambda: None)
     monkeypatch.setattr(
-        sdk.api, "update_catalog_asset_metadata", lambda custom_field_values: mock_response
+        sdk.api,
+        "update_catalog_asset_metadata",
+        lambda custom_field_values: mock_response,
     )
     custom_field_values: list[CatalogAssetMetadataPayloadItem] = [
         {"oid": "1", "otype": "glossary_term", "field_id": 3, "value": "Test Value"}
