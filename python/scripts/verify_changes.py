@@ -30,11 +30,11 @@ def verify_changes():
         )
         for project in projects_to_version_bump:
             print(f" - {project}/pyproject.toml")
-        exit(1)
+        sys.exit(1)
     else:
         print("pyproject.toml files reflect changes")
     projects_needing_requirements_update()
-    exit(0)
+    sys.exit(0)
 
 
 def ruff_check_all_projects():
