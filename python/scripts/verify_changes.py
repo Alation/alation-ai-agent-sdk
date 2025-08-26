@@ -91,10 +91,28 @@ def get_files_changed_from_base(
     local_branch_name = get_local_branch_name()
     # NOTE: These paths are relative to the repo root and not the current working directory
     relative_option = "--relative" if is_relative else ""
-    command = f"git diff --no-color --name-only {relative_option} $(git merge-base main {local_branch_name}) ."
+    # Get the merge base
+    merge_base_result = subprocess.run(
+        ["git", "merge-base", "main", local_branch_name],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    merge_base = merge_base_result.stdout.strip()
+    diff_args = ["git", "diff", "--no-color", "--name-only"]
+    if relative_option:
+        diff_args.append(relative_option)
+    diff_args.extend([merge_base, "."])
+    diff_result = subprocess.run(
+        diff_args,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    files = diff_result.stdout.strip().split("\n")
     if grep_filter:
-        command += f" | grep {grep_filter}"
-    return os.popen(command).read().strip().split("\n")
+        files = [f for f in files if grep_filter in f]
+    return files
 
 
 def group_changes_by_project(is_relative: bool = False, grep_filter: str | None = None):
