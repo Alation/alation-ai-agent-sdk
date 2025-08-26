@@ -73,8 +73,16 @@ def get_current_working_dir():
     return os.getcwd()
 
 
-def get_local_branch_name():
-    return os.popen("git rev-parse --abbrev-ref HEAD").read().strip()
+    result = subprocess.run(
+        ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        print("Error: Failed to get current git branch name.")
+        print(result.stderr)
+        exit(1)
+    return result.stdout.strip()
 
 
 def get_files_changed_from_base(
