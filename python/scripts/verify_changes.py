@@ -171,6 +171,10 @@ def group_requirements_files():
 
 
 def projects_needing_requirements_update():
+    """
+      We only check for requirements if we detect a pyproject.toml was changed.
+    """
+
     changed_projects_and_pyproject_files = group_changes_by_project(
         is_relative=True, grep_filter="pyproject.toml"
     )
@@ -185,7 +189,6 @@ def projects_needing_requirements_update():
 
     changed_projects_and_requirements_files = group_requirements_files()
 
-    # TODO: should we discount any files that are already changed? or should we only discount if it already matches the suggestion?
     is_fatal = False
     # Optimization: Figure this out ahead of time so it shows up as part of the task list
     for project_name, project_files in changed_projects_and_pyproject_files.items():
