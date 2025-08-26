@@ -24,6 +24,8 @@ from alation_ai_agent_sdk.api import (
 from .test_sdk import (
     REFRESH_TOKEN_RESPONSE_SUCCESS,
     JWT_RESPONSE_SUCCESS,
+    mock_requests_get,  # noqa: F401
+    mock_requests_post,  # noqa: F401
 )
 
 
@@ -365,8 +367,8 @@ def test_alation_lineage_tool_returns_api_errors(get_lineage_tool, mock_api):
 
 
 def test_alation_lineage_tool_raises_value_errors_during_validation(
-    mock_requests_post,
-    mock_requests_get,
+    mock_requests_post,  # noqa: F811
+    mock_requests_get,  # noqa: F811
 ):
     mock_requests_post(
         "createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS
@@ -462,7 +464,10 @@ def test_alation_lineage_tool_raises_value_errors_during_validation(
 
 
 @pytest.fixture
-def alation_api(mock_requests_get, mock_requests_post):
+def alation_api(
+    mock_requests_get,  # noqa: F811
+    mock_requests_post,  # noqa: F811
+):
     mock_requests_post(
         "createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS
     )
@@ -482,7 +487,9 @@ def alation_api(mock_requests_get, mock_requests_post):
 
 
 def test_get_bulk_lineage_success_complete_filtered_with_pagination_response(
-    alation_api, mock_requests_post, mock_requests_get
+    alation_api,
+    mock_requests_post,  # noqa: F811
+    mock_requests_get,  # noqa: F811
 ):
     mock_requests_post(
         "createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS
@@ -590,7 +597,9 @@ def test_get_bulk_lineage_success_complete_filtered_with_pagination_response(
 
 
 def test_get_bulk_lineage_success_chunked(
-    alation_api, mock_requests_post, mock_requests_get
+    alation_api,
+    mock_requests_post,  # noqa: F811
+    mock_requests_get,  # noqa: F811
 ):
     mock_requests_post(
         "createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS
