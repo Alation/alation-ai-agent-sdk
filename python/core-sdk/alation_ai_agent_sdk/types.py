@@ -16,7 +16,13 @@ class BearerTokenAuthParams(NamedTuple):
     token: str
 
 
-AuthParams = Union[UserAccountAuthParams, ServiceAccountAuthParams, BearerTokenAuthParams]
+class SessionAuthParams(NamedTuple):
+    session_cookie: str
+
+
+AuthParams = Union[
+    UserAccountAuthParams, ServiceAccountAuthParams, BearerTokenAuthParams, SessionAuthParams
+]
 
 
 class CatalogAssetMetadataPayloadItem(TypedDict):
