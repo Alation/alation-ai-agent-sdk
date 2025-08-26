@@ -40,8 +40,7 @@ def verify_changes():
 def ruff_check_all_projects():
     for project in sdk_project_dirs:
         result = subprocess.run(
-            f"ruff check --fix {project}",
-            shell=True,
+            ["ruff", "check", "--fix", project],
             capture_output=True,
             text=True,
         )
