@@ -31,6 +31,8 @@ def verify_changes():
         for project in projects_to_version_bump:
             print(f" - {project}/pyproject.toml")
         exit(1)
+    else:
+        print("pyproject.toml files reflect changes")
     projects_needing_requirements_update()
     exit(0)
 
@@ -44,11 +46,11 @@ def ruff_check_all_projects():
             text=True,
         )
         if result.returncode != 0:
-            print(f"Ruff check failed for {project}:")
+            print(f"ruff check failed - {project}:")
             print(result.stdout)
             print(result.stderr)
         else:
-            print(f"Ruff check passed for {project}.")
+            print(f"ruff check passed - {project}.")
 
 
 def ruff_format_all_projects():
@@ -60,11 +62,11 @@ def ruff_format_all_projects():
             text=True,
         )
         if result.returncode != 0:
-            print(f"Ruff format failed for {project}:")
+            print(f"ruff format failed - {project}:")
             print(result.stdout)
             print(result.stderr)
         else:
-            print(f"Ruff format passed for {project}.")
+            print(f"ruff format passed - {project}.")
 
 
 def get_current_working_dir():
@@ -217,6 +219,7 @@ def projects_needing_requirements_update():
                     is_fatal = True
     if is_fatal:
         exit(1)
+    print("requirement.txt files reflect changes")
 
 
 def is_package_required(package_name: str, requirements_file: str) -> bool:
