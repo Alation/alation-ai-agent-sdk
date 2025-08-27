@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 import subprocess
+import sys
 
 
 class SDKProject:
@@ -71,6 +72,7 @@ def get_current_working_dir():
     return os.getcwd()
 
 
+def get_local_branch_name():
     result = subprocess.run(
         ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
         capture_output=True,
@@ -133,7 +135,7 @@ cmd_pipe_version_line_count_to_shell_exit_code = (
 )
 
 
-def is_pyproject_version_bump_needed(pyproject_file_path: str):
+def is_pyproject_version_already_bumped(pyproject_file_path: str):
     local_branch_name = get_local_branch_name()
     # Get the merge base between main and the local branch
     merge_base_result = subprocess.run(
@@ -182,7 +184,7 @@ def projects_needing_version_bump():
             # We want to discover pyproject.toml changes because the developer
             # may have already bumped the version. Let's take a closer look.
             if file_path.endswith("pyproject.toml"):
-                if is_pyproject_version_bump_needed(pyproject_file_path=file_path):
+                if is_pyproject_version_already_bumped(pyproject_file_path=file_path):
                     projects_needing_version_bump.remove(project)
                 break
     return projects_needing_version_bump
@@ -257,7 +259,7 @@ def projects_needing_requirements_update():
                     )
                     is_fatal = True
     if is_fatal:
-        exit(1)
+        sys.exit(1)
     print("requirement.txt files reflect changes")
 
 
@@ -274,8 +276,7 @@ def is_package_version_current(
     package_name: str, package_version: str, requirements_file: str
 ) -> bool:
     result = subprocess.run(
-        f"grep '{package_name}>={package_version}' {requirements_file}",
-        shell=True,
+        ['grep', f'{package_name}>={package_version}', requirements_file],
         capture_output=True,
         text=True,
     )
@@ -284,20 +285,19 @@ def is_package_version_current(
 
 def get_project_version_str(pyproject_file_path: str):
     result = subprocess.run(
-        f"grep 'version = ' {pyproject_file_path} | head -1",
-        shell=True,
+        ['grep', 'version =', pyproject_file_path],
         capture_output=True,
         text=True,
     )
     if result.returncode != 0:
         print(f"Failed to get version from {pyproject_file_path}: {result.stderr}")
-        exit(1)
+        sys.exit(1)
     # Parse the version from the output
     version_line = result.stdout.strip()
     if version_line:
         return version_line.split(" = ")[1].strip().strip('"')
     print(f"Failed to get version from {pyproject_file_path}: {result.stderr}")
-    exit(1)
+    sys.exit(1)
 
 
 def get_package_name_from_project(project_name: str):
