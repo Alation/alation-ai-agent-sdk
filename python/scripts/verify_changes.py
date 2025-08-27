@@ -264,8 +264,7 @@ def projects_needing_requirements_update():
 
 def is_package_required(package_name: str, requirements_file: str) -> bool:
     result = subprocess.run(
-        f"grep '{package_name}' {requirements_file}",
-        shell=True,
+        ['grep', package_name, requirements_file],
         capture_output=True,
         text=True,
     )
