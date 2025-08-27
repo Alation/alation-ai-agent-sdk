@@ -190,8 +190,7 @@ def projects_needing_version_bump():
 
 def group_requirements_files():
     result = subprocess.run(
-        f"find . -name 'requirements.txt'",
-        shell=True,
+        ["find", ".", "-name", "requirements.txt"],
         capture_output=True,
         text=True,
     )
