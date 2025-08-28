@@ -52,7 +52,7 @@ def test_update_catalog_asset_metadata(monkeypatch):
         ),
     )
     mock_response = {"job_id": 105}
-    monkeypatch.setattr(sdk.api, "_with_valid_token", lambda: None)
+    monkeypatch.setattr(sdk.api, "_with_valid_auth", lambda: None)
     monkeypatch.setattr(
         sdk.api, "update_catalog_asset_metadata", lambda custom_field_values: mock_response
     )

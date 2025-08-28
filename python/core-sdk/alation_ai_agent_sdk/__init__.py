@@ -4,6 +4,7 @@ from .api import (
     UserAccountAuthParams,
     ServiceAccountAuthParams,
     BearerTokenAuthParams,
+    SessionAuthParams,
 )
 from .sdk import (
     AlationAIAgentSDK,
@@ -19,5 +20,6 @@ __all__ = [
     "UserAccountAuthParams",
     "ServiceAccountAuthParams",
     "BearerTokenAuthParams",
+    "SessionAuthParams",
     "csv_str_to_tool_list",
 ]
