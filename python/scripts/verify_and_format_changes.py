@@ -27,13 +27,14 @@ def verify_changes():
     projects_to_version_bump = projects_needing_version_bump()
     if len(projects_to_version_bump) != 0:
         print(
-            "Please bump the version within pyproject.toml for the following projects:"
+            "FAIL: Please bump the version within pyproject.toml for the following projects:"
         )
         for project in projects_to_version_bump:
             print(f" - {project}/pyproject.toml")
         sys.exit(1)
     else:
-        print("pyproject.toml files reflect changes")
+        print("PASS: pyproject.toml versions reflect changes")
+    projects_needing_dependencies_bumped()
     projects_needing_requirements_update()
     sys.exit(0)
 
@@ -46,11 +47,11 @@ def ruff_check_all_projects():
             text=True,
         )
         if result.returncode != 0:
-            print(f"ruff check failed - {project}:")
+            print(f"FAIL: ruff check failed - {project}:")
             print(result.stdout)
             print(result.stderr)
         else:
-            print(f"ruff check passed - {project}.")
+            print(f"PASS: ruff check passed - {project}.")
 
 
 def ruff_format_all_projects():
@@ -61,11 +62,11 @@ def ruff_format_all_projects():
             text=True,
         )
         if result.returncode != 0:
-            print(f"ruff format failed - {project}:")
+            print(f"FAIL: ruff format failed - {project}:")
             print(result.stdout)
             print(result.stderr)
         else:
-            print(f"ruff format passed - {project}.")
+            print(f"PASS: ruff format passed - {project}.")
 
 
 def get_current_working_dir():
@@ -134,7 +135,20 @@ def split_semantic_version(semantic_version_str: str) -> list[int]:
     return list(map(int, semantic_version_str.split(".")))
 
 
-def is_pyproject_version_already_bumped(pyproject_file_path: str):
+def get_versions_from_diff_result(
+    diff_result: subprocess.CompletedProcess,
+) -> tuple[str | None, str | None]:
+    new_version = None
+    old_version = None
+    for line in diff_result.stdout.splitlines():
+        if line.startswith("+version"):
+            new_version = line.split("=")[-1].strip().replace('"', "")
+        if line.startswith("-version"):
+            old_version = line.split("=")[-1].strip().replace('"', "")
+    return old_version, new_version
+
+
+def pyproject_version_is_bumped(pyproject_file_path: str):
     local_branch_name = get_local_branch_name()
     # Get the merge base between main and the local branch
     merge_base_result = subprocess.run(
@@ -151,15 +165,7 @@ def is_pyproject_version_already_bumped(pyproject_file_path: str):
         text=True,
         check=True,
     )
-    new_version = None
-    old_version = None
-    for line in diff_result.stdout.splitlines():
-        if line.startswith("+version"):
-            new_version = line.split("=")[-1].strip().replace('"', '')
-        if line.startswith("-version"):
-            old_version = line.split("=")[-1].strip().replace('"', '')
-    # Check if any line in the diff adds a version line
-
+    old_version, new_version = get_versions_from_diff_result(diff_result)
     if not new_version or not old_version:
         return False
     old_version_parts = split_semantic_version(old_version)
@@ -192,15 +198,15 @@ def projects_needing_version_bump():
             # We want to discover pyproject.toml changes because the developer
             # may have already bumped the version. Let's take a closer look.
             if file_path.endswith("pyproject.toml"):
-                if is_pyproject_version_already_bumped(pyproject_file_path=file_path):
+                if pyproject_version_is_bumped(pyproject_file_path=file_path):
                     projects_needing_version_bump.remove(project)
                 break
     return projects_needing_version_bump
 
 
-def group_requirements_files_by_project_name():
+def group_files_by_project_name(file_name: str):
     result = subprocess.run(
-        ["find", ".", "-name", "requirements.txt"],
+        ["find", ".", "-name", file_name],
         capture_output=True,
         text=True,
     )
@@ -215,7 +221,99 @@ def group_requirements_files_by_project_name():
                 ) + [line.strip()]
     return grouped_requirements
 
-# TODO: some pyproject.toml list other packages as dependencies - those need to be changed as well
+
+def get_pyproject_mismatched_dependencies(
+    changed_projects_and_package_names: dict[str, str],
+    project_name: str,
+    changed_projects_and_project_versions: dict[str, str],
+    pyproject_file: str,
+):
+    packages_needing_update = []
+    for (
+        possible_dependent_project_name,
+        possible_dependent_package_name,
+    ) in changed_projects_and_package_names.items():
+        # A project can't depend on itself
+        if possible_dependent_project_name == project_name:
+            continue
+        ideal_dependent_package_version = changed_projects_and_project_versions.get(
+            possible_dependent_project_name
+        )
+        # This package isn't changing, ignore it
+        if not ideal_dependent_package_version:
+            continue
+        # If this isn't a dependency, skip it
+        if not is_package_required(
+            package_name=possible_dependent_package_name,
+            requirements_file=pyproject_file,
+        ):
+            continue
+        if not is_package_version_current(
+            package_name=possible_dependent_package_name,
+            package_version=ideal_dependent_package_version,
+            requirements_file=pyproject_file,
+        ):
+            packages_needing_update.append(
+                f"{possible_dependent_package_name}>={ideal_dependent_package_version}"
+            )
+    return packages_needing_update
+
+
+def process_pyprojects_for_dependency_mismatch(
+    changed_projects_and_project_versions: dict[str, str],
+    changed_projects_and_package_names: dict[str, str],
+    all_pyproject_files_by_project: dict[str, list[str]],
+    is_fatal: bool,
+):
+    # iterate over each pyproject file: check its contents for a match - determine which hits there are then prompt user to address them
+    for project_name, pyproject_files in all_pyproject_files_by_project.items():
+        # The Core SDK shouldn't depend on any other projects
+        if project_name == SDKProject.CORE:
+            continue
+        pyproject_file = pyproject_files[0]
+
+        packages_needing_update = get_pyproject_mismatched_dependencies(
+            changed_projects_and_package_names=changed_projects_and_package_names,
+            project_name=project_name,
+            changed_projects_and_project_versions=changed_projects_and_project_versions,
+            pyproject_file=pyproject_file,
+        )
+        if len(packages_needing_update) != 0:
+            print(
+                f"\nFAIL: Please update these dependencies and test the following changes: {pyproject_file}\n{'\n'.join(packages_needing_update)}"
+            )
+            is_fatal = True
+    return is_fatal
+
+
+def projects_needing_dependencies_bumped():
+    # Determine which pyprojects were changed (most likely due to version bumps)
+    changed_projects_and_pyproject_files = group_changes_by_project(
+        is_relative=True, grep_filter="pyproject.toml"
+    )
+    # Figure out what the new versions are
+    changed_projects_and_project_versions = get_changed_project_versions_dict(
+        changed_projects_and_pyproject_files=changed_projects_and_pyproject_files
+    )
+    # Resolve the package names so we know what to look for
+    changed_projects_and_package_names = {
+        project_name: get_package_name_from_project(project_name=project_name)
+        for project_name in changed_projects_and_project_versions.keys()
+    }
+    # Find all pyproject files so we can see if they depend on any of the changed pyprojects
+    all_pyproject_files_by_project = group_files_by_project_name(
+        file_name="pyproject.toml"
+    )
+
+    is_fatal = process_pyprojects_for_dependency_mismatch(
+        changed_projects_and_project_versions=changed_projects_and_project_versions,
+        changed_projects_and_package_names=changed_projects_and_package_names,
+        all_pyproject_files_by_project=all_pyproject_files_by_project,
+        is_fatal=False,
+    )
+    if is_fatal:
+        sys.exit(1)
+    print("PASS: pyproject.toml dependencies reflect the version changes.")
 
 
 def get_changed_project_versions_dict(
@@ -264,7 +362,7 @@ def process_requirements_files_for_project(
         )
         if len(packages_needing_update) != 0:
             print(
-                f"\nPlease update {requirement_file}\n{'\n'.join(packages_needing_update)}"
+                f"\nFAIL: Please update and test the following changes: {requirement_file}\n{'\n'.join(packages_needing_update)}"
             )
             is_fatal = True
     return is_fatal
@@ -280,7 +378,9 @@ def projects_needing_requirements_update():
     changed_projects_and_project_versions = get_changed_project_versions_dict(
         changed_projects_and_pyproject_files=changed_projects_and_pyproject_files
     )
-    changed_projects_and_requirements_files = group_requirements_files_by_project_name()
+    changed_projects_and_requirements_files = group_files_by_project_name(
+        file_name="requirements.txt"
+    )
 
     is_fatal = False
     # Optimization: Figure this out ahead of time so it shows up as part of the task list
@@ -295,7 +395,7 @@ def projects_needing_requirements_update():
         )
     if is_fatal:
         sys.exit(1)
-    print("requirement.txt files reflect changes")
+    print("PASS: requirement.txt files reflect changes")
 
 
 def is_package_required(package_name: str, requirements_file: str) -> bool:
@@ -325,13 +425,15 @@ def get_project_version_str(pyproject_file_path: str):
         text=True,
     )
     if result.returncode != 0:
-        print(f"Failed to get version from {pyproject_file_path}: {result.stderr}")
+        print(
+            f"FAIL: Failed to get version from {pyproject_file_path}: {result.stderr}"
+        )
         sys.exit(1)
     # Parse the version from the output
     version_line = result.stdout.strip()
     if version_line:
         return version_line.split(" = ")[1].strip().strip('"')
-    print(f"Failed to get version from {pyproject_file_path}: {result.stderr}")
+    print(f"FAIL: Failed to get version from {pyproject_file_path}: {result.stderr}")
     sys.exit(1)
 
 
