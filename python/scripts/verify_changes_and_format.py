@@ -74,7 +74,7 @@ def get_current_working_dir():
 
 def get_local_branch_name():
     result = subprocess.run(
-        ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
+        ["git", "rev-parse", "--abbrev-ref", "HEAD"],
         capture_output=True,
         text=True,
     )
@@ -130,9 +130,8 @@ def group_changes_by_project(is_relative: bool = False, grep_filter: str | None 
     return changed_projects
 
 
-cmd_pipe_version_line_count_to_shell_exit_code = (
-    "grep \"+version\" | wc -l | awk '{exit ($1 == 0)}'"
-)
+def split_semantic_version(semantic_version_str: str) -> list[int]:
+    return list(map(int, semantic_version_str.split(".")))
 
 
 def is_pyproject_version_already_bumped(pyproject_file_path: str):
@@ -152,18 +151,27 @@ def is_pyproject_version_already_bumped(pyproject_file_path: str):
         text=True,
         check=True,
     )
+    new_version = None
+    old_version = None
+    for line in diff_result.stdout.splitlines():
+        if line.startswith("+version"):
+            new_version = line.split("=")[-1].strip().replace('"', '')
+        if line.startswith("-version"):
+            old_version = line.split("=")[-1].strip().replace('"', '')
     # Check if any line in the diff adds a version line
-    version_line_count = sum(
-        1 for line in diff_result.stdout.splitlines() if line.startswith("+version")
-    )
-    return version_line_count == 0
+
+    if not new_version or not old_version:
+        return False
+    old_version_parts = split_semantic_version(old_version)
+    new_version_parts = split_semantic_version(new_version)
+    return new_version_parts > old_version_parts
 
 
 monitored_file_suffixes = set([".py", "Dockerfile", "LICENSE", ".toml"])
 
 
 def projects_needing_version_bump():
-    changed_projects = group_changes_by_project()
+    changed_projects = group_changes_by_project(is_relative=True)
     projects_needing_version_bump = set()
     for project, project_files in changed_projects.items():
         advance_project = False
@@ -190,7 +198,7 @@ def projects_needing_version_bump():
     return projects_needing_version_bump
 
 
-def group_requirements_files():
+def group_requirements_files_by_project_name():
     result = subprocess.run(
         ["find", ".", "-name", "requirements.txt"],
         capture_output=True,
@@ -207,16 +215,12 @@ def group_requirements_files():
                 ) + [line.strip()]
     return grouped_requirements
 
+# TODO: some pyproject.toml list other packages as dependencies - those need to be changed as well
 
-def projects_needing_requirements_update():
-    """
-      We only check for requirements if we detect a pyproject.toml was changed.
-    """
 
-    changed_projects_and_pyproject_files = group_changes_by_project(
-        is_relative=True, grep_filter="pyproject.toml"
-    )
-
+def get_changed_project_versions_dict(
+    changed_projects_and_pyproject_files: dict[str, list[str]],
+) -> dict[str, str]:
     changed_projects_and_project_versions = {}
     for project_name, project_files in changed_projects_and_pyproject_files.items():
         for pyproject_file_path in project_files:
@@ -224,40 +228,71 @@ def projects_needing_requirements_update():
                 pyproject_file_path=pyproject_file_path
             )
             changed_projects_and_project_versions[project_name] = new_project_version
+    return changed_projects_and_project_versions
 
-    changed_projects_and_requirements_files = group_requirements_files()
+
+def process_requirements_file_for_project(
+    changed_projects_and_project_versions: dict[str, str], requirement_file: str
+):
+    packages_needing_update = []
+    for (
+        inner_project_name,
+        package_version,
+    ) in changed_projects_and_project_versions.items():
+        package_name = get_package_name_from_project(project_name=inner_project_name)
+        if is_package_required(
+            package_name=package_name,
+            requirements_file=requirement_file,
+        ) and not is_package_version_current(
+            package_name=package_name,
+            package_version=package_version,
+            requirements_file=requirement_file,
+        ):
+            packages_needing_update.append(f"{package_name}>={package_version}")
+    return packages_needing_update
+
+
+def process_requirements_files_for_project(
+    requirements_files: list[str],
+    changed_projects_and_project_versions: dict[str, str],
+    is_fatal: bool = False,
+):
+    for requirement_file in requirements_files:
+        packages_needing_update = process_requirements_file_for_project(
+            changed_projects_and_project_versions=changed_projects_and_project_versions,
+            requirement_file=requirement_file,
+        )
+        if len(packages_needing_update) != 0:
+            print(
+                f"\nPlease update {requirement_file}\n{'\n'.join(packages_needing_update)}"
+            )
+            is_fatal = True
+    return is_fatal
+
+
+def projects_needing_requirements_update():
+    """
+    We only check for requirements if we detect a pyproject.toml was changed.
+    """
+    changed_projects_and_pyproject_files = group_changes_by_project(
+        is_relative=True, grep_filter="pyproject.toml"
+    )
+    changed_projects_and_project_versions = get_changed_project_versions_dict(
+        changed_projects_and_pyproject_files=changed_projects_and_pyproject_files
+    )
+    changed_projects_and_requirements_files = group_requirements_files_by_project_name()
 
     is_fatal = False
     # Optimization: Figure this out ahead of time so it shows up as part of the task list
-    for project_name, project_files in changed_projects_and_pyproject_files.items():
-        for pyproject_file_path in project_files:
-            requirements_files = changed_projects_and_requirements_files.get(
-                project_name, []
-            )
-
-            for requirement_file in requirements_files:
-                packages_needing_update = []
-                for (
-                    inner_project_name,
-                    package_version,
-                ) in changed_projects_and_project_versions.items():
-                    package_name = get_package_name_from_project(project_name=inner_project_name)
-                    if is_package_required(
-                        package_name=package_name,
-                        requirements_file=requirement_file,
-                    ) and not is_package_version_current(
-                        package_name=package_name,
-                        package_version=package_version,
-                        requirements_file=requirement_file,
-                    ):
-                        packages_needing_update.append(
-                            f"{package_name}>={package_version}"
-                        )
-                if len(packages_needing_update) != 0:
-                    print(
-                        f"\nPlease update {requirement_file}\n{'\n'.join(packages_needing_update)}"
-                    )
-                    is_fatal = True
+    for project_name in changed_projects_and_pyproject_files.keys():
+        requirements_files = changed_projects_and_requirements_files.get(
+            project_name, []
+        )
+        is_fatal = process_requirements_files_for_project(
+            requirements_files=requirements_files,
+            changed_projects_and_project_versions=changed_projects_and_project_versions,
+            is_fatal=is_fatal,
+        )
     if is_fatal:
         sys.exit(1)
     print("requirement.txt files reflect changes")
@@ -265,7 +300,7 @@ def projects_needing_requirements_update():
 
 def is_package_required(package_name: str, requirements_file: str) -> bool:
     result = subprocess.run(
-        ['grep', package_name, requirements_file],
+        ["grep", package_name, requirements_file],
         capture_output=True,
         text=True,
     )
@@ -276,7 +311,7 @@ def is_package_version_current(
     package_name: str, package_version: str, requirements_file: str
 ) -> bool:
     result = subprocess.run(
-        ['grep', f'{package_name}>={package_version}', requirements_file],
+        ["grep", f"{package_name}>={package_version}", requirements_file],
         capture_output=True,
         text=True,
     )
@@ -285,7 +320,7 @@ def is_package_version_current(
 
 def get_project_version_str(pyproject_file_path: str):
     result = subprocess.run(
-        ['grep', 'version =', pyproject_file_path],
+        ["grep", "version =", pyproject_file_path],
         capture_output=True,
         text=True,
     )
