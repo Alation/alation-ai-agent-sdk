@@ -149,18 +149,9 @@ def get_versions_from_diff_result(
 
 
 def pyproject_version_is_bumped(pyproject_file_path: str):
-    local_branch_name = get_local_branch_name()
-    # Get the merge base between main and the local branch
-    merge_base_result = subprocess.run(
-        ["git", "merge-base", "main", local_branch_name],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    merge_base = merge_base_result.stdout.strip()
     # Get the diff for the pyproject_file_path
     diff_result = subprocess.run(
-        ["git", "diff", "--no-color", merge_base, "--", pyproject_file_path],
+        ["git", "diff", "--no-color", "origin/main", "--", pyproject_file_path],
         capture_output=True,
         text=True,
         check=True,
