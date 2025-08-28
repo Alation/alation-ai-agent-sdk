@@ -11,6 +11,7 @@ from .types import (
     UserAccountAuthParams,
     ServiceAccountAuthParams,
     BearerTokenAuthParams,
+    SessionAuthParams,
     AuthParams,
     CatalogAssetMetadataPayloadItem,
 )
@@ -34,6 +35,7 @@ from alation_ai_agent_sdk.lineage import (
 AUTH_METHOD_USER_ACCOUNT = "user_account"
 AUTH_METHOD_SERVICE_ACCOUNT = "service_account"
 AUTH_METHOD_BEARER_TOKEN = "bearer_token"
+AUTH_METHOD_SESSION = "session"
 
 logger = logging.getLogger(__name__)
 
@@ -57,9 +59,7 @@ class CatalogAssetMetadataPayloadBuilder:
         if missing:
             raise ValueError(f"Missing required fields: {missing}")
         if obj["otype"] not in cls.ALLOWED_OTYPES:
-            raise ValueError(
-                f"Invalid otype: {obj['otype']}. Allowed: {cls.ALLOWED_OTYPES}"
-            )
+            raise ValueError(f"Invalid otype: {obj['otype']}. Allowed: {cls.ALLOWED_OTYPES}")
         if obj["field_id"] not in cls.FIELD_ID_TYPE_MAP:
             raise ValueError(
                 f"Invalid field_id: {obj['field_id']}. Allowed: {list(cls.FIELD_ID_TYPE_MAP.keys())}"
@@ -89,12 +89,12 @@ class CatalogAssetMetadataPayloadBuilder:
 class AlationAPI:
     """
     Client for interacting with the Alation API.
-    This class manages authentication (via refresh token or service account)
+    This class manages authentication (via refresh token, service account, bearer token, or session cookie)
     and provides methods to retrieve context-specific information from the Alation catalog.
 
     Attributes:
         base_url (str): Base URL for the Alation instance
-        auth_method (str): Authentication method ("user_account", "service_account", or "bearer_token")
+        auth_method (str): Authentication method ("user_account", "service_account", "bearer_token", or "session")
         auth_params (AuthParams): Parameters required for the chosen authentication method
     """
 
@@ -134,9 +134,15 @@ class AlationAPI:
                     "For 'bearer_token' authentication, provide a tuple with (token: str)."
                 )
             self.access_token = auth_params.token
+        elif auth_method == AUTH_METHOD_SESSION:
+            if not isinstance(auth_params, SessionAuthParams):
+                raise ValueError(
+                    "For 'session' authentication, provide a tuple with (session_cookie: str)."
+                )
+            self.session_cookie = auth_params.session_cookie
         else:
             raise ValueError(
-                "auth_method must be 'user_account', 'service_account', or 'bearer_token'."
+                "auth_method must be 'user_account', 'service_account', 'bearer_token', or 'session'."
             )
 
         logger.debug(f"AlationAPI initialized with auth method: {self.auth_method}")
@@ -148,11 +154,8 @@ class AlationAPI:
         """
         Fetches instance info (license and version) after authentication and caches in memory.
         """
-        self._with_valid_token()
-        headers = {
-            "Token": self.access_token,
-            "Accept": "application/json",
-        }
+        self._with_valid_auth()
+        headers = self._get_request_headers()
         try:
             # License info
             license_url = f"{self.base_url}/api/v1/license"
@@ -194,12 +197,8 @@ class AlationAPI:
                 dist_version=dist_version,
             )
 
-        status_code = getattr(
-            exception.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR
-        )
-        response_text = getattr(
-            exception.response, "text", "No response received from server"
-        )
+        status_code = getattr(exception.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR)
+        response_text = getattr(exception.response, "text", "No response received from server")
         if exception.response is not None:
             try:
                 parsed = exception.response.json()
@@ -263,9 +262,7 @@ class AlationAPI:
             "user_id": self.user_id,
             "refresh_token": self.refresh_token,
         }
-        logger.debug(
-            f"Generating access token using refresh token for user_id: {self.user_id}"
-        )
+        logger.debug(f"Generating access token using refresh token for user_id: {self.user_id}")
 
         try:
             response = requests.post(url, json=payload, timeout=60)
@@ -286,9 +283,7 @@ class AlationAPI:
             )
 
         if data.get("status") == "failed" or "api_access_token" not in data:
-            meta = AlationErrorClassifier.classify_token_error(
-                response.status_code, data
-            )
+            meta = AlationErrorClassifier.classify_token_error(response.status_code, data)
             raise AlationAPIError(
                 f"Logical failure or missing token in access token response from {url}",
                 status_code=response.status_code,
@@ -336,9 +331,7 @@ class AlationAPI:
             )
 
         if "access_token" not in data:
-            meta = AlationErrorClassifier.classify_token_error(
-                response.status_code, data
-            )
+            meta = AlationErrorClassifier.classify_token_error(response.status_code, data)
             raise AlationAPIError(
                 f"Access token missing in JWT API response from {url}",
                 status_code=response.status_code,
@@ -383,16 +376,12 @@ class AlationAPI:
             response = requests.post(url, json=payload, headers=headers, timeout=60)
             response.raise_for_status()
         except requests.RequestException as e:
-            status_code = getattr(
-                e.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR
-            )
+            status_code = getattr(e.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR)
 
             if status_code is HTTPStatus.UNAUTHORIZED:
                 return False
 
-            response_text = getattr(
-                e.response, "text", "No response received from server"
-            )
+            response_text = getattr(e.response, "text", "No response received from server")
             parsed = {"error": response_text}
             meta = AlationErrorClassifier.classify_token_error(status_code, parsed)
 
@@ -440,12 +429,8 @@ class AlationAPI:
             data = response.json()
             return data.get("active", False)
         except requests.RequestException as e:
-            status_code = getattr(
-                e.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR
-            )
-            response_text = getattr(
-                e.response, "text", "No response received from server"
-            )
+            status_code = getattr(e.response, "status_code", HTTPStatus.INTERNAL_SERVER_ERROR)
+            response_text = getattr(e.response, "text", "No response received from server")
             parsed = {"error": response_text}
             meta = AlationErrorClassifier.classify_token_error(status_code, parsed)
 
@@ -477,14 +462,19 @@ class AlationAPI:
             logger.error(f"Error validating token on server: {e}")
             return False
 
-    def _with_valid_token(self):
+    def _with_valid_auth(self):
         """
-        Ensures a valid access token is available, generating one if needed.
-        Check validity on server (other services can revoke and invalidate tokens)
-        For bearer_token authentication, validation is done at the MCP server request layer, so we can skip it here.
+        Ensures authentication is ready for API calls.
+
+        For token-based auth (user_account, service_account): validates and refreshes tokens as needed.
+        For credential-based auth (bearer_token, session): assumes credentials are valid (validation happens at request time).
         """
-        if self.auth_method == AUTH_METHOD_BEARER_TOKEN:
+        if self.auth_method in (AUTH_METHOD_BEARER_TOKEN, AUTH_METHOD_SESSION):
+            # For bearer tokens and session cookies, we assume they are valid
+            # Validation happens at the API request level
             return
+
+        # For token-based authentication, check validity and refresh if needed
         try:
             if self.access_token and self._token_is_valid_on_server():
                 logger.debug("Access token is valid on server")
@@ -494,21 +484,32 @@ class AlationAPI:
 
         self._generate_new_token()
 
-    def get_context_from_catalog(
-        self, query: str, signature: Optional[Dict[str, Any]] = None
-    ):
+    def _get_request_headers(self) -> Dict[str, str]:
+        """
+        Get the appropriate request headers including authentication based on the auth method.
+
+        Returns:
+            Dict[str, str]: Headers dictionary with authentication and content type information
+        """
+        headers = {"Accept": "application/json"}
+
+        if self.auth_method == AUTH_METHOD_SESSION:
+            headers["Cookie"] = self.session_cookie
+        elif self.access_token:
+            headers["Token"] = self.access_token
+
+        return headers
+
+    def get_context_from_catalog(self, query: str, signature: Optional[Dict[str, Any]] = None):
         """
         Retrieve contextual information from the Alation catalog based on a natural language query and signature.
         """
         if not query:
             raise ValueError("Query cannot be empty")
 
-        self._with_valid_token()
+        self._with_valid_auth()
 
-        headers = {
-            "Token": self.access_token,
-            "Accept": "application/json",
-        }
+        headers = self._get_request_headers()
 
         params = {"question": query, "mode": "search"}
         if signature:
@@ -544,12 +545,9 @@ class AlationAPI:
         if not signature:
             raise ValueError("Signature cannot be empty for bulk retrieval")
 
-        self._with_valid_token()
+        self._with_valid_auth()
 
-        headers = {
-            "Token": self.access_token,
-            "Accept": "application/json",
-        }
+        headers = self._get_request_headers()
 
         params = {
             "mode": "bulk",
@@ -575,9 +573,7 @@ class AlationAPI:
                 response_body=response.text,
                 reason="Malformed Response",
                 resolution_hint="The server returned a non-JSON response. Contact support if this persists.",
-                help_links=[
-                    "https://developer.alation.com/dev/reference/getaggregatedcontext"
-                ],
+                help_links=["https://developer.alation.com/dev/reference/getaggregatedcontext"],
             )
 
     def _fetch_marketplace_id(self, headers: Dict[str, str]) -> str:
@@ -614,11 +610,8 @@ class AlationAPI:
             ValueError: If neither product_id nor query is provided.
             AlationAPIError: On network, API, or response errors.
         """
-        self._with_valid_token()
-        headers = {
-            "Token": self.access_token,
-            "Accept": "application/json",
-        }
+        self._with_valid_auth()
+        headers = self._get_request_headers()
 
         if product_id:
             # Fetch data product by ID
@@ -640,9 +633,7 @@ class AlationAPI:
                     "results": [],
                 }
             except requests.RequestException as e:
-                self._handle_request_error(
-                    e, f"fetching data product by id: {product_id}"
-                )
+                self._handle_request_error(e, f"fetching data product by id: {product_id}")
 
         elif query:
             # Fetch marketplace ID if not cached
@@ -666,12 +657,10 @@ class AlationAPI:
                     results = [
                         {
                             "id": product["product"]["product_id"],
-                            "name": product["product"]["spec_json"]["product"]["en"][
-                                "name"
+                            "name": product["product"]["spec_json"]["product"]["en"]["name"],
+                            "description": product["product"]["spec_json"]["product"]["en"][
+                                "description"
                             ],
-                            "description": product["product"]["spec_json"]["product"][
-                                "en"
-                            ]["description"],
                             "url": f"{self.base_url}/app/marketplace/{self.marketplace_id}/data-product/{product['product']['product_id']}/",
                         }
                         for product in response_data
@@ -682,9 +671,7 @@ class AlationAPI:
                     "results": [],
                 }
             except requests.RequestException as e:
-                self._handle_request_error(
-                    e, f"searching data products with query: {query}"
-                )
+                self._handle_request_error(e, f"searching data products with query: {query}")
 
         else:
             raise ValueError(
@@ -740,25 +727,15 @@ class AlationAPI:
             raise ValueError("limit cannot exceed 1,000.")
         if allowed_otypes is not None:
             if processing_mode != LineageGraphProcessingOptions.COMPLETE:
-                raise ValueError(
-                    "allowed_otypes is only supported in 'complete' processing mode."
-                )
+                raise ValueError("allowed_otypes is only supported in 'complete' processing mode.")
             if len(allowed_otypes) == 0:
                 raise ValueError("allowed_otypes cannot be empty list.")
-        if (
-            pagination is not None
-            and processing_mode == LineageGraphProcessingOptions.COMPLETE
-        ):
-            raise ValueError(
-                "pagination is only supported in 'chunked' processing mode."
-            )
+        if pagination is not None and processing_mode == LineageGraphProcessingOptions.COMPLETE:
+            raise ValueError("pagination is only supported in 'chunked' processing mode.")
 
-        self._with_valid_token()
+        self._with_valid_auth()
 
-        headers = {
-            "Token": self.access_token,
-            "Accept": "application/json",
-        }
+        headers = self._get_request_headers()
 
         lineage_request_dict = {
             "key_type": key_type,
@@ -788,9 +765,7 @@ class AlationAPI:
             lineage_request_dict["filters"]["temp_filter"] = show_temporal_objects
         url = f"{self.base_url}/integration/v2/bulk_lineage/"
         try:
-            response = requests.post(
-                url, headers=headers, json=lineage_request_dict, timeout=60
-            )
+            response = requests.post(url, headers=headers, json=lineage_request_dict, timeout=60)
             response.raise_for_status()
             response_data = response.json()
             if (
@@ -830,20 +805,13 @@ class AlationAPI:
         Updates metadata for one or more Alation catalog assets via custom field values.
         Validates payload before sending to API.
         """
-        validated_payload = CatalogAssetMetadataPayloadBuilder.build(
-            custom_field_values
-        )
-        self._with_valid_token()
-        headers = {
-            "Token": self.access_token,
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        }
+        validated_payload = CatalogAssetMetadataPayloadBuilder.build(custom_field_values)
+        self._with_valid_auth()
+        headers = self._get_request_headers()
+        headers["Content-Type"] = "application/json"
         url = f"{self.base_url}/integration/v2/custom_field_value/async/"
         try:
-            response = requests.put(
-                url, headers=headers, json=validated_payload, timeout=60
-            )
+            response = requests.put(url, headers=headers, json=validated_payload, timeout=60)
             response.raise_for_status()
             return response.json()
         except requests.RequestException as e:
@@ -859,12 +827,18 @@ class AlationAPI:
         Returns:
             dict: The API response containing job status and details.
         """
-        self._with_valid_token()
+        # Session auth is not supported for this endpoint (internal restriction)
+        if self.auth_method == AUTH_METHOD_SESSION:
+            raise AlationAPIError(
+                "Session authentication is not supported for check_job_status",
+                reason="Unsupported Authentication Method",
+                resolution_hint="Use user_account, service_account, or bearer_token authentication instead",
+                help_links=["https://developer.alation.com/"],
+            )
 
-        headers = {
-            "Token": self.access_token,
-            "Accept": "application/json",
-        }
+        self._with_valid_auth()
+
+        headers = self._get_request_headers()
         params = {"id": job_id}
         url = f"{self.base_url}/api/v1/bulk_metadata/job/"
         try:
@@ -889,11 +863,8 @@ class AlationAPI:
         Check SQL query tables for data quality using the integration/v1/dq/check_sql_query_tables endpoint.
         Returns dict (JSON) or str (YAML Markdown) depending on output_format.
         """
-        self._with_valid_token()
-        headers = {
-            "Token": self.access_token,
-            "Accept": "application/json",
-        }
+        self._with_valid_auth()
+        headers = self._get_request_headers()
         url = f"{self.base_url}/integration/v1/dq/check_sql_query_tables/"
         payload = {}
         if table_ids is not None:
@@ -943,12 +914,9 @@ class AlationAPI:
         Raises:
             AlationAPIError: On network, API, authentication, or authorization errors
         """
-        self._with_valid_token()
+        self._with_valid_auth()
 
-        headers = {
-            "Token": self.access_token,
-            "Accept": "application/json",
-        }
+        headers = self._get_request_headers()
 
         url = f"{self.base_url}/integration/v2/custom_field/"
 

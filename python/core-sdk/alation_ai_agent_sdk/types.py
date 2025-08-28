@@ -16,8 +16,12 @@ class BearerTokenAuthParams(NamedTuple):
     token: str
 
 
+class SessionAuthParams(NamedTuple):
+    session_cookie: str
+
+
 AuthParams = Union[
-    UserAccountAuthParams, ServiceAccountAuthParams, BearerTokenAuthParams
+    UserAccountAuthParams, ServiceAccountAuthParams, BearerTokenAuthParams, SessionAuthParams
 ]
 
 

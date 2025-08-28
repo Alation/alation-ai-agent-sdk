@@ -9,9 +9,11 @@ from alation_ai_agent_sdk.sdk import (
 from alation_ai_agent_sdk.api import (
     AUTH_METHOD_USER_ACCOUNT,
     AUTH_METHOD_SERVICE_ACCOUNT,
+    AUTH_METHOD_SESSION,
     AlationAPIError,
     UserAccountAuthParams,
     ServiceAccountAuthParams,
+    SessionAuthParams,
 )
 
 
@@ -21,6 +23,7 @@ MOCK_USER_ID = 123
 MOCK_REFRESH_TOKEN = "test-refresh-token"
 MOCK_CLIENT_ID = "test-client-id"
 MOCK_CLIENT_SECRET = "test-client-secret"
+MOCK_SESSION_COOKIE = "sessionid=test_session_cookie_value"
 
 
 REFRESH_TOKEN_RESPONSE_SUCCESS = {
@@ -213,6 +216,22 @@ def test_sdk_valid_initialization_service_account(
     assert sdk.api.dist_version == "test-dist-version"
 
 
+def test_sdk_valid_initialization_session_auth(mock_requests_get):
+    """Test valid SDK init with session auth method."""
+    mock_requests_get("license", response_json={"is_cloud": True})
+    mock_requests_get("full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"})
+    
+    sdk = AlationAIAgentSDK(
+        base_url=MOCK_BASE_URL,
+        auth_method=AUTH_METHOD_SESSION,
+        auth_params=SessionAuthParams(MOCK_SESSION_COOKIE),
+        dist_version="test-dist-version",
+    )
+    assert sdk.api.auth_method == AUTH_METHOD_SESSION
+    assert sdk.api.session_cookie == MOCK_SESSION_COOKIE
+    assert sdk.api.dist_version == "test-dist-version"
+
+
 @pytest.mark.parametrize(
     "auth_method, auth_params, expected_error_message_part",
     [
@@ -232,9 +251,14 @@ def test_sdk_valid_initialization_service_account(
             "provide a tuple with (client_id: str, client_secret: str)",
         ),
         (
+            AUTH_METHOD_SESSION,
+            ("invalid_session_params",),
+            "provide a tuple with (session_cookie: str)",
+        ),
+        (
             "invalid_method",
             (MOCK_USER_ID, MOCK_REFRESH_TOKEN),
-            "auth_method must be 'user_account', 'service_account', or 'bearer_token'",
+            "auth_method must be 'user_account', 'service_account', 'bearer_token', or 'session'",
         ),
     ],
 )
@@ -393,3 +417,27 @@ def test_check_job_status_tool_explicitly_disabled(
     )
     assert AlationTools.CHECK_JOB_STATUS in sdk.disabled_tools
     assert sdk.check_job_status not in sdk.get_tools()
+
+
+def test_check_job_status_session_auth_restriction(mock_requests_get):
+    """Test that check_job_status is properly restricted for session authentication."""
+    mock_requests_get("license", response_json={"is_cloud": True})
+    mock_requests_get("full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"})
+    
+    sdk = AlationAIAgentSDK(
+        base_url=MOCK_BASE_URL,
+        auth_method=AUTH_METHOD_SESSION,
+        auth_params=SessionAuthParams(MOCK_SESSION_COOKIE),
+    )
+    
+    # The SDK should be initialized successfully
+    assert sdk.api.auth_method == AUTH_METHOD_SESSION
+    
+    # But calling check_job_status should raise an error
+    with pytest.raises(AlationAPIError) as exc_info:
+        sdk.check_job_status(job_id=123)
+    
+    error = exc_info.value
+    assert "Session authentication is not supported for check_job_status" in str(error)
+    assert error.reason == "Unsupported Authentication Method"
+
