@@ -29,57 +29,57 @@ def get_mock_customer_profile_metadata():
                         "name": "id",
                         "title": "Customer ID",
                         "description": "Unique identifier for the customer",
-                        "data_type": "TEXT"
+                        "data_type": "TEXT",
                     },
                     {
                         "name": "name",
                         "title": "Customer Name",
                         "description": "Full name of the customer",
-                        "data_type": "TEXT"
+                        "data_type": "TEXT",
                     },
                     {
                         "name": "email",
                         "title": "Email Address",
                         "description": "Primary email address for contacting the customer",
-                        "data_type": "TEXT"
+                        "data_type": "TEXT",
                     },
                     {
                         "name": "status",
                         "title": "Account Status",
                         "description": "Current status of the customer account (active, inactive, suspended)",
-                        "data_type": "TEXT"
+                        "data_type": "TEXT",
                     },
                     {
                         "name": "since",
                         "title": "Customer Since",
                         "description": "Date when the customer first registered",
-                        "data_type": "DATE"
+                        "data_type": "DATE",
                     },
                     {
                         "name": "phone",
                         "title": "Phone Number",
                         "description": "Primary contact phone number",
-                        "data_type": "TEXT"
+                        "data_type": "TEXT",
                     },
                     {
                         "name": "default_shipping_address",
                         "title": "Default Shipping Address",
                         "description": "Customer's preferred shipping address",
-                        "data_type": "TEXT"
+                        "data_type": "TEXT",
                     },
                     {
                         "name": "preferred_payment_methods",
                         "title": "Preferred Payment Methods",
                         "description": "Comma-separated list of customer's payment methods",
-                        "data_type": "TEXT"
+                        "data_type": "TEXT",
                     },
                     {
                         "name": "total_returns",
                         "title": "Total Returns",
                         "description": "Count of previous return requests by this customer",
-                        "data_type": "INTEGER"
-                    }
-                ]
+                        "data_type": "INTEGER",
+                    },
+                ],
             }
         ]
     }
@@ -101,69 +101,69 @@ def get_mock_purchase_history_metadata():
                         "name": "order_id",
                         "title": "Order ID",
                         "description": "Order ID",
-                        "data_type": "INTEGER"
+                        "data_type": "INTEGER",
                     },
                     {
                         "name": "customer_id",
                         "title": "Customer ID",
                         "description": "Customer ID",
-                        "data_type": "INTEGER"
+                        "data_type": "INTEGER",
                     },
                     {
                         "name": "order_date",
                         "title": "Order Date",
                         "description": "Order date",
-                        "data_type": "TEXT"
+                        "data_type": "TEXT",
                     },
                     {
                         "name": "order_total",
                         "title": "Order Total",
                         "description": "Order total",
-                        "data_type": "REAL"
+                        "data_type": "REAL",
                     },
                     {
                         "name": "order_item_id",
                         "title": "Order Item ID",
                         "description": "Line item ID",
-                        "data_type": "INTEGER"
+                        "data_type": "INTEGER",
                     },
                     {
                         "name": "product_id",
                         "title": "Product ID",
                         "description": "Product ID",
-                        "data_type": "INTEGER"
+                        "data_type": "INTEGER",
                     },
                     {
                         "name": "product_name",
                         "title": "Product Name",
                         "description": "Product name",
-                        "data_type": "TEXT"
+                        "data_type": "TEXT",
                     },
                     {
                         "name": "product_category",
                         "title": "Product Category",
                         "description": "Product category",
-                        "data_type": "TEXT"
+                        "data_type": "TEXT",
                     },
                     {
                         "name": "quantity",
                         "title": "Quantity",
                         "description": "Quantity purchased",
-                        "data_type": "INTEGER"
+                        "data_type": "INTEGER",
                     },
                     {
                         "name": "unit_price",
                         "title": "Unit Price",
                         "description": "Unit price",
-                        "data_type": "REAL"
+                        "data_type": "REAL",
                     },
                     {
                         "name": "line_total",
                         "title": "Line Total",
                         "description": "Total for this line",
-                        "data_type": "REAL"
-                    }
-                ]
+                        "data_type": "REAL",
+                    },
+                ],
             }
         ]
     }
@@ -185,57 +185,57 @@ def get_mock_membership_benefits_metadata():
                         "name": "customer_id",
                         "title": "Customer ID",
                         "description": "Customer ID",
-                        "data_type": "INTEGER"
+                        "data_type": "INTEGER",
                     },
                     {
                         "name": "membership_tier",
                         "title": "Membership Tier",
                         "description": "Customer's membership level",
-                        "data_type": "TEXT"
+                        "data_type": "TEXT",
                     },
                     {
                         "name": "enrollment_date",
                         "title": "Enrollment Date",
                         "description": "When customer enrolled in membership program",
-                        "data_type": "DATE"
+                        "data_type": "DATE",
                     },
                     {
                         "name": "renewal_date",
                         "title": "Renewal Date",
                         "description": "Next renewal date",
-                        "data_type": "DATE"
+                        "data_type": "DATE",
                     },
                     {
                         "name": "discount_percentage",
                         "title": "Discount Percentage",
                         "description": "Standard discount percentage",
-                        "data_type": "INTEGER"
+                        "data_type": "INTEGER",
                     },
                     {
                         "name": "expedited_shipping",
                         "title": "Expedited Shipping",
                         "description": "Eligibility for free expedited shipping",
-                        "data_type": "BOOLEAN"
+                        "data_type": "BOOLEAN",
                     },
                     {
                         "name": "extended_returns",
                         "title": "Extended Returns",
                         "description": "Extended return window in days",
-                        "data_type": "INTEGER"
+                        "data_type": "INTEGER",
                     },
                     {
                         "name": "exclusive_events",
                         "title": "Exclusive Events",
                         "description": "Access to exclusive member events",
-                        "data_type": "BOOLEAN"
+                        "data_type": "BOOLEAN",
                     },
                     {
                         "name": "reward_points_balance",
                         "title": "Reward Points Balance",
                         "description": "Current reward points balance",
-                        "data_type": "INTEGER"
-                    }
-                ]
+                        "data_type": "INTEGER",
+                    },
+                ],
             }
         ]
     }
@@ -257,63 +257,63 @@ def get_mock_warranties_metadata():
                         "name": "warranty_id",
                         "title": "Warranty ID",
                         "description": "Warranty ID",
-                        "data_type": "INTEGER"
+                        "data_type": "INTEGER",
                     },
                     {
                         "name": "customer_id",
                         "title": "Customer ID",
                         "description": "Customer ID",
-                        "data_type": "INTEGER"
+                        "data_type": "INTEGER",
                     },
                     {
                         "name": "order_id",
                         "title": "Order ID",
                         "description": "Associated order ID",
-                        "data_type": "TEXT"
+                        "data_type": "TEXT",
                     },
                     {
                         "name": "product_id",
                         "title": "Product ID",
                         "description": "Product ID",
-                        "data_type": "INTEGER"
+                        "data_type": "INTEGER",
                     },
                     {
                         "name": "product_name",
                         "title": "Product Name",
                         "description": "Product name",
-                        "data_type": "TEXT"
+                        "data_type": "TEXT",
                     },
                     {
                         "name": "warranty_type",
                         "title": "Warranty Type",
                         "description": "Standard or extended warranty",
-                        "data_type": "TEXT"
+                        "data_type": "TEXT",
                     },
                     {
                         "name": "start_date",
                         "title": "Start Date",
                         "description": "Warranty start date",
-                        "data_type": "DATE"
+                        "data_type": "DATE",
                     },
                     {
                         "name": "end_date",
                         "title": "End Date",
                         "description": "Warranty expiration date",
-                        "data_type": "DATE"
+                        "data_type": "DATE",
                     },
                     {
                         "name": "coverage_details",
                         "title": "Coverage Details",
                         "description": "Summary of warranty coverage",
-                        "data_type": "TEXT"
+                        "data_type": "TEXT",
                     },
                     {
                         "name": "is_active",
                         "title": "Is Active",
                         "description": "Whether warranty is currently active",
-                        "data_type": "BOOLEAN"
-                    }
-                ]
+                        "data_type": "BOOLEAN",
+                    },
+                ],
             }
         ]
     }
@@ -346,9 +346,10 @@ def get_mock_policy_electronics() -> Dict[str, Any]:
                 "- Missing original serial numbers or packaging voids return eligibility.\n"
                 "- Liquid damage and physical abuse are not covered.\n"
             ),
-            "url": "http://alation-instance/docs/electronics-return-policy"
+            "url": "http://alation-instance/docs/electronics-return-policy",
         }
     }
+
 
 def get_mock_policy_clothing() -> Dict[str, Any]:
     """Return a detailed mock policy for clothing items."""
@@ -376,9 +377,10 @@ def get_mock_policy_clothing() -> Dict[str, Any]:
                 "- Sale/clearance items marked 'final sale' not eligible for return.\n"
                 "- Customized or altered items are non-returnable.\n"
             ),
-            "url": "http://alation-instance/docs/clothing-return-policy"
+            "url": "http://alation-instance/docs/clothing-return-policy",
         }
     }
+
 
 def get_mock_policy_home_goods() -> Dict[str, Any]:
     """Return a detailed mock policy for home goods."""
@@ -409,7 +411,7 @@ def get_mock_policy_home_goods() -> Dict[str, Any]:
                 "- Clearance items marked 'as-is' not returnable.\n"
                 "- Customer responsible for return shipping on large items unless defective.\n"
             ),
-            "url": "http://alation-instance/docs/home-goods-return-policy"
+            "url": "http://alation-instance/docs/home-goods-return-policy",
         }
     }
 
@@ -424,11 +426,14 @@ def mock_alation_context(question: str, signature=None):
     response = {"relevant_tables": []}
 
     # Check for multi-table structure query
-    if ("columns" in q or "structure" in q) and any(table in q for table in [
-        "vw_customer_purchase_history",
-        "vw_customer_membership_benefits",
-        "vw_customer_product_warranties"
-    ]):
+    if ("columns" in q or "structure" in q) and any(
+        table in q
+        for table in [
+            "vw_customer_purchase_history",
+            "vw_customer_membership_benefits",
+            "vw_customer_product_warranties",
+        ]
+    ):
         # Check which tables are included in the question
         if "vw_customer_purchase_history" in q:
             purchase_data = get_mock_purchase_history_metadata()
@@ -453,22 +458,54 @@ def mock_alation_context(question: str, signature=None):
     # Handle policy queries based on product categories
     if "policy" in q or "return" in q:
         # Electronics policies
-        if any(term in q for term in ["electronics", "headphone", "tv", "speaker",
-                                      "laptop", "computer", "phone", "camera"]):
+        if any(
+            term in q
+            for term in [
+                "electronics",
+                "headphone",
+                "tv",
+                "speaker",
+                "laptop",
+                "computer",
+                "phone",
+                "camera",
+            ]
+        ):
             return get_mock_policy_electronics()
 
         # Clothing policies
-        elif any(term in q for term in ["clothing", "apparel", "shirt", "pants",
-                                        "dress", "shoes", "jacket", "sweater"]):
+        elif any(
+            term in q
+            for term in [
+                "clothing",
+                "apparel",
+                "shirt",
+                "pants",
+                "dress",
+                "shoes",
+                "jacket",
+                "sweater",
+            ]
+        ):
             return get_mock_policy_clothing()
 
         # Home goods policies
-        elif any(term in q for term in ["home", "furniture", "decor", "kitchen",
-                                        "mattress", "bedding", "rug"]):
+        elif any(
+            term in q
+            for term in [
+                "home",
+                "furniture",
+                "decor",
+                "kitchen",
+                "mattress",
+                "bedding",
+                "rug",
+            ]
+        ):
             return get_mock_policy_home_goods()
 
     # Default fallback
     return {
         "message": "No specific mock data available for this query. This is a development mock.",
-        "query": question
+        "query": question,
     }

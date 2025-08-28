@@ -49,4 +49,7 @@ def get_tool_metadata(tool_class) -> Dict[str, str]:
     Returns:
         dict: Dictionary with 'name' and 'description' keys
     """
-    return {"name": tool_class._get_name(), "description": tool_class._get_description()}
+    return {
+        "name": tool_class._get_name(),
+        "description": tool_class._get_description(),
+    }

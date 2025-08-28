@@ -54,9 +54,9 @@ def get_base_url(base_url_override: Optional[str] = None) -> str:
     return base_url
 
 
-def parse_arguments() -> (
-    Tuple[str, Optional[str], Optional[str], Optional[str], str, int, Optional[str]]
-):
+def parse_arguments() -> Tuple[
+    str, Optional[str], Optional[str], Optional[str], str, int, Optional[str]
+]:
     """
     Parse command-line arguments for the MCP server.
 
@@ -136,10 +136,14 @@ def validate_cloud_instance(alation_sdk: AlationAIAgentSDK) -> None:
     """
     is_cloud = getattr(alation_sdk.api, "is_cloud", None)
     if is_cloud is not None and not is_cloud:
-        raise RuntimeError("This Alation instance is on-prem. MCP tools require a cloud instance.")
+        raise RuntimeError(
+            "This Alation instance is on-prem. MCP tools require a cloud instance."
+        )
 
 
-def log_initialization_info(alation_sdk: AlationAIAgentSDK, mcp_server_version: str) -> None:
+def log_initialization_info(
+    alation_sdk: AlationAIAgentSDK, mcp_server_version: str
+) -> None:
     """
     Log initialization information for the MCP server.
 
@@ -155,7 +159,8 @@ def log_initialization_info(alation_sdk: AlationAIAgentSDK, mcp_server_version: 
 
 
 def get_tool_configuration(
-    disabled_tools_str: Optional[str] = None, enabled_beta_tools_str: Optional[str] = None
+    disabled_tools_str: Optional[str] = None,
+    enabled_beta_tools_str: Optional[str] = None,
 ) -> tuple[list[str], list[str]]:
     """
     Get tool configuration from environment variables or provided parameters.

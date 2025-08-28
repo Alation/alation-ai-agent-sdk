@@ -207,8 +207,7 @@ source venv/bin/activate
 venv\Scripts\activate
 
 # Install dependencies
-pip3 install pdm
-pdm install
+pip3 install .
 ```
 
 > Make sure you run the npx command from the active venv terminal

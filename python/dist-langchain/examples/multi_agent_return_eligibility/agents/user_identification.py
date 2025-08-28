@@ -41,7 +41,7 @@ def create_identification_agent() -> AgentExecutor:
             Tool(
                 name="alation_context",
                 description="Mocked Alation catalog context",
-                func=mock_alation_wrapper
+                func=mock_alation_wrapper,
             )
         ]
     else:
@@ -58,7 +58,7 @@ def create_identification_agent() -> AgentExecutor:
         Example: 
         SELECT * FROM table_name WHERE column = 'value'
         """,
-        func=execute_sql
+        func=execute_sql,
     )
 
     tools.append(sql_tool)
@@ -67,8 +67,11 @@ def create_identification_agent() -> AgentExecutor:
     # implemented via direct scripting, we're using an agent architecture to showcase how to build
     # effective LLM-powered agents. This implementation demonstrates the core functionality, but
     # could be extended with additional views/tables and more sophisticated SQL generation logic.
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", """You are a customer identification agent for a retail company.
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                """You are a customer identification agent for a retail company.
         Your job is to identify customers based on their email or details in their query.
 
         Follow this exact process:
@@ -87,14 +90,19 @@ def create_identification_agent() -> AgentExecutor:
         4. FINALLY, organize and return the customer information in a clear JSON format
 
         If you cannot identify the customer with confidence, clearly state this.
-        """),
-        ("human", """
+        """,
+            ),
+            (
+                "human",
+                """
         Customer query: {input}
         Customer email: {email}
         Signature: {signature}
-        """),
-        MessagesPlaceholder(variable_name="agent_scratchpad"),
-    ])
+        """,
+            ),
+            MessagesPlaceholder(variable_name="agent_scratchpad"),
+        ]
+    )
 
     # Create the agent
     agent = create_openai_functions_agent(llm=llm, tools=tools, prompt=prompt)
@@ -109,7 +117,7 @@ def user_identification_node(state: CustomerState) -> CustomerState:
     input_data = {
         "input": state["query"],
         "email": state.get("email", ""),
-        "signature": CUSTOMER_PROFILE_SIGNATURE
+        "signature": CUSTOMER_PROFILE_SIGNATURE,
     }
 
     # Run the agent
@@ -118,7 +126,7 @@ def user_identification_node(state: CustomerState) -> CustomerState:
     # Extract customer information from the agent's output
     try:
         # Parse the agent output for customer information
-        customer_info = extract_customer_info(result.get('output', ''))
+        customer_info = extract_customer_info(result.get("output", ""))
 
         # Update state with customer info
         state["customer_info"] = customer_info
@@ -126,14 +134,18 @@ def user_identification_node(state: CustomerState) -> CustomerState:
         # Check if we failed to identify the customer
         if not customer_info or not customer_info.get("id"):
             state["agent_notes"] = state.get("agent_notes", []) + [
-                "Failed to identify customer. Proceed with limited functionality."]
+                "Failed to identify customer. Proceed with limited functionality."
+            ]
     except Exception as e:
         state["agent_notes"] = state.get("agent_notes", []) + [
-            f"Error processing customer identification: {str(e)}"]
+            f"Error processing customer identification: {str(e)}"
+        ]
         state["customer_info"] = {}
 
     # Update phase
-    state["agent_notes"] = state.get("agent_notes", []) + [f"Identification complete: {result['output']}"]
+    state["agent_notes"] = state.get("agent_notes", []) + [
+        f"Identification complete: {result['output']}"
+    ]
     state["current_phase"] = "context"
 
     return state
@@ -149,11 +161,11 @@ def extract_customer_info(agent_output: str) -> Dict[str, Any]:
     # Try to find JSON blocks in the output
     try:
         # Look for JSON structure in the output
-        start_idx = agent_output.find('{')
-        end_idx = agent_output.rfind('}')
+        start_idx = agent_output.find("{")
+        end_idx = agent_output.rfind("}")
 
         if start_idx >= 0 and end_idx > start_idx:
-            json_str = agent_output[start_idx:end_idx + 1]
+            json_str = agent_output[start_idx : end_idx + 1]
             customer_info = json.loads(json_str)
             return customer_info
     except Exception:

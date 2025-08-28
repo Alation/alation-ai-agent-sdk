@@ -71,7 +71,8 @@ def create_fastmcp_server(
         resource_server_url = external_url if external_url else f"http://{host}:{port}"
 
         auth = AuthSettings(
-            issuer_url=AnyHttpUrl(base_url), resource_server_url=AnyHttpUrl(resource_server_url)
+            issuer_url=AnyHttpUrl(base_url),
+            resource_server_url=AnyHttpUrl(resource_server_url),
         )
         return FastMCP(
             name="Alation MCP Server",
@@ -160,16 +161,28 @@ def run_server() -> None:
     """Entry point for running the MCP server."""
     setup_logging()
 
-    transport, base_url, disabled_tools_str, enabled_beta_tools_str, host, port, external_url = (
-        parse_arguments()
-    )
+    (
+        transport,
+        base_url,
+        disabled_tools_str,
+        enabled_beta_tools_str,
+        host,
+        port,
+        external_url,
+    ) = parse_arguments()
 
     mcp = create_server(
-        transport, base_url, disabled_tools_str, enabled_beta_tools_str, host, port, external_url
+        transport,
+        base_url,
+        disabled_tools_str,
+        enabled_beta_tools_str,
+        host,
+        port,
+        external_url,
     )
 
     if transport == "stdio":
-        logging.info(f"Starting Alation MCP STDIO Server")
+        logging.info("Starting Alation MCP STDIO Server")
         mcp.run()
     elif transport == "http":
         logging.info(f"Starting Alation MCP HTTP Server on {host}:{port}")

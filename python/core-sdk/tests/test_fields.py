@@ -1,10 +1,8 @@
-import pytest
-
 from alation_ai_agent_sdk.fields import (
     filter_field_properties,
     get_built_in_fields_structured,
     get_built_in_usage_guide,
-    get_built_in_section
+    get_built_in_section,
 )
 
 
@@ -21,7 +19,7 @@ def test_filter_field_properties():
             "allow_multiple": False,
             "name_plural": "Test Fields",
             "unwanted_field": "should_be_removed",
-            "another_unwanted": 12345
+            "another_unwanted": 12345,
         }
     ]
 
@@ -34,8 +32,16 @@ def test_filter_field_properties():
     assert len(field) == 8
 
     # Should have required properties
-    expected_props = ['id', 'name_singular', 'field_type', 'allowed_otypes',
-                      'options', 'tooltip_text', 'allow_multiple', 'name_plural']
+    expected_props = [
+        "id",
+        "name_singular",
+        "field_type",
+        "allowed_otypes",
+        "options",
+        "tooltip_text",
+        "allow_multiple",
+        "name_plural",
+    ]
     for prop in expected_props:
         assert prop in field
 

@@ -25,7 +25,9 @@ elif ALATION_AUTH_METHOD == "service_account":
     ALATION_CLIENT_ID = os.getenv("ALATION_CLIENT_ID")
     ALATION_CLIENT_SECRET = os.getenv("ALATION_CLIENT_SECRET")
 else:
-    raise ValueError("Invalid ALATION_AUTH_METHOD. Must be 'user_account' or 'service_account'.")
+    raise ValueError(
+        "Invalid ALATION_AUTH_METHOD. Must be 'user_account' or 'service_account'."
+    )
 
 # LLM configuration
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")

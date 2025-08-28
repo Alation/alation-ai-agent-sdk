@@ -8,7 +8,9 @@ from langgraph.graph import StateGraph, END, START
 from schemas import CustomerState
 from agents.user_identification import user_identification_node as identification_node
 from agents.customer_context import customer_context_node as context_node
-from agents.eligibility import eligibility_node  # If you have this combined agent instead
+from agents.eligibility import (
+    eligibility_node,
+)  # If you have this combined agent instead
 
 
 def build_customer_service_graph():
@@ -34,9 +36,7 @@ def build_customer_service_graph():
 
 
 def handle_customer_request(
-        customer_query: str,
-        user_email: str,
-        debug_mode: bool = False
+    customer_query: str, user_email: str, debug_mode: bool = False
 ) -> Dict[str, Any]:
     """
     Process a customer service request through the multi-agent workflow.
@@ -58,7 +58,7 @@ def handle_customer_request(
         email=user_email,
         agent_notes=[],
         current_phase="start",
-        requires_human=False
+        requires_human=False,
     )
 
     # Execute the multi-agent workflow
@@ -68,12 +68,10 @@ def handle_customer_request(
     if debug_mode:
         return {
             "response": result.get("final_response", "No response generated"),
-            "state": result
+            "state": result,
         }
     else:
-        return {
-            "response": result.get("final_response", "No response generated")
-        }
+        return {"response": result.get("final_response", "No response generated")}
 
 
 def print_banner():
@@ -84,7 +82,6 @@ def print_banner():
 
 
 if __name__ == "__main__":
-
     email = "jane.doe@example.com"
     # Print welcome banner
     print_banner()
@@ -105,7 +102,7 @@ if __name__ == "__main__":
         print(f"Eligibility: {result['state'].get('eligibility_status', 'unknown')}")
         print(f"Required Human: {result['state'].get('requires_human', False)}")
 
-        if result['state'].get('agent_notes'):
+        if result["state"].get("agent_notes"):
             print("\nAgent Notes:")
-            for note in result['state'].get('agent_notes', []):
+            for note in result["state"].get("agent_notes", []):
                 print(f"- {note}")

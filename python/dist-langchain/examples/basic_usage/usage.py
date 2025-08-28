@@ -46,7 +46,9 @@ def initialize_sdk(base_url: str, auth_method: str) -> AlationAIAgentSDK:
         return AlationAIAgentSDK(
             base_url=base_url,
             auth_method=auth_method,
-            auth_params=UserAccountAuthParams(user_id=user_id, refresh_token=refresh_token),
+            auth_params=UserAccountAuthParams(
+                user_id=user_id, refresh_token=refresh_token
+            ),
         )
 
     elif auth_method == "service_account":
@@ -61,7 +63,9 @@ def initialize_sdk(base_url: str, auth_method: str) -> AlationAIAgentSDK:
         return AlationAIAgentSDK(
             base_url=base_url,
             auth_method=auth_method,
-            auth_params=ServiceAccountAuthParams(client_id=client_id, client_secret=client_secret),
+            auth_params=ServiceAccountAuthParams(
+                client_id=client_id, client_secret=client_secret
+            ),
         )
 
     else:
@@ -108,7 +112,9 @@ print(response)
 
 # Example 2: With signature
 print("\n=== Example 2: With Signature ===")
-tables_only_signature = {"table": {"fields_required": ["name", "title", "description", "url"]}}
+tables_only_signature = {
+    "table": {"fields_required": ["name", "title", "description", "url"]}
+}
 qa_question = "What tables contain sales data?"
 qa_response = executor.invoke(
     {
@@ -123,18 +129,14 @@ print(qa_response)
 # Example 3: Bulk retrieval tool
 print("\n=== Example 3: Bulk retrieval tool ===")
 bulk_table_signature = {
-  "table": {
-    "fields_required": ["name", "title", "description", "url"],
-    "search_filters": {"flags": ["Endorsement"], "fields": {"ds": [1]}},
-    "limit": 5
-  }
+    "table": {
+        "fields_required": ["name", "title", "description", "url"],
+        "search_filters": {"flags": ["Endorsement"], "fields": {"ds": [1]}},
+        "limit": 5,
+    }
 }
 qa_question = f"""Use the bulk_retrieval tool with this exact signature: {json.dumps(bulk_table_signature)}"""
 
-qa_response = executor.invoke(
-    {
-        "input": qa_question
-    }
-)
+qa_response = executor.invoke({"input": qa_question})
 print("\nAgent Response (Bulk retrieval tool):")
 print(qa_response)

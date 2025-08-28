@@ -25,7 +25,9 @@ def _fetch_schema_from_instance(self) -> Optional[str]:
         logger.warning("No API instance available to fetch schema")
         return None
 
-    schema_url = f"{self.api.base_url}/static/swagger/specs/data_products/product_schema.yaml"
+    schema_url = (
+        f"{self.api.base_url}/static/swagger/specs/data_products/product_schema.yaml"
+    )
 
     try:
         logger.debug(f"Fetching data product schema from: {schema_url}")

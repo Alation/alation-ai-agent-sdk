@@ -1,6 +1,5 @@
 import pytest
-import time
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 from alation_ai_agent_sdk.tools import GetDataDictionaryInstructionsTool
 from alation_ai_agent_sdk.api import AlationAPIError
 
@@ -17,14 +16,20 @@ def get_data_dictionary_instructions_tool(mock_api):
     return GetDataDictionaryInstructionsTool(mock_api)
 
 
-def test_get_data_dictionary_instructions_tool_initialization(get_data_dictionary_instructions_tool, mock_api):
+def test_get_data_dictionary_instructions_tool_initialization(
+    get_data_dictionary_instructions_tool, mock_api
+):
     """Test that the GetDataDictionaryInstructionsTool initializes correctly."""
-    assert get_data_dictionary_instructions_tool.name == "get_data_dictionary_instructions"
+    assert (
+        get_data_dictionary_instructions_tool.name == "get_data_dictionary_instructions"
+    )
     assert "CSV" in get_data_dictionary_instructions_tool.description
     assert get_data_dictionary_instructions_tool.api == mock_api
 
 
-def test_get_data_dictionary_instructions_tool_run_success_with_custom_fields(get_data_dictionary_instructions_tool, mock_api):
+def test_get_data_dictionary_instructions_tool_run_success_with_custom_fields(
+    get_data_dictionary_instructions_tool, mock_api
+):
     """Test successful instruction generation with custom fields."""
     # Mock custom fields response
     mock_custom_fields = [
@@ -36,7 +41,7 @@ def test_get_data_dictionary_instructions_tool_run_success_with_custom_fields(ge
             "options": ["Public", "Internal", "Confidential"],
             "tooltip_text": "Data classification level",
             "allow_multiple": False,
-            "name_plural": "Data Classifications"
+            "name_plural": "Data Classifications",
         }
     ]
     mock_api.get_custom_fields.return_value = mock_custom_fields
@@ -55,13 +60,13 @@ def test_get_data_dictionary_instructions_tool_run_success_with_custom_fields(ge
     assert "10001" in result
 
 
-def test_get_data_dictionary_instructions_tool_run_success_without_custom_fields(get_data_dictionary_instructions_tool, mock_api):
+def test_get_data_dictionary_instructions_tool_run_success_without_custom_fields(
+    get_data_dictionary_instructions_tool, mock_api
+):
     """Test instruction generation when custom fields returns 403 (non-admin user)."""
     # Mock 403 error for custom fields
     api_error = AlationAPIError(
-        message="Forbidden",
-        status_code=403,
-        reason="Forbidden"
+        message="Forbidden", status_code=403, reason="Forbidden"
     )
     mock_api.get_custom_fields.side_effect = api_error
 
@@ -78,7 +83,9 @@ def test_get_data_dictionary_instructions_tool_run_success_without_custom_fields
     assert "4|description" in result
 
 
-def test_get_data_dictionary_instructions_tool_run_empty_custom_fields(get_data_dictionary_instructions_tool, mock_api):
+def test_get_data_dictionary_instructions_tool_run_empty_custom_fields(
+    get_data_dictionary_instructions_tool, mock_api
+):
     """Test instruction generation with empty custom fields."""
     mock_api.get_custom_fields.return_value = []
 

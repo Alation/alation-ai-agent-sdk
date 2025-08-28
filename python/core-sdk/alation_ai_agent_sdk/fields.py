@@ -24,7 +24,7 @@ def get_built_in_fields_structured() -> List[Dict[str, Any]]:
             "allowed_otypes": None,
             "tooltip_text": "Object title or display name. NOT allowed for BI objects.",
             "allow_multiple": False,
-            "name_plural": ""
+            "name_plural": "",
         },
         {
             "id": 4,
@@ -33,7 +33,7 @@ def get_built_in_fields_structured() -> List[Dict[str, Any]]:
             "allowed_otypes": None,
             "tooltip_text": "Detailed description of the object. Supports HTML formatting.",
             "allow_multiple": False,
-            "name_plural": ""
+            "name_plural": "",
         },
         {
             "id": 8,
@@ -42,8 +42,8 @@ def get_built_in_fields_structured() -> List[Dict[str, Any]]:
             "allowed_otypes": ["user", "groupprofile"],
             "tooltip_text": "User or group responsible for this object. Use steward:user for users, steward:groupprofile for groups.",
             "allow_multiple": True,
-            "name_plural": "stewards"
-        }
+            "name_plural": "stewards",
+        },
     ]
 
 
@@ -63,7 +63,7 @@ def get_built_in_usage_guide() -> Dict[str, str]:
         "display_names": "Use 'name_singular' for field labels. For stewards with multiple values, use 'stewards' (name_plural).",
         "field_types": "TEXT = single line text, RICH_TEXT = formatted text with HTML, OBJECT_SET = references to users/groups. Built-in fields use these standard types.",
         "csv_headers": "For data dictionary CSV files: 3|title, 4|description, 8|steward:user (for users), 8|steward:groupprofile (for groups). This format is required for Alation to recognize which field to update.",
-        "steward_formatting": "For steward field, specify the object type: 8|steward:user for individual users, 8|steward:groupprofile for group profiles. Multiple values separated by semicolon."
+        "steward_formatting": "For steward field, specify the object type: 8|steward:user for individual users, 8|steward:groupprofile for group profiles. Multiple values separated by semicolon.",
     }
 
 
@@ -84,12 +84,19 @@ def get_built_in_section() -> str:
     - **Steward**: `8|steward:user (if its a user), 8|steward:groupprofile (if its a group profile)`
     """
 
+
 def filter_field_properties(raw_fields: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Filter custom fields to essential properties only."""
     filtered_fields = []
     selected_properties = [
-        'id', 'name_singular', 'field_type', 'allowed_otypes',
-        'options', 'tooltip_text', 'allow_multiple', 'name_plural'
+        "id",
+        "name_singular",
+        "field_type",
+        "allowed_otypes",
+        "options",
+        "tooltip_text",
+        "allow_multiple",
+        "name_plural",
     ]
 
     for field in raw_fields:

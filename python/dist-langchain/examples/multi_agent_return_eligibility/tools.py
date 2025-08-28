@@ -64,9 +64,15 @@ def execute_sql(query: str) -> str:
     # Check if query is safe - in production, implement proper SQL injection protection
     unsafe_keywords = ["DROP", "DELETE", "UPDATE", "INSERT", "ALTER", "TRUNCATE"]
     for keyword in unsafe_keywords:
-        if keyword in query.upper() and keyword not in ["UPDATE"] and "WHERE" not in query.upper():
+        if (
+            keyword in query.upper()
+            and keyword not in ["UPDATE"]
+            and "WHERE" not in query.upper()
+        ):
             return json.dumps(
-                {"error": f"Unsafe SQL operation: {keyword} without WHERE clause is not allowed"}
+                {
+                    "error": f"Unsafe SQL operation: {keyword} without WHERE clause is not allowed"
+                }
             )
 
     try:

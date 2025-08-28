@@ -1,10 +1,7 @@
-import pytest
-
 from alation_ai_agent_sdk.data_dict import (
     build_optimized_instructions,
-    build_process_steps,
     build_hierarchy_rules,
-    build_quick_reference
+    build_quick_reference,
 )
 
 
@@ -37,7 +34,7 @@ def test_build_optimized_instructions_with_custom_fields():
             "options": None,
             "tooltip_text": None,
             "allow_multiple": False,
-            "name_plural": ""
+            "name_plural": "",
         }
     ]
 
@@ -51,7 +48,7 @@ def test_build_optimized_instructions_with_custom_fields():
         "PROCESS STEPS",
         "EXAMPLES",
         "VALIDATION REFERENCE",
-        "CRITICAL REMINDERS"
+        "CRITICAL REMINDERS",
     ]
 
     for section in required_sections:

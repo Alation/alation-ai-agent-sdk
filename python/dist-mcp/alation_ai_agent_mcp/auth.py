@@ -74,10 +74,14 @@ class AlationTokenVerifier(TokenVerifier):
                         expires_at=int(time.time()) + 3600,
                     )
                 elif response.status_code == 401:
-                    logging.warning("Token verification failed: Invalid or expired token")
+                    logging.warning(
+                        "Token verification failed: Invalid or expired token"
+                    )
                     return None
                 elif response.status_code == 403:
-                    logging.warning("Token verification failed: Insufficient permissions")
+                    logging.warning(
+                        "Token verification failed: Insufficient permissions"
+                    )
                     return None
                 elif response.status_code == 404:
                     logging.error(
@@ -93,7 +97,9 @@ class AlationTokenVerifier(TokenVerifier):
                 logging.error(f"Token verification timed out after 5 seconds: {e}")
                 return None
             except httpx.ConnectError as e:
-                logging.error(f"Failed to connect to Alation instance at {self.base_url}: {e}")
+                logging.error(
+                    f"Failed to connect to Alation instance at {self.base_url}: {e}"
+                )
                 return None
             except httpx.RequestError as e:
                 logging.error(f"Network error during token verification: {e}")
@@ -103,7 +109,9 @@ class AlationTokenVerifier(TokenVerifier):
                 return None
 
 
-def get_stdio_auth_params() -> tuple[str, Union[UserAccountAuthParams, ServiceAccountAuthParams]]:
+def get_stdio_auth_params() -> tuple[
+    str, Union[UserAccountAuthParams, ServiceAccountAuthParams]
+]:
     """
     Load authentication parameters from environment variables.
 

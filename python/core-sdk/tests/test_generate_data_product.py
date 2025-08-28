@@ -102,9 +102,7 @@ def test_generate_data_product_tool_content_validation():
     # Mock schema fetch to return a basic schema
     with patch("requests.get") as mock_get:
         mock_response = Mock()
-        mock_response.text = (
-            "type: object\ntitle: Test Schema\nproperties:\n  product:\n    type: object"
-        )
+        mock_response.text = "type: object\ntitle: Test Schema\nproperties:\n  product:\n    type: object"
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 
@@ -137,9 +135,7 @@ def test_cache_is_used_on_subsequent_calls():
 
     with patch("requests.get") as mock_get:
         mock_response = Mock()
-        mock_response.text = (
-            "type: object\ntitle: Test Schema\nproperties:\n  product:\n    type: object"
-        )
+        mock_response.text = "type: object\ntitle: Test Schema\nproperties:\n  product:\n    type: object"
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 
@@ -164,9 +160,7 @@ def test_cache_expires_after_ttl():
 
     with patch("requests.get") as mock_get:
         mock_response = Mock()
-        mock_response.text = (
-            "type: object\ntitle: Test Schema\nproperties:\n  product:\n    type: object"
-        )
+        mock_response.text = "type: object\ntitle: Test Schema\nproperties:\n  product:\n    type: object"
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 

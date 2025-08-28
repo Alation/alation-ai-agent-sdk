@@ -1,8 +1,5 @@
 import re
 import logging
-import requests
-import time
-from requests.exceptions import RequestException
 
 from typing import (
     Any,
@@ -350,7 +347,6 @@ class AlationLineageTool:
         time_from: Optional[LineageTimestampType] = None,
         time_to: Optional[LineageTimestampType] = None,
     ) -> LineageToolResponse:
-
         lineage_kwargs = make_lineage_kwargs(
             root_node=root_node,
             processing_mode=processing_mode,
@@ -768,7 +764,9 @@ class GetDataDictionaryInstructionsTool:
             except AlationAPIError as e:
                 # Non-admin users will get 403 - provide instructions without custom fields
                 if e.status_code == 403:
-                    logger.info("Non-admin user detected, providing built-in fields only")
+                    logger.info(
+                        "Non-admin user detected, providing built-in fields only"
+                    )
                     custom_fields = []
                 else:
                     raise

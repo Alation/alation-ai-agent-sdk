@@ -15,7 +15,11 @@ import os
 import json
 from typing import Dict, Any
 
-from alation_ai_agent_sdk import AlationAIAgentSDK, UserAccountAuthParams, ServiceAccountAuthParams
+from alation_ai_agent_sdk import (
+    AlationAIAgentSDK,
+    UserAccountAuthParams,
+    ServiceAccountAuthParams,
+)
 from alation_ai_agent_sdk.api import AlationAPIError
 
 
@@ -31,7 +35,9 @@ def initialize_sdk(base_url: str, auth_method: str) -> AlationAIAgentSDK:
         refresh_token = os.getenv("ALATION_REFRESH_TOKEN")
 
         if not all([user_id_str, refresh_token]):
-            raise ValueError("Missing required environment variables for user account authentication. Please set ALATION_USER_ID and ALATION_REFRESH_TOKEN.")
+            raise ValueError(
+                "Missing required environment variables for user account authentication. Please set ALATION_USER_ID and ALATION_REFRESH_TOKEN."
+            )
 
         try:
             user_id = int(user_id_str)
@@ -41,7 +47,9 @@ def initialize_sdk(base_url: str, auth_method: str) -> AlationAIAgentSDK:
         return AlationAIAgentSDK(
             base_url=base_url,
             auth_method=auth_method,
-            auth_params=UserAccountAuthParams(user_id=user_id, refresh_token=refresh_token),
+            auth_params=UserAccountAuthParams(
+                user_id=user_id, refresh_token=refresh_token
+            ),
         )
 
     elif auth_method == "service_account":
@@ -49,12 +57,16 @@ def initialize_sdk(base_url: str, auth_method: str) -> AlationAIAgentSDK:
         client_secret = os.getenv("ALATION_CLIENT_SECRET")
 
         if not all([client_id, client_secret]):
-            raise ValueError("Missing required environment variables for service account authentication. Please set ALATION_CLIENT_ID and ALATION_CLIENT_SECRET.")
+            raise ValueError(
+                "Missing required environment variables for service account authentication. Please set ALATION_CLIENT_ID and ALATION_CLIENT_SECRET."
+            )
 
         return AlationAIAgentSDK(
             base_url=base_url,
             auth_method=auth_method,
-            auth_params=ServiceAccountAuthParams(client_id=client_id, client_secret=client_secret),
+            auth_params=ServiceAccountAuthParams(
+                client_id=client_id, client_secret=client_secret
+            ),
         )
 
     else:
@@ -81,7 +93,9 @@ def main() -> None:
 
     # Example 1: Basic query without signature
     print("\n=== Example 1: Basic Query ===")
-    print("Query: Fetch detail about customer (no signature- by default fetches multiple objects)")
+    print(
+        "Query: Fetch detail about customer (no signature- by default fetches multiple objects)"
+    )
 
     try:
         response = sdk.get_context("What tables contain customer information?")
@@ -102,12 +116,16 @@ def main() -> None:
         "table": {
             "fields_required": ["name", "title", "description", "url"],
             "fields_optional": ["common_joins", "common_filters"],
-            "search_filters": {"fields": {"tag_ids": [2]}},  # Replace with actual tag ID
+            "search_filters": {
+                "fields": {"tag_ids": [2]}
+            },  # Replace with actual tag ID
         }
     }
 
     try:
-        response = sdk.get_context("Can you explain transactions table?", signature=table_signature)
+        response = sdk.get_context(
+            "Can you explain transactions table?", signature=table_signature
+        )
         print_json(response)
     except AlationAPIError as e:
         print(f"API Error: {e}")
@@ -121,7 +139,9 @@ def main() -> None:
     detailed_signature = {
         "table": {
             "fields_required": ["name", "title", "description", "url", "columns"],
-            "child_objects": {"columns": {"fields": ["name", "title", "data_type", "description"]}},
+            "child_objects": {
+                "columns": {"fields": ["name", "title", "data_type", "description"]}
+            },
         }
     }
 
@@ -143,7 +163,8 @@ def main() -> None:
 
     try:
         response = sdk.get_context(
-            "What is the difference between loan type and loan term", signature=docs_signature
+            "What is the difference between loan type and loan term",
+            signature=docs_signature,
         )
         print_json(response)
     except AlationAPIError as e:
@@ -156,11 +177,11 @@ def main() -> None:
 
     # Define a signature that includes column information
     detailed_signature = {
-      "table": {
-        "fields_required": ["name", "title", "description", "url"],
-        "search_filters": {"flags": ["Endorsement"], "fields": {"ds": [1]}},
-        "limit": 20
-      }
+        "table": {
+            "fields_required": ["name", "title", "description", "url"],
+            "search_filters": {"flags": ["Endorsement"], "fields": {"ds": [1]}},
+            "limit": 20,
+        }
     }
     try:
         response = sdk.get_bulk_objects(signature=detailed_signature)

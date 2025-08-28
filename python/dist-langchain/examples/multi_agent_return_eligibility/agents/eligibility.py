@@ -10,7 +10,6 @@ from tools import get_alation_tools
 from config import LLM_MODEL, USE_MOCK_DATA
 
 
-
 def create_eligibility_agent() -> AgentExecutor:
     """Create an agent for determining return eligibility."""
     # Initialize the LLM
@@ -27,7 +26,7 @@ def create_eligibility_agent() -> AgentExecutor:
             Tool(
                 name="alation_context",
                 description="Mocked Alation catalog context",
-                func=mock_alation_wrapper
+                func=mock_alation_wrapper,
             )
         ]
     else:
@@ -35,8 +34,11 @@ def create_eligibility_agent() -> AgentExecutor:
         tools = get_alation_tools()
 
     # Define the agent prompt with response generation
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", """You are a return eligibility agent for a retail company.
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                """You are a return eligibility agent for a retail company.
         TODAY'S DATE is June 20, 2023. Use this exact date for all eligibility calculations.
 
         Your job is to:
@@ -90,15 +92,20 @@ def create_eligibility_agent() -> AgentExecutor:
           }},
           "customer_response": "[complete customer-friendly response text]"
         }}
-        """),
-        ("human", """
+        """,
+            ),
+            (
+                "human",
+                """
         Customer query: {input}
         Customer information: {customer_info}
         Purchase information: {purchase_info}
         Signature: {signature}
-        """),
-        MessagesPlaceholder(variable_name="agent_scratchpad"),
-    ])
+        """,
+            ),
+            MessagesPlaceholder(variable_name="agent_scratchpad"),
+        ]
+    )
 
     # Create the agent
     agent = create_openai_functions_agent(llm=llm, prompt=prompt, tools=tools)
@@ -112,7 +119,8 @@ def eligibility_node(state: CustomerState) -> CustomerState:
         state["eligibility_status"] = "unknown"
         state["requires_human"] = True
         state["agent_notes"] = state.get("agent_notes", []) + [
-            "Cannot determine eligibility - missing purchase information"]
+            "Cannot determine eligibility - missing purchase information"
+        ]
         state["current_phase"] = "complete"
         return state
 
@@ -123,7 +131,7 @@ def eligibility_node(state: CustomerState) -> CustomerState:
         "input": state["query"],
         "customer_info": state.get("customer_info", {}),
         "purchase_info": state["context_data"],
-        "signature": POLICY_SIGNATURE
+        "signature": POLICY_SIGNATURE,
     }
 
     # Run the agent with try/except
@@ -131,19 +139,21 @@ def eligibility_node(state: CustomerState) -> CustomerState:
         result = agent.invoke(input_data)
 
         # Extract the agent's output
-        output = result.get('output', '')
+        output = result.get("output", "")
         import json
         import re
 
         # Try to find JSON in the output
-        json_match = re.search(r'({.*})', output, re.DOTALL)
+        json_match = re.search(r"({.*})", output, re.DOTALL)
         if json_match:
             try:
                 json_str = json_match.group(1).strip()
                 decision_data = json.loads(json_str)
 
                 # Update state with decision data
-                state["eligibility_status"] = decision_data.get("eligibility_status", "unknown")
+                state["eligibility_status"] = decision_data.get(
+                    "eligibility_status", "unknown"
+                )
                 state["requires_human"] = decision_data.get("requires_human", True)
                 state["policy_info"] = decision_data.get("policy_info", {})
 
@@ -152,34 +162,44 @@ def eligibility_node(state: CustomerState) -> CustomerState:
                     state["final_response"] = decision_data["customer_response"]
                 else:
                     # Fallback if no customer response was generated
-                    state[
-                        "final_response"] = f"We've evaluated your return request. Your item is {state['eligibility_status']} for return."
+                    state["final_response"] = (
+                        f"We've evaluated your return request. Your item is {state['eligibility_status']} for return."
+                    )
 
             except json.JSONDecodeError:
                 state["eligibility_status"] = "unknown"
                 state["requires_human"] = True
-                state["policy_info"] = {"reason": "Could not parse eligibility decision"}
-                state[
-                    "final_response"] = "We're having trouble processing your return request. Please contact customer service."
+                state["policy_info"] = {
+                    "reason": "Could not parse eligibility decision"
+                }
+                state["final_response"] = (
+                    "We're having trouble processing your return request. Please contact customer service."
+                )
         else:
             # Fallback if no JSON found
             state["eligibility_status"] = "unknown"
             state["requires_human"] = True
             state["policy_info"] = {"reason": "Could not parse agent decision"}
-            state[
-                "final_response"] = "We're having trouble processing your return request. Please contact customer service."
+            state["final_response"] = (
+                "We're having trouble processing your return request. Please contact customer service."
+            )
 
     except Exception as e:
         state["eligibility_status"] = "unknown"
         state["requires_human"] = True
-        state["agent_notes"] = state.get("agent_notes", []) + [f"Error in eligibility determination: {str(e)}"]
+        state["agent_notes"] = state.get("agent_notes", []) + [
+            f"Error in eligibility determination: {str(e)}"
+        ]
         state["policy_info"] = {"reason": f"Error: {str(e)}"}
-        state[
-            "final_response"] = "We're having trouble processing your return request. Please contact customer service."
+        state["final_response"] = (
+            "We're having trouble processing your return request. Please contact customer service."
+        )
 
     # Add agent response to notes if available
-    if 'result' in locals() and 'output' in result:
-        state["agent_notes"] = state.get("agent_notes", []) + [f"Eligibility: {result['output']}"]
+    if "result" in locals() and "output" in result:
+        state["agent_notes"] = state.get("agent_notes", []) + [
+            f"Eligibility: {result['output']}"
+        ]
 
     state["current_phase"] = "complete"
     return state
