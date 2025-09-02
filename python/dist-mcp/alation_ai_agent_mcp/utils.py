@@ -15,6 +15,7 @@ STDIO and HTTP modes of the MCP server.
 import os
 import argparse
 import logging
+from importlib.metadata import version, PackageNotFoundError
 from typing import Optional, Tuple
 
 from alation_ai_agent_sdk import (
@@ -136,10 +137,14 @@ def validate_cloud_instance(alation_sdk: AlationAIAgentSDK) -> None:
     """
     is_cloud = getattr(alation_sdk.api, "is_cloud", None)
     if is_cloud is not None and not is_cloud:
-        raise RuntimeError("This Alation instance is on-prem. MCP tools require a cloud instance.")
+        raise RuntimeError(
+            "This Alation instance is on-prem. MCP tools require a cloud instance."
+        )
 
 
-def log_initialization_info(alation_sdk: AlationAIAgentSDK, mcp_server_version: str) -> None:
+def log_initialization_info(
+    alation_sdk: AlationAIAgentSDK, mcp_server_version: str
+) -> None:
     """
     Log initialization information for the MCP server.
 
@@ -155,7 +160,8 @@ def log_initialization_info(alation_sdk: AlationAIAgentSDK, mcp_server_version: 
 
 
 def get_tool_configuration(
-    disabled_tools_str: Optional[str] = None, enabled_beta_tools_str: Optional[str] = None
+    disabled_tools_str: Optional[str] = None,
+    enabled_beta_tools_str: Optional[str] = None,
 ) -> tuple[list[str], list[str]]:
     """
     Get tool configuration from environment variables or provided parameters.
@@ -206,3 +212,18 @@ def prepare_server_config(
     )
 
     return base_url, tools_disabled, beta_tools_enabled
+
+
+def get_mcp_server_version() -> str:
+    """
+    Return the MCP server version from the current alation_ai_agent_mcp package.
+
+    Returns:
+        str: MCP server version
+    """
+    MCP_SERVER_VERSION = "UNKNOWN"
+    try:
+        return version("alation_ai_agent_mcp")
+    except PackageNotFoundError:
+        # noop
+        return "UNKNOWN"

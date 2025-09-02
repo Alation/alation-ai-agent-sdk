@@ -1,8 +1,5 @@
 import re
 import logging
-import requests
-import time
-from requests.exceptions import RequestException
 
 from typing import (
     Any,
@@ -37,11 +34,15 @@ from alation_ai_agent_sdk.data_product import (
 
 from alation_ai_agent_sdk.data_dict import build_optimized_instructions
 
+from alation_ai_agent_sdk.event import track_tool_execution
+
 from alation_ai_agent_sdk.fields import (
     filter_field_properties,
     get_built_in_fields_structured,
     get_built_in_usage_guide,
 )
+
+from alation_ai_agent_sdk.utils import get_sdk_version
 
 logger = logging.getLogger(__name__)
 
@@ -100,11 +101,30 @@ def is_version_supported(current: str, minimum: str) -> bool:
         return False
 
 
-class AlationContextTool:
+class BaseAlationTool:
+    # Maybe it should be passed from the SDK via constructor
+    sdk_version = get_sdk_version()
+
     def __init__(self, api: AlationAPI):
         self.api = api
         self.name = self._get_name()
         self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        raise NotImplementedError
+
+    @staticmethod
+    def _get_description() -> str:
+        raise NotImplementedError
+
+    def run(self, *args, **kwargs):
+        raise NotImplementedError
+
+
+class AlationContextTool(BaseAlationTool):
+    def __init__(self, api: AlationAPI):
+        super().__init__(api)
 
     @staticmethod
     def _get_name() -> str:
@@ -163,6 +183,7 @@ class AlationContextTool:
 """
 
     @min_alation_version("2025.1.2")
+    @track_tool_execution()
     def run(self, question: str, signature: Optional[Dict[str, Any]] = None):
         try:
             return self.api.get_context_from_catalog(question, signature)
@@ -170,11 +191,9 @@ class AlationContextTool:
             return {"error": e.to_dict()}
 
 
-class AlationGetDataProductTool:
+class AlationGetDataProductTool(BaseAlationTool):
     def __init__(self, api: AlationAPI):
-        self.api = api
-        self.name = self._get_name()
-        self.description = self._get_description()
+        super().__init__(api)
 
     @staticmethod
     def _get_name() -> str:
@@ -210,6 +229,7 @@ class AlationGetDataProductTool:
           Multiple results: Summary format (name, id, description, url)
           """
 
+    @track_tool_execution()
     def run(self, product_id: Optional[str] = None, query: Optional[str] = None):
         try:
             return self.api.get_data_products(product_id=product_id, query=query)
@@ -217,11 +237,9 @@ class AlationGetDataProductTool:
             return {"error": e.to_dict()}
 
 
-class AlationBulkRetrievalTool:
+class AlationBulkRetrievalTool(BaseAlationTool):
     def __init__(self, api: AlationAPI):
-        self.api = api
-        self.name = self._get_name()
-        self.description = self._get_description()
+        super().__init__(api)
 
     @staticmethod
     def _get_name() -> str:
@@ -254,6 +272,7 @@ class AlationBulkRetrievalTool:
      - With relationships: bulk_retrieval(signature = {"table": {"fields_required": ["name", "columns"], "child_objects": {"columns": {"fields": ["name", "data_type"]}}, "limit": 10}})
     """
 
+    @track_tool_execution()
     def run(self, signature: Optional[Dict[str, Any]] = None):
         if not signature:
             return {
@@ -277,11 +296,9 @@ class AlationBulkRetrievalTool:
             return {"error": e.to_dict()}
 
 
-class AlationLineageTool:
+class AlationLineageTool(BaseAlationTool):
     def __init__(self, api: AlationAPI):
-        self.api = api
-        self.name = self._get_name()
-        self.description = self._get_description()
+        super().__init__(api)
 
     @staticmethod
     def _get_name() -> str:
@@ -334,6 +351,7 @@ class AlationLineageTool:
         - Fully qualified names should be split into their component parts (period separated). The last element is the most specific name.
         """
 
+    @track_tool_execution()
     def run(
         self,
         root_node: LineageRootNode,
@@ -376,11 +394,9 @@ class AlationLineageTool:
             return {"error": e.to_dict()}
 
 
-class UpdateCatalogAssetMetadataTool:
+class UpdateCatalogAssetMetadataTool(BaseAlationTool):
     def __init__(self, api: AlationAPI):
-        self.api = api
-        self.name = self._get_name()
-        self.description = self._get_description()
+        super().__init__(api)
 
     @staticmethod
     def _get_name() -> str:
@@ -437,15 +453,14 @@ class UpdateCatalogAssetMetadataTool:
             - TOOL: Use get_job_status tool with the returned job_id
             """
 
+    @track_tool_execution()
     def run(self, custom_field_values: list[CatalogAssetMetadataPayloadItem]) -> dict:
         return self.api.update_catalog_asset_metadata(custom_field_values)
 
 
-class CheckJobStatusTool:
+class CheckJobStatusTool(BaseAlationTool):
     def __init__(self, api: AlationAPI):
-        self.api = api
-        self.name = self._get_name()
-        self.description = self._get_description()
+        super().__init__(api)
 
     @staticmethod
     def _get_name() -> str:
@@ -469,15 +484,14 @@ class CheckJobStatusTool:
         Returns the job status and details as a JSON object.
         """
 
+    @track_tool_execution()
     def run(self, job_id: int) -> dict:
         return self.api.check_job_status(job_id)
 
 
-class GenerateDataProductTool:
+class GenerateDataProductTool(BaseAlationTool):
     def __init__(self, api: AlationAPI):
-        self.api = api
-        self.name = self._get_name()
-        self.description = self._get_description()
+        super().__init__(api)
 
         # Cache the schema to avoid repeated requests, store as a tuple: (schema_content, timestamp)
         self._cached_schema: Optional[tuple[str, float]] = None
@@ -515,6 +529,7 @@ class GenerateDataProductTool:
         No parameters required - returns the complete instruction set with the latest schema from your Alation instance.
         """
 
+    @track_tool_execution()
     def run(self) -> str:
         """
         Assembles and returns the complete instructional prompt for creating
@@ -530,11 +545,9 @@ class GenerateDataProductTool:
         return final_instructions
 
 
-class CheckDataQualityTool:
+class CheckDataQualityTool(BaseAlationTool):
     def __init__(self, api: AlationAPI):
-        self.api = api
-        self.name = self._get_name()
-        self.description = self._get_description()
+        super().__init__(api)
 
     @staticmethod
     def _get_name() -> str:
@@ -567,6 +580,7 @@ class CheckDataQualityTool:
             
             Returns quality scores, issues, and recommendations in specified format. """
 
+    @track_tool_execution()
     def run(
         self,
         table_ids: Optional[list] = None,
@@ -593,11 +607,9 @@ class CheckDataQualityTool:
             return {"error": e.to_dict()}
 
 
-class GetCustomFieldsDefinitionsTool:
+class GetCustomFieldsDefinitionsTool(BaseAlationTool):
     def __init__(self, api: AlationAPI):
-        self.api = api
-        self.name = self._get_name()
-        self.description = self._get_description()
+        super().__init__(api)
 
     @staticmethod
     def _get_name() -> str:
@@ -653,6 +665,7 @@ class GetCustomFieldsDefinitionsTool:
         Non-admin users: Returns only built-in fields (id: 3 (title), 4 (description), 8 (steward))
         """
 
+    @track_tool_execution()
     def run(self) -> Dict[str, Any]:
         """
         Retrieve all custom field definitions from the Alation instance.
@@ -698,7 +711,7 @@ class GetCustomFieldsDefinitionsTool:
         }
 
 
-class GetDataDictionaryInstructionsTool:
+class GetDataDictionaryInstructionsTool(BaseAlationTool):
     """
     Generates comprehensive instructions for creating Alation Data Dictionary CSV files.
 
@@ -707,9 +720,7 @@ class GetDataDictionaryInstructionsTool:
     """
 
     def __init__(self, api: AlationAPI):
-        self.api = api
-        self.name = self._get_name()
-        self.description = self._get_description()
+        super().__init__(api)
 
     @staticmethod
     def _get_name() -> str:
@@ -749,6 +760,7 @@ class GetDataDictionaryInstructionsTool:
         Complete instruction set with formatting rules, validation schemas, and examples
         """
 
+    @track_tool_execution()
     def run(self) -> str:
         """
         Generate comprehensive data dictionary CSV formatting instructions.
@@ -768,7 +780,9 @@ class GetDataDictionaryInstructionsTool:
             except AlationAPIError as e:
                 # Non-admin users will get 403 - provide instructions without custom fields
                 if e.status_code == 403:
-                    logger.info("Non-admin user detected, providing built-in fields only")
+                    logger.info(
+                        "Non-admin user detected, providing built-in fields only"
+                    )
                     custom_fields = []
                 else:
                     raise

@@ -5,6 +5,7 @@ This module provides common utilities that can be used across different distribu
 of the SDK (core, MCP, LangChain, etc.).
 """
 
+from importlib.metadata import version, PackageNotFoundError
 from typing import Dict
 
 
@@ -49,4 +50,20 @@ def get_tool_metadata(tool_class) -> Dict[str, str]:
     Returns:
         dict: Dictionary with 'name' and 'description' keys
     """
-    return {"name": tool_class._get_name(), "description": tool_class._get_description()}
+    return {
+        "name": tool_class._get_name(),
+        "description": tool_class._get_description(),
+    }
+
+
+def get_sdk_version() -> str:
+    """
+    Get the SDK version.
+
+    Returns:
+        str: The SDK version string.
+    """
+    try:
+        return version("alation_ai_agent_sdk")
+    except PackageNotFoundError:
+        return "UNKNOWN"

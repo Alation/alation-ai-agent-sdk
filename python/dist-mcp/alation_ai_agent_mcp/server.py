@@ -33,9 +33,8 @@ from .utils import (
     setup_logging,
     parse_arguments,
     prepare_server_config,
+    get_mcp_server_version,
 )
-
-MCP_SERVER_VERSION = "0.5.0"
 
 
 def create_fastmcp_server(
@@ -71,7 +70,8 @@ def create_fastmcp_server(
         resource_server_url = external_url if external_url else f"http://{host}:{port}"
 
         auth = AuthSettings(
-            issuer_url=AnyHttpUrl(base_url), resource_server_url=AnyHttpUrl(resource_server_url)
+            issuer_url=AnyHttpUrl(base_url),
+            resource_server_url=AnyHttpUrl(resource_server_url),
         )
         return FastMCP(
             name="Alation MCP Server",
@@ -121,15 +121,17 @@ def create_server(
         # This SDK is reused for all tool calls to avoid repeated authentication
         auth_method, auth_params = get_stdio_auth_params()
 
+        dist_version = get_mcp_server_version()
+
         alation_sdk = AlationAIAgentSDK(
             base_url,
             auth_method,
             auth_params,
-            dist_version=f"mcp-{MCP_SERVER_VERSION}",
+            dist_version=f"mcp-{dist_version}",
         )
 
         validate_cloud_instance(alation_sdk)
-        log_initialization_info(alation_sdk, MCP_SERVER_VERSION)
+        log_initialization_info(alation_sdk, dist_version)
 
         # Register tools with explicit tool configuration (same as HTTP mode)
         register_tools(
@@ -160,12 +162,24 @@ def run_server() -> None:
     """Entry point for running the MCP server."""
     setup_logging()
 
-    transport, base_url, disabled_tools_str, enabled_beta_tools_str, host, port, external_url = (
-        parse_arguments()
-    )
+    (
+        transport,
+        base_url,
+        disabled_tools_str,
+        enabled_beta_tools_str,
+        host,
+        port,
+        external_url,
+    ) = parse_arguments()
 
     mcp = create_server(
-        transport, base_url, disabled_tools_str, enabled_beta_tools_str, host, port, external_url
+        transport,
+        base_url,
+        disabled_tools_str,
+        enabled_beta_tools_str,
+        host,
+        port,
+        external_url,
     )
 
     if transport == "stdio":

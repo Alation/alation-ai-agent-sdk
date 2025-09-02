@@ -22,7 +22,7 @@ from .tools import (
     CheckDataQualityTool,
     GenerateDataProductTool,
     GetCustomFieldsDefinitionsTool,
-    GetDataDictionaryInstructionsTool
+    GetDataDictionaryInstructionsTool,
 )
 from .lineage import (
     LineageToolResponse,
@@ -37,6 +37,7 @@ from .lineage import (
     LineagePagination,
     LineageBatchSizeType,
 )
+from .event import create_event_tracker
 
 
 class AlationTools:
@@ -93,13 +94,22 @@ class AlationAIAgentSDK:
         self.context_tool = AlationContextTool(self.api)
         self.bulk_retrieval_tool = AlationBulkRetrievalTool(self.api)
         self.data_product_tool = AlationGetDataProductTool(self.api)
-        self.update_catalog_asset_metadata_tool = UpdateCatalogAssetMetadataTool(self.api)
+        self.update_catalog_asset_metadata_tool = UpdateCatalogAssetMetadataTool(
+            self.api
+        )
         self.check_job_status_tool = CheckJobStatusTool(self.api)
         self.generate_data_product_tool = GenerateDataProductTool(self.api)
         self.lineage_tool = AlationLineageTool(self.api)
         self.check_data_quality_tool = CheckDataQualityTool(self.api)
-        self.get_custom_fields_definitions_tool = GetCustomFieldsDefinitionsTool(self.api)
-        self.get_data_dictionary_instructions_tool = GetDataDictionaryInstructionsTool(self.api)
+        self.get_custom_fields_definitions_tool = GetCustomFieldsDefinitionsTool(
+            self.api
+        )
+        self.get_data_dictionary_instructions_tool = GetDataDictionaryInstructionsTool(
+            self.api
+        )
+
+        # Configure event tracker for metrics
+        create_event_tracker(base_url=base_url)
 
     BETA_TOOLS = {AlationTools.LINEAGE}
 
@@ -285,7 +295,9 @@ class AlationAIAgentSDK:
         Returns dict (JSON) or str (YAML Markdown) depending on output_format.
         """
         if not table_ids and not sql_query:
-            raise ValueError("At least one of 'table_ids' or 'sql_query' must be provided.")
+            raise ValueError(
+                "At least one of 'table_ids' or 'sql_query' must be provided."
+            )
 
         try:
             return self.check_data_quality_tool.run(
@@ -323,8 +335,7 @@ class AlationAIAgentSDK:
         """
         return self.get_custom_fields_definitions_tool.run()
 
-    def get_data_dictionary_instructions(
-            self) -> str:
+    def get_data_dictionary_instructions(self) -> str:
         """
         Generate comprehensive instructions for creating data dictionary CSV files.
 
@@ -338,14 +349,18 @@ class AlationAIAgentSDK:
 
         tools = []
         if is_tool_enabled(
-            AlationTools.AGGREGATED_CONTEXT, self.disabled_tools, self.enabled_beta_tools
+            AlationTools.AGGREGATED_CONTEXT,
+            self.disabled_tools,
+            self.enabled_beta_tools,
         ):
             tools.append(self.context_tool)
         if is_tool_enabled(
             AlationTools.BULK_RETRIEVAL, self.disabled_tools, self.enabled_beta_tools
         ):
             tools.append(self.bulk_retrieval_tool)
-        if is_tool_enabled(AlationTools.DATA_PRODUCT, self.disabled_tools, self.enabled_beta_tools):
+        if is_tool_enabled(
+            AlationTools.DATA_PRODUCT, self.disabled_tools, self.enabled_beta_tools
+        ):
             tools.append(self.data_product_tool)
         if is_tool_enabled(
             AlationTools.UPDATE_METADATA, self.disabled_tools, self.enabled_beta_tools
@@ -355,16 +370,30 @@ class AlationAIAgentSDK:
             AlationTools.CHECK_JOB_STATUS, self.disabled_tools, self.enabled_beta_tools
         ):
             tools.append(self.check_job_status_tool)
-        if is_tool_enabled(AlationTools.LINEAGE, self.disabled_tools, self.enabled_beta_tools):
+        if is_tool_enabled(
+            AlationTools.LINEAGE, self.disabled_tools, self.enabled_beta_tools
+        ):
             tools.append(self.lineage_tool)
-        if is_tool_enabled(AlationTools.DATA_QUALITY, self.disabled_tools, self.enabled_beta_tools):
+        if is_tool_enabled(
+            AlationTools.DATA_QUALITY, self.disabled_tools, self.enabled_beta_tools
+        ):
             tools.append(self.check_data_quality_tool)
         if is_tool_enabled(
-            AlationTools.GENERATE_DATA_PRODUCT, self.disabled_tools, self.enabled_beta_tools
+            AlationTools.GENERATE_DATA_PRODUCT,
+            self.disabled_tools,
+            self.enabled_beta_tools,
         ):
             tools.append(self.generate_data_product_tool)
-        if is_tool_enabled(AlationTools.GET_CUSTOM_FIELDS_DEFINITIONS, self.disabled_tools, self.enabled_beta_tools):
+        if is_tool_enabled(
+            AlationTools.GET_CUSTOM_FIELDS_DEFINITIONS,
+            self.disabled_tools,
+            self.enabled_beta_tools,
+        ):
             tools.append(self.get_custom_fields_definitions_tool)
-        if is_tool_enabled(AlationTools.GET_DATA_DICTIONARY_INSTRUCTIONS, self.disabled_tools, self.enabled_beta_tools):
+        if is_tool_enabled(
+            AlationTools.GET_DATA_DICTIONARY_INSTRUCTIONS,
+            self.disabled_tools,
+            self.enabled_beta_tools,
+        ):
             tools.append(self.get_data_dictionary_instructions_tool)
         return tools
