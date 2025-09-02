@@ -544,22 +544,22 @@ class CheckDataQualityTool:
     def _get_description() -> str:
         return """
             Check data quality of SQL queries or tables before/after execution.
-            
+
             **Call this function when:**
             - User directly asks to "check data quality"
-            - User requests to "validate data quality" or "assess quality"
+            - User requests to "validate data quality" or "assess quality" of a sql query or table
             - User asks "is this data reliable/trustworthy?"
             - User says "run data quality check" or similar explicit request
-            
-            **Required:** Either table_ids OR sql_query
+
+            **Required:** Either table_ids OR (sql_query AND (ds_id OR db_uri))
             **Key parameters:**
             - sql_query: SQL to analyze for quality issues
             - table_ids: List of table IDs (max 30) - use alation_context to get IDs first
             - ds_id: Required with table_ids, datasource ID from Alation
             - db_uri: Database URI, alternative to ds_id for SQL analysis
-            - output_format: "JSON" (default) or "YAML_MARKDOWN" for readable reports
+            - output_format: "json" (default) or "yaml_markdown" for readable reports
             - dq_score_threshold: Quality threshold (0-100), tables below this are flagged
-            
+
             **Parameter combinations:**
             1. sql_query + ds_id (recommended for SQL validation)
             2. sql_query + db_uri (when ds_id unknown)
