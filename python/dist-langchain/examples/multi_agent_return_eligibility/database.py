@@ -281,6 +281,7 @@ INSERT OR IGNORE INTO product_warranties (customer_id, order_id, product_id, war
   ('C12345', 'ORD-1006', 1, 'Extended', '2023-05-11', '2025-05-11', 'Covers manufacturing defects and accidental damage', 1);
 """
 
+
 def init_database(force_init=False) -> None:
     """Initialize the database with schema and sample data."""
 

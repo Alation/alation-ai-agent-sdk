@@ -29,7 +29,11 @@ import argparse
 from typing import Dict, Any, List
 
 import openai
-from alation_ai_agent_sdk import AlationAIAgentSDK, UserAccountAuthParams, ServiceAccountAuthParams
+from alation_ai_agent_sdk import (
+    AlationAIAgentSDK,
+    UserAccountAuthParams,
+    ServiceAccountAuthParams,
+)
 from alation_ai_agent_sdk.api import AlationAPIError
 
 
@@ -80,12 +84,16 @@ class DataCatalogQA:
             try:
                 user_id = int(user_id_str)
             except ValueError:
-                raise ValueError(f"ALATION_USER_ID must be an integer, got: {user_id_str}")
+                raise ValueError(
+                    f"ALATION_USER_ID must be an integer, got: {user_id_str}"
+                )
 
             return AlationAIAgentSDK(
                 base_url=self.base_url,
                 auth_method=auth_method,
-                auth_params=UserAccountAuthParams(user_id=user_id, refresh_token=refresh_token),
+                auth_params=UserAccountAuthParams(
+                    user_id=user_id, refresh_token=refresh_token
+                ),
             )
 
         elif auth_method == "service_account":
@@ -120,7 +128,9 @@ class DataCatalogQA:
                 "fields_required": ["name", "title", "description", "url"],
                 "fields_optional": ["common_joins", "common_filters", "columns"],
                 "child_objects": {
-                    "columns": {"fields": ["name", "data_type", "description", "sample_values"]}
+                    "columns": {
+                        "fields": ["name", "data_type", "description", "sample_values"]
+                    }
                 },
             },
             "documentation": {
@@ -255,7 +265,7 @@ class DataCatalogQA:
 
                     # Also add a note about this context for the LLM's reference
                     historical_context_str += (
-                        f"Context {i} from question: \"{entry['question']}\"\n"
+                        f'Context {i} from question: "{entry["question"]}"\n'
                     )
 
             # Provide a note about historical context being available
@@ -290,7 +300,9 @@ class DataCatalogQA:
 
         return response.choices[0].message.content.strip()
 
-    def answer_question(self, question: str, use_conversation_history: bool = False) -> str:
+    def answer_question(
+        self, question: str, use_conversation_history: bool = False
+    ) -> str:
         """
         Main method to answer a question about the data catalog.
 
@@ -329,7 +341,9 @@ def main():
     """Entry point for the QA application."""
     # Parse command line arguments
     parser = argparse.ArgumentParser(description="Data Catalog QA Bot")
-    parser.add_argument("--question", "-q", type=str, help="Question to ask about the data catalog")
+    parser.add_argument(
+        "--question", "-q", type=str, help="Question to ask about the data catalog"
+    )
     parser.add_argument(
         "--conversation",
         "-c",
@@ -353,7 +367,9 @@ def main():
             # Interactive mode
             print("\nData Catalog QA Bot")
             if args.conversation:
-                print("Conversation mode enabled - context will be maintained between questions.")
+                print(
+                    "Conversation mode enabled - context will be maintained between questions."
+                )
             print("Type 'exit' to quit.\n")
 
             while True:

@@ -64,7 +64,9 @@ def mock_requests_post(monkeypatch):
             )
 
         if raise_for_status_exception:
-            mock_response.raise_for_status = MagicMock(side_effect=raise_for_status_exception)
+            mock_response.raise_for_status = MagicMock(
+                side_effect=raise_for_status_exception
+            )
         else:
             mock_response.raise_for_status = MagicMock()
 
@@ -96,7 +98,9 @@ def mock_requests_post(monkeypatch):
         # Fallback for unmocked POST requests
         fallback_response = MagicMock(spec=requests.Response)
         fallback_response.status_code = 404
-        fallback_response.json = MagicMock(return_value={"error": "Not Found - Unmocked POST URL"})
+        fallback_response.json = MagicMock(
+            return_value={"error": "Not Found - Unmocked POST URL"}
+        )
         fallback_response.raise_for_status = MagicMock(
             side_effect=requests.exceptions.HTTPError("404 Not Found")
         )
@@ -128,7 +132,9 @@ def mock_requests_get(monkeypatch):
             )
 
         if raise_for_status_exception:
-            mock_response.raise_for_status = MagicMock(side_effect=raise_for_status_exception)
+            mock_response.raise_for_status = MagicMock(
+                side_effect=raise_for_status_exception
+            )
         else:
             mock_response.raise_for_status = MagicMock()
 
@@ -153,7 +159,9 @@ def mock_requests_get(monkeypatch):
         # Fallback for unmocked GET requests
         fallback_response = MagicMock(spec=requests.Response)
         fallback_response.status_code = 404
-        fallback_response.json = MagicMock(return_value={"error": "Not Found - Unmocked GET URL"})
+        fallback_response.json = MagicMock(
+            return_value={"error": "Not Found - Unmocked GET URL"}
+        )
         fallback_response.raise_for_status = MagicMock(
             side_effect=requests.exceptions.HTTPError("404 Not Found")
         )
@@ -168,9 +176,13 @@ def mock_requests_get(monkeypatch):
 
 def test_sdk_valid_initialization_user_account(mock_requests_post, mock_requests_get):
     """Test valid SDK init with user_account auth method."""
-    mock_requests_post("createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS)
+    mock_requests_post(
+        "createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS
+    )
     mock_requests_get("license", response_json={"is_cloud": True})
-    mock_requests_get("full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"})
+    mock_requests_get(
+        "full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"}
+    )
     sdk = AlationAIAgentSDK(
         base_url=MOCK_BASE_URL,
         auth_method=AUTH_METHOD_USER_ACCOUNT,
@@ -183,11 +195,15 @@ def test_sdk_valid_initialization_user_account(mock_requests_post, mock_requests
     assert sdk.api.dist_version == "test-dist-version"
 
 
-def test_sdk_valid_initialization_service_account(mock_requests_post, mock_requests_get):
+def test_sdk_valid_initialization_service_account(
+    mock_requests_post, mock_requests_get
+):
     """Test valid SDK init with service_account auth method."""
     mock_requests_post("oauth/v2/token", response_json=JWT_RESPONSE_SUCCESS)
     mock_requests_get("license", response_json={"is_cloud": True})
-    mock_requests_get("full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"})
+    mock_requests_get(
+        "full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"}
+    )
     sdk = AlationAIAgentSDK(
         base_url=MOCK_BASE_URL,
         auth_method=AUTH_METHOD_SERVICE_ACCOUNT,
@@ -203,8 +219,10 @@ def test_sdk_valid_initialization_service_account(mock_requests_post, mock_reque
 def test_sdk_valid_initialization_session_auth(mock_requests_get):
     """Test valid SDK init with session auth method."""
     mock_requests_get("license", response_json={"is_cloud": True})
-    mock_requests_get("full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"})
-    
+    mock_requests_get(
+        "full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"}
+    )
+
     sdk = AlationAIAgentSDK(
         base_url=MOCK_BASE_URL,
         auth_method=AUTH_METHOD_SESSION,
@@ -246,7 +264,9 @@ def test_sdk_valid_initialization_session_auth(mock_requests_get):
         ),
     ],
 )
-def test_sdk_invalid_initialization(auth_method, auth_params, expected_error_message_part):
+def test_sdk_invalid_initialization(
+    auth_method, auth_params, expected_error_message_part
+):
     """Test invalid SDK initialization scenarios."""
     with pytest.raises(ValueError) as excinfo:
         AlationAIAgentSDK(
@@ -284,10 +304,14 @@ def test_token_reuse_and_refresh(
     expected_token_valid_calls,
 ):
     """Test token reuse and refresh for both auth methods."""
-    mock_requests_post("createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS)
+    mock_requests_post(
+        "createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS
+    )
     mock_requests_post("oauth/v2/token", response_json=JWT_RESPONSE_SUCCESS)
     mock_requests_get("license", response_json={"is_cloud": True})
-    mock_requests_get("full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"})
+    mock_requests_get(
+        "full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"}
+    )
     mock_requests_get("context/", response_json=CONTEXT_RESPONSE_SUCCESS)
 
     sdk = AlationAIAgentSDK(
@@ -298,15 +322,18 @@ def test_token_reuse_and_refresh(
     )
     sdk.api.access_token = "mock-access-token"  # Ensure access_token is set
 
-    with patch.object(
-        sdk.api,
-        "_token_is_valid_on_server",
-        side_effect=side_effect,
-    ) as mock_token_valid, patch.object(
-        sdk.api,
-        "_generate_new_token",
-        wraps=sdk.api._generate_new_token,
-    ) as spy_generate_token:
+    with (
+        patch.object(
+            sdk.api,
+            "_token_is_valid_on_server",
+            side_effect=side_effect,
+        ) as mock_token_valid,
+        patch.object(
+            sdk.api,
+            "_generate_new_token",
+            wraps=sdk.api._generate_new_token,
+        ) as spy_generate_token,
+    ):
         sdk.get_context("first question")  # Valid token reused
         sdk.get_context("second question")  # Token refreshed
 
@@ -316,7 +343,9 @@ def test_token_reuse_and_refresh(
 
 def test_error_handling_in_token_validation(mock_requests_post):
     """Test that errors in token validation raise AlationAPIError."""
-    mock_requests_post("createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS)
+    mock_requests_post(
+        "createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS
+    )
 
     sdk = AlationAIAgentSDK(
         base_url=MOCK_BASE_URL,
@@ -330,7 +359,9 @@ def test_error_handling_in_token_validation(mock_requests_post):
         "_is_access_token_valid",
         side_effect=AlationAPIError("Mocked error in access token validation"),
     ) as mock_access_token_valid:
-        with pytest.raises(AlationAPIError, match="Mocked error in access token validation"):
+        with pytest.raises(
+            AlationAPIError, match="Mocked error in access token validation"
+        ):
             sdk.api._is_access_token_valid()
         mock_access_token_valid.assert_called_once()
 
@@ -339,18 +370,25 @@ def test_error_handling_in_token_validation(mock_requests_post):
         "_is_jwt_token_valid",
         side_effect=AlationAPIError("Mocked error in JWT token validation"),
     ) as mock_jwt_token_valid:
-        with pytest.raises(AlationAPIError, match="Mocked error in JWT token validation"):
+        with pytest.raises(
+            AlationAPIError, match="Mocked error in JWT token validation"
+        ):
             sdk.api._is_jwt_token_valid()
         mock_jwt_token_valid.assert_called_once()
+
 
 def test_lineage_beta_tools_disabled_by_default(
     mock_requests_get,
     mock_requests_post,
 ):
-    mock_requests_post("createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS)
+    mock_requests_post(
+        "createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS
+    )
     mock_requests_post("oauth/v2/token", response_json=JWT_RESPONSE_SUCCESS)
     mock_requests_get("license", response_json={"is_cloud": True})
-    mock_requests_get("full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"})
+    mock_requests_get(
+        "full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"}
+    )
 
     sdk = AlationAIAgentSDK(
         base_url=MOCK_BASE_URL,
@@ -359,20 +397,25 @@ def test_lineage_beta_tools_disabled_by_default(
     )
     assert AlationTools.LINEAGE not in sdk.enabled_beta_tools
 
+
 def test_check_job_status_tool_explicitly_disabled(
     mock_requests_get,
     mock_requests_post,
 ):
-    mock_requests_post("createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS)
+    mock_requests_post(
+        "createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS
+    )
     mock_requests_post("oauth/v2/token", response_json=JWT_RESPONSE_SUCCESS)
     mock_requests_get("license", response_json={"is_cloud": True})
-    mock_requests_get("full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"})
+    mock_requests_get(
+        "full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"}
+    )
 
     sdk = AlationAIAgentSDK(
         base_url=MOCK_BASE_URL,
         auth_method=AUTH_METHOD_USER_ACCOUNT,
         auth_params=UserAccountAuthParams(MOCK_USER_ID, MOCK_REFRESH_TOKEN),
-        disabled_tools={AlationTools.CHECK_JOB_STATUS}
+        disabled_tools={AlationTools.CHECK_JOB_STATUS},
     )
     assert AlationTools.CHECK_JOB_STATUS in sdk.disabled_tools
     assert sdk.check_job_status not in sdk.get_tools()
@@ -381,22 +424,23 @@ def test_check_job_status_tool_explicitly_disabled(
 def test_check_job_status_session_auth_restriction(mock_requests_get):
     """Test that check_job_status is properly restricted for session authentication."""
     mock_requests_get("license", response_json={"is_cloud": True})
-    mock_requests_get("full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"})
-    
+    mock_requests_get(
+        "full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"}
+    )
+
     sdk = AlationAIAgentSDK(
         base_url=MOCK_BASE_URL,
         auth_method=AUTH_METHOD_SESSION,
         auth_params=SessionAuthParams(MOCK_SESSION_COOKIE),
     )
-    
+
     # The SDK should be initialized successfully
     assert sdk.api.auth_method == AUTH_METHOD_SESSION
-    
+
     # But calling check_job_status should raise an error
     with pytest.raises(AlationAPIError) as exc_info:
         sdk.check_job_status(job_id=123)
-    
+
     error = exc_info.value
     assert "Session authentication is not supported for check_job_status" in str(error)
     assert error.reason == "Unsupported Authentication Method"
-

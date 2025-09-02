@@ -16,7 +16,9 @@ def get_custom_field_definitions_tool(mock_api):
     return GetCustomFieldsDefinitionsTool(mock_api)
 
 
-def test_get_custom_field_definitions_tool_run_success(get_custom_field_definitions_tool, mock_api):
+def test_get_custom_field_definitions_tool_run_success(
+    get_custom_field_definitions_tool, mock_api
+):
     """Test successful custom field definitions retrieval."""
     mock_response = [
         {
@@ -28,7 +30,7 @@ def test_get_custom_field_definitions_tool_run_success(get_custom_field_definiti
             "tooltip_text": "Classification level for data",
             "allow_multiple": False,
             "name_plural": "Data Classifications",
-            "extra_field": "should_be_filtered"
+            "extra_field": "should_be_filtered",
         },
         {
             "id": 10002,
@@ -38,8 +40,8 @@ def test_get_custom_field_definitions_tool_run_success(get_custom_field_definiti
             "options": None,
             "tooltip_text": None,
             "allow_multiple": False,
-            "name_plural": ""
-        }
+            "name_plural": "",
+        },
     ]
     mock_api.get_custom_fields.return_value = mock_response
 
@@ -60,14 +62,16 @@ def test_get_custom_field_definitions_tool_run_success(get_custom_field_definiti
     assert "extra_field" not in first_field
 
 
-def test_get_custom_field_definitions_tool_run_403_returns_builtin_fields(get_custom_field_definitions_tool, mock_api):
+def test_get_custom_field_definitions_tool_run_403_returns_builtin_fields(
+    get_custom_field_definitions_tool, mock_api
+):
     """Test handling of 403 errors - should return built-in fields."""
     # Mock 403 API error
     api_error = AlationAPIError(
         message="Forbidden",
         status_code=403,
         reason="Forbidden",
-        resolution_hint="Admin permissions required"
+        resolution_hint="Admin permissions required",
     )
     mock_api.get_custom_fields.side_effect = api_error
 
@@ -90,14 +94,16 @@ def test_get_custom_field_definitions_tool_run_403_returns_builtin_fields(get_cu
     assert 8 in field_ids  # steward
 
 
-def test_get_custom_field_definitions_tool_run_non_403_api_error(get_custom_field_definitions_tool, mock_api):
+def test_get_custom_field_definitions_tool_run_non_403_api_error(
+    get_custom_field_definitions_tool, mock_api
+):
     """Test handling of non-403 API errors - should return error."""
     # Mock non-403 API error
     api_error = AlationAPIError(
         message="Internal Server Error",
         status_code=500,
         reason="Internal Server Error",
-        resolution_hint="Server error occurred"
+        resolution_hint="Server error occurred",
     )
     mock_api.get_custom_fields.side_effect = api_error
 
@@ -113,7 +119,9 @@ def test_get_custom_field_definitions_tool_run_non_403_api_error(get_custom_fiel
     assert result["error"]["reason"] == "Internal Server Error"
 
 
-def test_get_custom_field_definitions_tool_run_empty_response(get_custom_field_definitions_tool, mock_api):
+def test_get_custom_field_definitions_tool_run_empty_response(
+    get_custom_field_definitions_tool, mock_api
+):
     """Test handling of empty custom fields response."""
     mock_api.get_custom_fields.return_value = []
 

@@ -1,5 +1,4 @@
 import pytest
-from alation_ai_agent_sdk import AlationAIAgentSDK
 from alation_ai_agent_sdk.api import AlationAPIError
 
 

@@ -2,11 +2,13 @@ from typing import List, Dict, Set, Union
 from typing_extensions import TypedDict
 
 OType = str
+
+
 class LineageGraphNode(TypedDict):
     fully_qualified_name: str
     id: Union[str, int]
     otype: OType
-    neighbors: List['LineageGraphNode']
+    neighbors: List["LineageGraphNode"]
 
 
 def get_node_object_key(node: LineageGraphNode) -> str:
@@ -24,7 +26,7 @@ def get_node_object_key(node: LineageGraphNode) -> str:
 
 def get_initial_graph_state(
     nodes: List[Dict],
-  ) -> tuple[List[str], Dict[str, Dict], Set[str]]:
+) -> tuple[List[str], Dict[str, Dict], Set[str]]:
     """
     Get the initial state of the graph from the list of nodes.
 
@@ -72,7 +74,7 @@ def resolve_neighbors(
         return (visited[node_key], visited)
 
     node = key_to_node[node_key]
-    if node['otype'] in allowed_types:
+    if node["otype"] in allowed_types:
         new_neighbors = []
         if "neighbors" not in node:
             visited[node_key] = [key_to_node[node_key]]
@@ -80,15 +82,17 @@ def resolve_neighbors(
 
         for neighbor_node in node["neighbors"]:
             neighbor_key = get_node_object_key(neighbor_node)
-            neighbors_neighbors, visited = resolve_neighbors(neighbor_key, key_to_node, visited, allowed_types)
+            neighbors_neighbors, visited = resolve_neighbors(
+                neighbor_key, key_to_node, visited, allowed_types
+            )
             new_neighbors.extend(neighbors_neighbors)
         visited[node_key] = [key_to_node[node_key]]
         unique_new_neighbors = {get_node_object_key(n): n for n in new_neighbors}
-        node['neighbors'] = [
+        node["neighbors"] = [
             new_neighbor
             for new_neighbor in new_neighbors
             if get_node_object_key(new_neighbor) in unique_new_neighbors
-          ]
+        ]
         return ([key_to_node[node_key]], visited)
 
     # Omit this node, but keep its children (recursively)
@@ -98,7 +102,9 @@ def resolve_neighbors(
         return (collected, visited)
     for neighbor_node in node["neighbors"]:
         neighbor_key = get_node_object_key(neighbor_node)
-        neighbors_neighbors, visited = resolve_neighbors(neighbor_key, key_to_node, visited, allowed_types)
+        neighbors_neighbors, visited = resolve_neighbors(
+            neighbor_key, key_to_node, visited, allowed_types
+        )
         collected.extend(neighbors_neighbors)
     visited[node_key] = collected
     return (collected, visited)
@@ -120,8 +126,14 @@ def filter_graph(nodes: List[Dict], allowed_types: Set[str]) -> List[Dict]:
 
     # Populate the visited nodes and patch up neighbors to account for any that were omitted
     for node in nodes:
-        resolve_neighbors(get_node_object_key(node), key_to_node, visited, allowed_types)
-    kept_keys = {node_key for node_key in visited if key_to_node[node_key]['otype'] in allowed_types}
+        resolve_neighbors(
+            get_node_object_key(node), key_to_node, visited, allowed_types
+        )
+    kept_keys = {
+        node_key
+        for node_key in visited
+        if key_to_node[node_key]["otype"] in allowed_types
+    }
     # Free the memory before we build the filtered graph
     visited = {}
 
@@ -130,9 +142,9 @@ def filter_graph(nodes: List[Dict], allowed_types: Set[str]) -> List[Dict]:
 
 
 def build_filtered_graph(
-      ordered_keys: List[str],
-      kept_keys: Set[str],
-      key_to_node: Dict[str, Dict],
+    ordered_keys: List[str],
+    kept_keys: Set[str],
+    key_to_node: Dict[str, Dict],
 ) -> List[Dict]:
     """
     Builds the filtered graph from the ordered keys and kept keys.
@@ -157,7 +169,9 @@ def build_filtered_graph(
         if "fully_qualified_name" in original_node:
             new_node["fully_qualified_name"] = original_node["fully_qualified_name"]
         new_node["neighbors"] = [
-            n for n in original_node.get("neighbors", []) if get_node_object_key(n) in kept_keys
+            n
+            for n in original_node.get("neighbors", [])
+            if get_node_object_key(n) in kept_keys
         ]
         new_nodes.append(new_node)
     # Each item in the list have have neighbors but their neighbors are not allowed otherwise we're repeating
