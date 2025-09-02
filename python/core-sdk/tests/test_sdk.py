@@ -219,8 +219,10 @@ def test_sdk_valid_initialization_service_account(
 def test_sdk_valid_initialization_session_auth(mock_requests_get):
     """Test valid SDK init with session auth method."""
     mock_requests_get("license", response_json={"is_cloud": True})
-    mock_requests_get("full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"})
-    
+    mock_requests_get(
+        "full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"}
+    )
+
     sdk = AlationAIAgentSDK(
         base_url=MOCK_BASE_URL,
         auth_method=AUTH_METHOD_SESSION,
@@ -422,22 +424,23 @@ def test_check_job_status_tool_explicitly_disabled(
 def test_check_job_status_session_auth_restriction(mock_requests_get):
     """Test that check_job_status is properly restricted for session authentication."""
     mock_requests_get("license", response_json={"is_cloud": True})
-    mock_requests_get("full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"})
-    
+    mock_requests_get(
+        "full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"}
+    )
+
     sdk = AlationAIAgentSDK(
         base_url=MOCK_BASE_URL,
         auth_method=AUTH_METHOD_SESSION,
         auth_params=SessionAuthParams(MOCK_SESSION_COOKIE),
     )
-    
+
     # The SDK should be initialized successfully
     assert sdk.api.auth_method == AUTH_METHOD_SESSION
-    
+
     # But calling check_job_status should raise an error
     with pytest.raises(AlationAPIError) as exc_info:
         sdk.check_job_status(job_id=123)
-    
+
     error = exc_info.value
     assert "Session authentication is not supported for check_job_status" in str(error)
     assert error.reason == "Unsupported Authentication Method"
-
