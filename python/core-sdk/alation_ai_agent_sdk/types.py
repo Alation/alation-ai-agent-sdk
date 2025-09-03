@@ -21,7 +21,10 @@ class SessionAuthParams(NamedTuple):
 
 
 AuthParams = Union[
-    UserAccountAuthParams, ServiceAccountAuthParams, BearerTokenAuthParams, SessionAuthParams
+    UserAccountAuthParams,
+    ServiceAccountAuthParams,
+    BearerTokenAuthParams,
+    SessionAuthParams,
 ]
 
 

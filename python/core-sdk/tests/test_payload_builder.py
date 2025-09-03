@@ -5,7 +5,12 @@ from alation_ai_agent_sdk.api import CatalogAssetMetadataPayloadBuilder
 def test_payload_builder_valid_glossary():
     payload = [
         {"oid": "1", "otype": "glossary_term", "field_id": 3, "value": "Some text"},
-        {"oid": "2", "otype": "glossary_v3", "field_id": 4, "value": "<b>Rich text</b>"},
+        {
+            "oid": "2",
+            "otype": "glossary_v3",
+            "field_id": 4,
+            "value": "<b>Rich text</b>",
+        },
     ]
     result = CatalogAssetMetadataPayloadBuilder.build(payload)
     assert result == payload

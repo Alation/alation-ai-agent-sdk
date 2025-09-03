@@ -74,7 +74,9 @@ def mock_requests_get(monkeypatch):
                 response_mock = MagicMock()
                 response_mock.status_code = mock_response["status_code"]
                 response_mock.json.return_value = (
-                    mock_response["response_json"] if mock_response["response_json"] != [] else []
+                    mock_response["response_json"]
+                    if mock_response["response_json"] != []
+                    else []
                 )
                 return response_mock
         raise ValueError(f"No mock response found for URL: {url}")
@@ -158,7 +160,9 @@ def test_get_data_products_by_id(alation_api, mock_requests_get, mock_token_meth
     )
 
 
-def test_get_data_products_by_id_not_found(alation_api, mock_requests_get, mock_token_methods):
+def test_get_data_products_by_id_not_found(
+    alation_api, mock_requests_get, mock_token_methods
+):
     """Test get_data_products method with non-existent product_id."""
     mock_requests_get(
         "data-product/non_existent",
@@ -169,7 +173,9 @@ def test_get_data_products_by_id_not_found(alation_api, mock_requests_get, mock_
     response = alation_api.get_data_products(product_id="non_existent")
 
     assert len(response["results"]) == 0
-    assert response["instructions"] == "No data products found for the given product ID."
+    assert (
+        response["instructions"] == "No data products found for the given product ID."
+    )
 
 
 def test_get_data_products_query_multiple_results(
