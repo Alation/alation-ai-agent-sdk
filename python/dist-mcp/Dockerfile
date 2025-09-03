@@ -79,7 +79,7 @@ COPY --from=builder --chown=appuser:appuser /app/alation_ai_agent_mcp ./alation_
 
 ENV PATH="/app/.venv/bin:$PATH"
 ENV VIRTUAL_ENV="/app/.venv"
-ENV PYTHONPATH="/app"
+ENV PYTHONPATH="/app:${PYTHONPATH}"
 # Prevent Python from writing .pyc files
 ENV PYTHONDONTWRITEBYTECODE=1
 # Ensure Python output is unbuffered
