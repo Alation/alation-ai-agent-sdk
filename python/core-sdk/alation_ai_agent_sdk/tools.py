@@ -549,7 +549,7 @@ class CheckDataQualityTool:
 
             IMPORTANT: Either a table_ids or sql_query parameter is required. If sql_query is provided, either ds_id or db_uri must also be included.
 
-            VALID PARAMETER COMBINATONS:
+            VALID PARAMETER COMBINATIONS:
             1. table_ids (for checking specific tables)
             2. sql_query + ds_id (recommended for SQL query validation)
             3. sql_query + db_uri (recommended for SQL query validation when ds_id is unknown)
