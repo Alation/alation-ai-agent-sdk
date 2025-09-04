@@ -109,7 +109,7 @@ class AlationAIAgentSDK:
         )
 
         # Configure event tracker for metrics
-        create_event_tracker(base_url=base_url)
+        create_event_tracker(self.api)
 
     BETA_TOOLS = {AlationTools.LINEAGE}
 
@@ -147,6 +147,29 @@ class AlationAIAgentSDK:
             }
         """
         return self.bulk_retrieval_tool.run(signature)
+
+    async def get_bulk_objects_async(self, signature: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Fetch bulk objects from Alation's catalog based on signature specifications.
+
+        Args:
+            signature (Dict[str, Any]): A signature defining object types, fields, and filters.
+
+        Returns:
+            Dict[str, Any]: Contains the catalog objects matching the signature criteria.
+
+        Example signature:
+            {
+                "table": {
+                    "fields_required": ["name", "title", "description", "url"],
+                    "search_filters": {
+                        "flags": ["Endorsement"]
+                    },
+                    "limit": 100
+                }
+            }
+        """
+        return await self.bulk_retrieval_tool.run_async(signature)
 
     def get_data_products(
         self, product_id: Optional[str] = None, query: Optional[str] = None

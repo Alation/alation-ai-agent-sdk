@@ -2,9 +2,14 @@ import datetime
 import time
 import logging
 import asyncio
-from typing import Any, Dict, Optional, Callable
+from typing import Any, Dict, Optional, Callable, Union
 from functools import wraps
 import httpx
+
+from .api import AlationAPI
+
+# Set the global logging level to INFO
+logging.basicConfig(level=logging.INFO)
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +25,7 @@ class ToolEvent:
         output: Any,
         duration_ms: float,
         success: bool,
-        error: Optional[str] = None,
+        error: Optional[Union[str, dict]] = None,
         custom_metrics: Optional[Dict[str, Any]] = None,
         timestamp: Optional[datetime.datetime] = None,
     ):
@@ -55,12 +60,27 @@ class ToolEvent:
             "tool_version": self.tool_version,
             "tool_metadata": tool_metadata,
             "context_char_count": len(self.output),
-            "request_duration_ms": self.duration_ms,
+            "request_duration_ms": int(self.duration_ms),
             "status_code": self.get_status_code(self.success, self.error),
-            "error_message": self.error,
-            "custom_metrics": self.custom_metrics,
+            "error_message": self.get_error_message(self.error),
             "timestamp": self.timestamp.isoformat(),
         }
+
+    def get_status_code(self, success: bool, error: Optional[Union[str, dict]]) -> int:
+        if success:
+            return 200
+        elif error and isinstance(error, dict) and "status_code" in error:
+            # If the error is a dict and has a status_code, return it
+            return error["status_code"]
+        else:
+            return 0
+
+    def get_error_message(self, error: Optional[Union[str, dict]]) -> Optional[str]:
+        if isinstance(error, str):
+            return error
+        if isinstance(error, dict) and "message" in error:
+            return error["message"]
+        return None
 
 
 class EventTracker:
@@ -68,35 +88,29 @@ class EventTracker:
 
     def __init__(
         self,
-        endpoint_url: str,
+        api: AlationAPI,
         timeout: float = 5.0,
         max_retries: int = 2,
         headers: Optional[Dict[str, str]] = None,
     ):
-        self.client = httpx.AsyncClient()
-        self.endpoint_url = endpoint_url
+        self.api = api
         self.timeout = timeout
         self.max_retries = max_retries
         self.headers = headers or {}
 
-    async def send_event(self, event: ToolEvent):
+    async def send_event_async(self, event: ToolEvent):
         """Send the event to the event tracking endpoint asynchronously."""
         try:
             payload = event.to_payload()
-            headers = {"Content-Type": "application/json", **self.headers}
+            logger.debug(f"Payload: {payload}")
 
             for attempt in range(self.max_retries + 1):
                 try:
-                    response = await self.client.post(
-                        self.endpoint_url,
-                        json=payload,
-                        headers=headers,
-                        timeout=self.timeout,
+                    await self.api.post_tool_event_async(
+                        payload, timeout=self.timeout, extra_headers=self.headers
                     )
-                    logger.debug(
-                        f"Event sent successfully: {event.tool_name}.{event.method_name}"
-                    )
-                    response.raise_for_status()
+                    logger.debug(f"Event sent successfully: {event.tool_name}")
+                    return
                 except httpx.RequestError as e:
                     if attempt == self.max_retries:
                         logger.warning(
@@ -107,6 +121,35 @@ class EventTracker:
                             f"Event send attempt {attempt + 1} failed, retrying: {e}"
                         )
                         await asyncio.sleep(0.1 * (2**attempt))  # Exponential backoff
+        except asyncio.CancelledError:
+            # Handle cancellation gracefully - this is expected for fire-and-forget tasks
+            logger.debug(f"Telemetry task cancelled for {event.tool_name}")
+        except Exception as e:
+            logger.error(f"Unexpected error sending event: {e}")
+
+    def send_event(self, event: ToolEvent):
+        """Send the event synchronously using httpx.Client (for background threads)."""
+        try:
+            payload = event.to_payload()
+            logger.debug(f"Payload: {payload}")
+
+            for attempt in range(self.max_retries + 1):
+                try:
+                    self.api.post_tool_event(
+                        payload, timeout=self.timeout, extra_headers=self.headers
+                    )
+                    logger.debug(f"Event sent successfully: {event.tool_name}")
+                    return
+                except httpx.RequestError as e:
+                    if attempt == self.max_retries:
+                        logger.warning(
+                            f"Failed to send event after {self.max_retries + 1} attempts: {e}"
+                        )
+                    else:
+                        logger.debug(
+                            f"Event send attempt {attempt + 1} failed, retrying: {e}"
+                        )
+                        time.sleep(0.1 * (2**attempt))  # Exponential backoff
         except Exception as e:
             logger.error(f"Unexpected error sending event: {e}")
 
@@ -116,7 +159,7 @@ _event_tracker: Optional[EventTracker] = None
 
 
 def create_event_tracker(
-    base_url: Optional[str] = None,
+    api: AlationAPI,
     timeout: float = 5.0,
     max_retries: int = 2,
     headers: Optional[Dict[str, str]] = None,
@@ -139,19 +182,13 @@ def create_event_tracker(
     if _event_tracker is not None:
         return _event_tracker
 
-    # Create new tracker if base_url provided
-    if base_url:
-        endpoint_url = base_url.rstrip("/") + "/tool/event"
-        _event_tracker = EventTracker(
-            endpoint_url=endpoint_url,
-            timeout=timeout,
-            max_retries=max_retries,
-            headers=headers,
-        )
-        return _event_tracker
-
-    # No existing tracker and no base_url provided
-    return None
+    _event_tracker = EventTracker(
+        api=api,
+        timeout=timeout,
+        max_retries=max_retries,
+        headers=headers,
+    )
+    return _event_tracker
 
 
 def get_event_tracker() -> Optional[EventTracker]:
@@ -246,15 +283,20 @@ def track_tool_execution(
                     custom_metrics=custom_metrics,
                 )
 
-                # Handle async send_event call
+                # Handle event sending - use simple fire-and-forget approach
                 try:
-                    # Check if we're already in an event loop
-                    asyncio.get_running_loop()
-                    # If we're already in an event loop, create a task
-                    asyncio.create_task(tracker.send_event(event))
-                except RuntimeError:
-                    # No event loop is running, create a new one
-                    asyncio.run(tracker.send_event(event))
+                    import threading
+
+                    def send_in_background():
+                        # Use the synchronous method to avoid event loop issues
+                        tracker.send_event(event)
+
+                    # Use Timer with immediate execution (0 delay)
+                    timer = threading.Timer(0.0, send_in_background)
+                    timer.daemon = True
+                    timer.start()
+                except Exception as e:
+                    logger.debug(f"Could not send telemetry event: {e}")
 
         return wrapper
 
@@ -317,7 +359,6 @@ def track_async_tool_execution(
                 return output
             except Exception as e:
                 success = False
-                error = str(e)
                 output = {"error": str(e)}
                 raise
             finally:
@@ -349,9 +390,22 @@ def track_async_tool_execution(
                     error=error,
                     custom_metrics=custom_metrics,
                 )
+                # await asyncio.create_task(tracker.send_event_async(event))
+                try:
+                    import threading
 
-                # For async functions, fire-and-forget the event tracking
-                asyncio.create_task(tracker.send_event(event))
+                    async def send_in_background():
+                        # Use the synchronous method to avoid event loop issues
+                        await tracker.send_event_async(event)
+
+                    # Use Timer with immediate execution (0 delay)
+                    timer = threading.Timer(
+                        0.0, lambda: asyncio.run(send_in_background())
+                    )
+                    timer.daemon = True
+                    timer.start()
+                except Exception as e:
+                    logger.debug(f"Could not send telemetry event: {e}")
 
         return wrapper
 

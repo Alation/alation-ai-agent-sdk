@@ -34,7 +34,7 @@ from alation_ai_agent_sdk.data_product import (
 
 from alation_ai_agent_sdk.data_dict import build_optimized_instructions
 
-from alation_ai_agent_sdk.event import track_tool_execution
+from alation_ai_agent_sdk.event import track_tool_execution, track_async_tool_execution
 
 from alation_ai_agent_sdk.fields import (
     filter_field_properties,
@@ -292,6 +292,29 @@ class AlationBulkRetrievalTool(BaseAlationTool):
 
         try:
             return self.api.get_bulk_objects_from_catalog(signature)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
+    @track_async_tool_execution()
+    async def run_async(self, signature: Optional[Dict[str, Any]] = None):
+        if not signature:
+            return {
+                "error": {
+                    "message": "Signature parameter is required for bulk retrieval",
+                    "reason": "Missing Required Parameter",
+                    "resolution_hint": "Provide a signature specifying object types, fields, and optional filters. See tool description for examples.",
+                    "example_signature": {
+                        "table": {
+                            "fields_required": ["name", "title", "description", "url"],
+                            "search_filters": {"flags": ["Endorsement"]},
+                            "limit": 10,
+                        }
+                    },
+                }
+            }
+
+        try:
+            return await self.api.get_bulk_objects_from_catalog_async(signature)
         except AlationAPIError as e:
             return {"error": e.to_dict()}
 
