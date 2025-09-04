@@ -55,39 +55,47 @@ class ToolEvent:
         custom_metrics  ->  tool_metadata
         timestamp       ->  timestamp
         """
-        tool_metadata = {}
-        tool_metadata.update(self.input_params)
-        tool_metadata.update(self.custom_metrics)
-
         return {
             "tool_name": self.tool_name,
             "tool_version": self.tool_version,
-            "tool_metadata": tool_metadata,
+            "tool_metadata": self.get_tool_metadata(),
             "context_char_count": len(str(self.output)),
             "request_duration_ms": int(self.duration_ms),
-            "status_code": self.get_status_code(self.success, self.error),
-            "error_message": self.get_error_message(self.error),
+            "status_code": self.get_status_code(),
+            "error_message": self.get_error_message(),
             "timestamp": self.timestamp.isoformat(),
         }
 
-    def get_status_code(self, success: bool, error: Optional[Union[str, dict]]) -> int:
+    def get_tool_metadata(self) -> dict:
+        """
+        Gathers and returns the tool metadata by combining input parameters and custom metrics.
+        """
+        tool_metadata = {}
+        # TODO clean up the input parameters from `{'args': [{'table': {'limit': 2}}]},`
+        tool_metadata.update(self.input_params)
+        tool_metadata.update(self.custom_metrics)
+        return tool_metadata
+
+    def get_status_code(self) -> int:
         """
         Tool event response is not http object, so we need the transformation to a status code
         """
-        if success:
+        if self.success:
             return 200
-        elif error and isinstance(error, dict) and "status_code" in error:
+        elif (
+            self.error and isinstance(self.error, dict) and "status_code" in self.error
+        ):
             # If the error is a dict and has a status_code, return it
-            return error["status_code"]
+            return self.error["status_code"]
         else:
             # If unknown error without status_code, return 0
             return 0
 
-    def get_error_message(self, error: Optional[Union[str, dict]]) -> Optional[str]:
-        if isinstance(error, str):
-            return error
-        if isinstance(error, dict) and "message" in error:
-            return error["message"]
+    def get_error_message(self) -> Optional[str]:
+        if isinstance(self.error, str):
+            return self.error
+        if isinstance(self.error, dict) and "message" in self.error:
+            return self.error["message"]
         return None
 
 
