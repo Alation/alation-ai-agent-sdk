@@ -1,3 +1,4 @@
+import time
 import logging
 import urllib.parse
 import json
@@ -801,9 +802,7 @@ class AlationAPI:
             "batch_size": (
                 limit
                 if processing_mode == LineageGraphProcessingOptions.COMPLETE
-                else pagination.get("batch_size", limit)
-                if pagination
-                else batch_size
+                else pagination.get("batch_size", limit) if pagination else batch_size
             ),
         }
         if show_temporal_objects:
@@ -978,3 +977,52 @@ class AlationAPI:
 
         except requests.RequestException as e:
             self._handle_request_error(e, "custom fields retrieval")
+
+    def post_tool_event(
+        self,
+        event: dict,
+        timeout: float,
+        max_retries: int,
+        extra_headers: Optional[Dict[str, str]] = None,
+    ) -> None:
+        """
+        Post a tool event to the Alation API.
+        Args:
+            event (dict): The tool event to post.
+            timeout (float): The timeout for the request.
+            max_retries (int): The maximum number of retry attempts.
+            extra_headers (Optional[Dict[str, str]]): Additional headers to include in the request.
+        """
+        self._with_valid_auth()
+
+        headers = self._get_request_headers()
+        headers.update(extra_headers or {})
+
+        url = f"{self.base_url}/api/v1/ai_agent/tool/event/"
+
+        for attempt in range(max_retries + 1):
+            try:
+                response = requests.post(
+                    url, headers=headers, json=event, timeout=timeout
+                )
+                response.raise_for_status()
+                logger.debug(
+                    f"Event sent successfully: {event.get('tool_name', 'unknown')}"
+                )
+                return
+            except requests.RequestException as e:
+                try:
+                    self._handle_request_error(e, "post tool event")
+                except AlationAPIError as api_error:
+                    if attempt == max_retries or not getattr(
+                        api_error, "is_retryable", False
+                    ):
+                        logger.error(
+                            f"Max retries reached for event tracking: {event.get('tool_name', 'unknown')}"
+                        )
+                        raise
+                    else:
+                        logger.warning(
+                            f"Retrying event tracking: {event.get('tool_name', 'unknown')} (Attempt {attempt + 1}/{max_retries + 1})"
+                        )
+                        time.sleep(0.1 * (2**attempt))  # Exponential backoff

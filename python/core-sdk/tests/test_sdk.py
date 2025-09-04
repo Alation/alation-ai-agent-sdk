@@ -284,14 +284,14 @@ def test_sdk_invalid_initialization(
         (
             AUTH_METHOD_USER_ACCOUNT,
             UserAccountAuthParams(MOCK_USER_ID, MOCK_REFRESH_TOKEN),
-            [True, False, True],
-            2,
+            [True, False, True, True, True],
+            4,
         ),
         (
             AUTH_METHOD_SERVICE_ACCOUNT,
             ServiceAccountAuthParams(MOCK_CLIENT_ID, MOCK_CLIENT_SECRET),
-            [True, False, True],
-            2,
+            [True, False, True, True, True],
+            4,
         ),
     ],
 )
