@@ -55,9 +55,9 @@ def get_base_url(base_url_override: Optional[str] = None) -> str:
     return base_url
 
 
-def parse_arguments() -> (
-    Tuple[str, Optional[str], Optional[str], Optional[str], str, int, Optional[str]]
-):
+def parse_arguments() -> Tuple[
+    str, Optional[str], Optional[str], Optional[str], str, int, Optional[str]
+]:
     """
     Parse command-line arguments for the MCP server.
 

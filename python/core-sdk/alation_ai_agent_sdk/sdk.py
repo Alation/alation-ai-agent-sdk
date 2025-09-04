@@ -3,7 +3,6 @@ from typing import (
     Dict,
     Optional,
     Union,
-    List,
 )
 
 from alation_ai_agent_sdk.errors import AlationAPIError

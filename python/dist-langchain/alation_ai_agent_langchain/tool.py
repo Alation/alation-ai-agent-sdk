@@ -1,6 +1,5 @@
 from typing import Any, Optional
 from alation_ai_agent_sdk import AlationAIAgentSDK
-from alation_ai_agent_sdk.api import CatalogAssetMetadataPayloadItem
 from alation_ai_agent_sdk.lineage import (
     LineageBatchSizeType,
     LineageDesignTimeType,
@@ -122,6 +121,7 @@ def get_check_job_status_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
         args_schema=None,
     )
 
+
 def get_generate_data_product_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     generate_data_product_tool = sdk.generate_data_product_tool
 
@@ -208,6 +208,7 @@ def get_check_data_quality_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
         args_schema=None,
     )
 
+
 def get_custom_fields_definitions_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     custom_fields_definitions_tool = sdk.get_custom_fields_definitions_tool
 
@@ -220,6 +221,7 @@ def get_custom_fields_definitions_tool(sdk: AlationAIAgentSDK) -> StructuredTool
         func=run_with_no_args,
         args_schema=None,
     )
+
 
 def get_data_dictionary_instructions_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     data_dict_tool = sdk.get_data_dictionary_instructions_tool

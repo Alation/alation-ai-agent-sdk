@@ -1,4 +1,3 @@
-import datetime
 import logging
 import urllib.parse
 import json
@@ -212,7 +211,7 @@ class AlationAPI:
         if exception.response is not None:
             try:
                 parsed = exception.response.json()
-            except (json.JSONDecodeError, ValueError) as parse_exc:
+            except (json.JSONDecodeError, ValueError):
                 parsed = {"error": response_text}
         else:
             parsed = {"error": response_text}
@@ -363,7 +362,6 @@ class AlationAPI:
         logger.debug("JWT token generated from client ID and secret")
 
     def _generate_new_token(self):
-
         logger.info(
             "Access token is invalid or expired. Attempting to generate a new one."
         )

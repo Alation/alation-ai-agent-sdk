@@ -8,6 +8,7 @@ from typing_extensions import TypedDict
 
 class CustomerState(TypedDict, total=False):
     """Simplified state shared between agents."""
+
     # Input data
     query: str
     email: Optional[str]
@@ -41,10 +42,8 @@ CUSTOMER_PROFILE_SIGNATURE = {
             }
         },
         "child_objects": {
-            "columns": {
-                "fields": ["name", "title", "data_type", "description"]
-            }
-        }
+            "columns": {"fields": ["name", "title", "data_type", "description"]}
+        },
     }
 }
 
@@ -54,16 +53,16 @@ CUSTOMER_DATA_SIGNATURE = {
         "fields_required": ["name", "title", "description", "url", "columns"],
         "search_filters": {
             "fields": {
-                "tag_ids": [456]  # Single tag ID that covers all customer data tables ( These 3 views in our example
+                "tag_ids": [
+                    456
+                ]  # Single tag ID that covers all customer data tables ( These 3 views in our example
                 # - "vw_customer_purchase_history", "vw_customer_membership_benefits",
                 # "vw_customer_product_warranties")
             }
         },
         "child_objects": {
-            "columns": {
-                "fields": ["name", "title", "data_type", "description"]
-            }
-        }
+            "columns": {"fields": ["name", "title", "data_type", "description"]}
+        },
     }
 }
 
@@ -75,6 +74,6 @@ POLICY_SIGNATURE = {
             "fields": {
                 "tag_ids": [789]  # Replace with actual tag ID
             }
-        }
+        },
     }
 }

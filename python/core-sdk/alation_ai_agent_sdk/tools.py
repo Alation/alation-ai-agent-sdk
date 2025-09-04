@@ -391,7 +391,6 @@ class AlationLineageTool(BaseAlationTool):
         time_from: Optional[LineageTimestampType] = None,
         time_to: Optional[LineageTimestampType] = None,
     ) -> LineageToolResponse:
-
         lineage_kwargs = make_lineage_kwargs(
             root_node=root_node,
             processing_mode=processing_mode,

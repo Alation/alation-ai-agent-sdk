@@ -5,6 +5,7 @@ from alation_ai_agent_sdk.fields import get_built_in_section
 
 logger = logging.getLogger(__name__)
 
+
 def build_optimized_instructions(custom_fields: List[Dict[str, Any]]) -> str:
     """Build optimized instruction set with better organization and less redundancy."""
 
@@ -53,6 +54,7 @@ Remember: Transform only what the user provides. Do not enhance, assume, or add 
 """
     return instructions
 
+
 def build_quick_reference() -> str:
     """Build a concise quick reference section."""
     return """
@@ -63,6 +65,7 @@ def build_quick_reference() -> str:
 
 **File Count**: Number of hierarchies in your data = Number of CSV files needed
 """
+
 
 def build_hierarchy_rules() -> str:
     """Build focused hierarchy rules without repetition."""
@@ -83,6 +86,7 @@ Objects must be grouped by hierarchy into separate CSV files:
 - 10 tables + 2 BI reports → 2 CSV files (RDBMS + BI)
 """
 
+
 def build_csv_format_section(custom_fields: List[Dict[str, Any]]) -> str:
     """Build concise CSV format section."""
 
@@ -97,13 +101,13 @@ No custom fields available (requires admin permissions).
         custom_section = "\n### Custom Fields:\n"
         display_fields = custom_fields
         for field in display_fields:
-            field_id = field.get('id')
-            name = field.get('name_singular', 'Unknown')
-            field_type = field.get('field_type', 'TEXT')
+            field_id = field.get("id")
+            name = field.get("name_singular", "Unknown")
+            field_type = field.get("field_type", "TEXT")
 
-            if field_type == 'OBJECT_SET' and field.get('allowed_otypes'):
+            if field_type == "OBJECT_SET" and field.get("allowed_otypes"):
                 # For OBJECT_SET fields with multiple allowed types, show examples for each type
-                allowed_types = field.get('allowed_otypes')
+                allowed_types = field.get("allowed_otypes")
                 if len(allowed_types) > 1:
                     # Show separate examples for each object type
                     examples = []
@@ -129,6 +133,7 @@ oid=<id>;otype=<type>,<field_values>
 {custom_section}
 """
 
+
 def build_process_steps() -> str:
     """Build streamlined process steps."""
     return """
@@ -138,6 +143,7 @@ def build_process_steps() -> str:
 4. **Populate**: One row per object with `oid=<id>;otype=<type>` + field values
 5. **Validate**: Check picker values, date formats, steward names
 """
+
 
 def build_focused_examples(custom_fields: List[Dict[str, Any]]) -> str:
     """Build focused examples showing key patterns."""
@@ -175,8 +181,8 @@ oid=5434;otype=bi_report_column,Revenue column,
     if custom_fields and len(custom_fields) > 0:
         # Use first custom field for example
         sample_field = custom_fields[0]
-        field_id = sample_field.get('id')
-        field_name = sample_field.get('name_singular')
+        field_id = sample_field.get("id")
+        field_name = sample_field.get("name_singular")
 
         custom_example = f"""
 ### Mixed Updates Example (Built-in + Custom Fields)
@@ -189,6 +195,7 @@ oid=719;otype=attribute,,Current account balance amount
         return base_examples + custom_example
 
     return base_examples
+
 
 def build_validation_reference(custom_fields: List[Dict[str, Any]]) -> str:
     """Build concise validation reference."""
@@ -208,7 +215,7 @@ def build_validation_reference(custom_fields: List[Dict[str, Any]]) -> str:
     # Rule for MULTI_PICKER
     validation_summary += (
         "- **MULTI_PICKER Fields**: For multiple values, use a string formatted like a Python list. "
-        "Example: `\"[\"\"Value 1\"\", \"\"Value 2\"\"]\"`\n"
+        'Example: `"[""Value 1"", ""Value 2""]"`\n'
     )
     # Rule for OBJECT_SET
     validation_summary += (
@@ -216,7 +223,7 @@ def build_validation_reference(custom_fields: List[Dict[str, Any]]) -> str:
         "Example: `object1;object2`\n"
     )
 
-    date_fields = [f for f in custom_fields if f.get('field_type') == 'DATE']
+    date_fields = [f for f in custom_fields if f.get("field_type") == "DATE"]
     if date_fields:
         validation_summary += f"- **Date Fields**: {len(date_fields)} fields requiring YYYY-MM-DD format\n"
 

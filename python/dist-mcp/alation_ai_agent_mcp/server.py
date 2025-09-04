@@ -183,7 +183,7 @@ def run_server() -> None:
     )
 
     if transport == "stdio":
-        logging.info(f"Starting Alation MCP STDIO Server")
+        logging.info("Starting Alation MCP STDIO Server")
         mcp.run()
     elif transport == "http":
         logging.info(f"Starting Alation MCP HTTP Server on {host}:{port}")
