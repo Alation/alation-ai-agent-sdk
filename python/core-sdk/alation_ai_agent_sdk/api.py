@@ -15,6 +15,7 @@ from .types import (
     AuthParams,
     CatalogAssetMetadataPayloadItem,
 )
+from .utils import SDK_VERSION
 from .errors import AlationAPIError, AlationErrorClassifier
 
 from alation_ai_agent_sdk.lineage import (
@@ -512,6 +513,13 @@ class AlationAPI:
             Dict[str, str]: Headers dictionary with authentication and content type information
         """
         headers = {"Accept": "application/json"}
+
+        # Set User-Agent header to be dist_version/sdk_version if either is present
+        user_agent = f"{self.dist_version}/" if self.dist_version else ""
+        if SDK_VERSION:
+            user_agent += f"sdk-{SDK_VERSION}"
+        if user_agent:
+            headers["User-Agent"] = user_agent
 
         if self.auth_method == AUTH_METHOD_SESSION:
             headers["Cookie"] = self.session_cookie

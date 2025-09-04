@@ -15,6 +15,7 @@ STDIO and HTTP modes of the MCP server.
 import os
 import argparse
 import logging
+from importlib.metadata import version, PackageNotFoundError
 from typing import Optional, Tuple
 
 from alation_ai_agent_sdk import (
@@ -23,6 +24,13 @@ from alation_ai_agent_sdk import (
 )
 
 logger = logging.getLogger("alation.mcp.server")
+
+
+MCP_SERVER_VERSION = "UNKNOWN"
+try:
+    MCP_SERVER_VERSION = version("alation_ai_agent_mcp")
+except PackageNotFoundError:
+    pass
 
 
 def setup_logging() -> None:

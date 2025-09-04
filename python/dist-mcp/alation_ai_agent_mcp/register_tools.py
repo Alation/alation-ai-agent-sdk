@@ -37,6 +37,8 @@ from alation_ai_agent_sdk.tools import (
 from mcp.server.fastmcp import FastMCP
 from fastmcp.server.dependencies import get_access_token
 
+from .utils import MCP_SERVER_VERSION
+
 logger = logging.getLogger(__name__)
 
 
@@ -83,7 +85,10 @@ def register_tools(
 
             auth_params = BearerTokenAuthParams(token=access_token.token)
             return AlationAIAgentSDK(
-                base_url=base_url, auth_method="bearer_token", auth_params=auth_params
+                base_url=base_url,
+                auth_method="bearer_token",
+                auth_params=auth_params,
+                dist_version=f"mcp-{MCP_SERVER_VERSION}",
             )
         except ValueError as e:
             logger.error(f"Authentication error in HTTP mode: {e}")

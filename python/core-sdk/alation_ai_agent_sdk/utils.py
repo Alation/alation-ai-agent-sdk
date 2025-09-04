@@ -5,7 +5,15 @@ This module provides common utilities that can be used across different distribu
 of the SDK (core, MCP, LangChain, etc.).
 """
 
+from importlib.metadata import version, PackageNotFoundError
 from typing import Dict
+
+
+SDK_VERSION = "UNKNOWN"
+try:
+    SDK_VERSION = version("alation_ai_agent_sdk")
+except PackageNotFoundError:
+    pass
 
 
 def is_tool_enabled(

@@ -3,6 +3,7 @@ import pytest
 import os
 from unittest.mock import patch, MagicMock
 from alation_ai_agent_mcp import server
+from alation_ai_agent_mcp.utils import MCP_SERVER_VERSION
 from alation_ai_agent_sdk import (
     AlationTools,
     UserAccountAuthParams,
@@ -158,7 +159,7 @@ def test_create_server_success(
         "https://mock-alation.com",
         "user_account",
         UserAccountAuthParams(12345, "mock-token"),
-        dist_version="mcp-0.5.0",
+        dist_version=f"mcp-{MCP_SERVER_VERSION}",
     )
     assert mcp_result is mock_mcp_instance
 
@@ -322,7 +323,7 @@ def test_create_server_service_account(
         "https://mock-alation.com",
         "service_account",
         ServiceAccountAuthParams("mock-client-id", "mock-client-secret"),
-        dist_version="mcp-0.5.0",
+        dist_version=f"mcp-{MCP_SERVER_VERSION}",
     )
     assert mcp_result is mock_mcp_instance
 
