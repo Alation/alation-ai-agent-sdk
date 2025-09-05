@@ -358,7 +358,7 @@ docker run --rm -p 8000:8000 alation-mcp-server --transport http --host 0.0.0.0 
 
 ### STDIO Mode
 - **Claude Desktop integration**: Direct connection to Claude Desktop app
-- **Local development**: Testing and development on local machines  
+- **Local development**: Testing and development on local machines
 - **Code editors**: Integration with Cursor, VS Code with MCP extensions
 - **Command-line tools**: Integration with CLI applications that support MCP
 - **Desktop applications**: Any application that can spawn processes and communicate via stdin/stdout

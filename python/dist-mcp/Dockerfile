@@ -62,7 +62,6 @@ LABEL org.opencontainers.image.title="Alation MCP Server" \
     org.opencontainers.image.source="https://github.com/Alation/alation-ai-agent-sdk" \
     org.opencontainers.image.documentation="https://github.com/Alation/alation-ai-agent-sdk/tree/main/python/dist-mcp" \
     org.opencontainers.image.licenses="Apache-2.0" \
-    org.opencontainers.image.base.name="python:3.10-slim-bookworm" \
     maintainer="Alation AI Team <ai-team@alation.com>" \
     com.alation.component="mcp-server" \
     com.alation.transport.modes="stdio,http" \
