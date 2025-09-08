@@ -7,7 +7,7 @@
 # 4. Enter the desired version tag (e.g., v1.2.3) in the "Tag" input field.
 # 5. The action will build the Docker image and push it to GHCR with two tags: the one you provided and 'latest'.
 
-name: Manual Docker Image Publisher
+name: MCP Server Docker Image Build & Publisher
 
 on:
   workflow_dispatch:
