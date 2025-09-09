@@ -3,7 +3,6 @@ from unittest.mock import Mock, patch
 from alation_ai_agent_sdk.tools import AlationBulkRetrievalTool
 from alation_ai_agent_sdk.api import AlationAPI, AlationAPIError
 from alation_ai_agent_sdk.types import ServiceAccountAuthParams
-from alation_ai_agent_sdk.utils import SDK_VERSION
 
 
 @pytest.fixture
