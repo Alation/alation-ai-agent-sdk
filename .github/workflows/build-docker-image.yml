@@ -1,0 +1,60 @@
+# This GitHub Action workflow manually builds a Docker image and pushes it to the GitHub Container Registry (GHCR).
+#
+# To run this workflow:
+# 1. Go to the "Actions" tab in your GitHub repository.
+# 2. Select "Manual Docker Image Publisher" from the list of workflows.
+# 3. Click "Run workflow".
+# 4. Enter the desired version tag (e.g., v1.2.3) in the "Tag" input field.
+# 5. The action will build the Docker image and push it to GHCR with two tags: the one you provided and 'latest'.
+
+name: MCP Server Docker Image Build & Publisher
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'The Docker tag for the release (e.g., v1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # Required to push images to GHCR
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/alation/alation-ai-agent-sdk/alation-mcp-server
+          tags: |
+            # Tag with the version provided in the manual input
+            type=raw,value=${{ github.event.inputs.tag }}
+            # Also tag as 'latest'
+            type=raw,value=latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./python/dist-mcp
+          # This is a manual workflow, so we always push the image.
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Enable build caching to speed up future builds
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
