@@ -92,7 +92,7 @@ def test_bulk_retrieval_tool_run_success(bulk_retrieval_tool, mock_api):
         "table": {"fields_required": ["name", "description", "url"], "limit": 1}
     }
 
-    result = bulk_retrieval_tool.run(signature)
+    result = bulk_retrieval_tool.run(signature=signature)
 
     # Verify API was called correctly
     mock_api.get_bulk_objects_from_catalog.assert_called_once_with(signature)
@@ -143,7 +143,7 @@ def test_bulk_retrieval_tool_run_api_error(bulk_retrieval_tool, mock_api):
 
     invalid_signature = {"unknown": {"fields_required": ["name"], "limit": 100}}
 
-    result = bulk_retrieval_tool.run(invalid_signature)
+    result = bulk_retrieval_tool.run(signature=invalid_signature)
 
     # Verify API was called
     mock_api.get_bulk_objects_from_catalog.assert_called_once_with(invalid_signature)
@@ -186,7 +186,7 @@ def test_bulk_retrieval_tool_run_usage_quota_warning(
         "table": {"fields_required": ["name", "description", "url"], "limit": 1}
     }
 
-    result = bulk_retrieval_tool_with_alation_api.run(signature)
+    result = bulk_retrieval_tool_with_alation_api.run(signature=signature)
 
     # Verify the requests.get was called
     mock_requests_get.assert_called_once()
@@ -237,7 +237,7 @@ def test_bulk_retrieval_tool_run_no_entitlement_warning(
         "table": {"fields_required": ["name", "description", "url"], "limit": 1}
     }
 
-    result = bulk_retrieval_tool_with_alation_api.run(signature)
+    result = bulk_retrieval_tool_with_alation_api.run(signature=signature)
 
     # Verify the requests.get was called
     mock_requests_get.assert_called_once()
@@ -269,7 +269,7 @@ def test_bulk_retrieval_tool_with_429_quota_reached(
         "table": {"fields_required": ["name", "description", "url"], "limit": 1}
     }
 
-    result = bulk_retrieval_tool_with_alation_api.run(signature)
+    result = bulk_retrieval_tool_with_alation_api.run(signature=signature)
 
     # Verify the requests.get was called
     mock_requests_get.assert_called_once()
@@ -294,7 +294,7 @@ def test_user_agent_header_populated(
 
     # Test 1: With dist_version and SDK_VERSION
     bulk_retrieval_tool_with_alation_api.api.dist_version = "mcp-0.10.0"
-    bulk_retrieval_tool_with_alation_api.run(signature)
+    bulk_retrieval_tool_with_alation_api.run(signature=signature)
 
     mock_requests_get.assert_called()
     call_args = mock_requests_get.call_args
@@ -306,7 +306,7 @@ def test_user_agent_header_populated(
     # Test 2: With only SDK_VERSION (no dist_version)
     mock_requests_get.reset_mock()
     bulk_retrieval_tool_with_alation_api.api.dist_version = None
-    bulk_retrieval_tool_with_alation_api.run(signature)
+    bulk_retrieval_tool_with_alation_api.run(signature=signature)
 
     call_args = mock_requests_get.call_args
     headers = call_args[1]["headers"]
@@ -319,7 +319,7 @@ def test_user_agent_header_populated(
     bulk_retrieval_tool_with_alation_api.api.dist_version = ""
 
     with patch("alation_ai_agent_sdk.api.SDK_VERSION", ""):
-        bulk_retrieval_tool_with_alation_api.run(signature)
+        bulk_retrieval_tool_with_alation_api.run(signature=signature)
 
         call_args = mock_requests_get.call_args
         headers = call_args[1]["headers"]

@@ -162,7 +162,7 @@ class AlationContextTool:
 
     @min_alation_version("2025.1.2")
     @track_tool_execution()
-    def run(self, question: str, signature: Optional[Dict[str, Any]] = None):
+    def run(self, *, question: str, signature: Optional[Dict[str, Any]] = None):
         try:
             return self.api.get_context_from_catalog(question, signature)
         except AlationAPIError as e:
@@ -210,7 +210,7 @@ class AlationGetDataProductTool:
           """
 
     @track_tool_execution()
-    def run(self, product_id: Optional[str] = None, query: Optional[str] = None):
+    def run(self, *, product_id: Optional[str] = None, query: Optional[str] = None):
         try:
             return self.api.get_data_products(product_id=product_id, query=query)
         except AlationAPIError as e:
@@ -255,7 +255,7 @@ class AlationBulkRetrievalTool:
     """
 
     @track_tool_execution()
-    def run(self, signature: Optional[Dict[str, Any]] = None):
+    def run(self, *, signature: Optional[Dict[str, Any]] = None):
         if not signature:
             return {
                 "error": {
@@ -338,6 +338,7 @@ class AlationLineageTool:
     @track_tool_execution()
     def run(
         self,
+        *,
         root_node: LineageRootNode,
         direction: LineageDirectionType,
         limit: Optional[int] = 1000,
@@ -439,7 +440,9 @@ class UpdateCatalogAssetMetadataTool:
             """
 
     @track_tool_execution()
-    def run(self, custom_field_values: list[CatalogAssetMetadataPayloadItem]) -> dict:
+    def run(
+        self, *, custom_field_values: list[CatalogAssetMetadataPayloadItem]
+    ) -> dict:
         return self.api.update_catalog_asset_metadata(custom_field_values)
 
 
@@ -472,7 +475,7 @@ class CheckJobStatusTool:
         """
 
     @track_tool_execution()
-    def run(self, job_id: int) -> dict:
+    def run(self, *, job_id: int) -> dict:
         return self.api.check_job_status(job_id)
 
 
@@ -575,6 +578,7 @@ class CheckDataQualityTool:
     @track_tool_execution()
     def run(
         self,
+        *,
         table_ids: Optional[list] = None,
         sql_query: Optional[str] = None,
         db_uri: Optional[str] = None,

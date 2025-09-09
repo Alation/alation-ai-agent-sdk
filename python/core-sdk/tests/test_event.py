@@ -71,7 +71,7 @@ class TestToolEvent:
     def test_to_payload_success_case(self):
         """Test to_payload method for successful execution."""
         custom_metrics = {"query_length": 10, "result_count": 5}
-        input_params = {"args": ["test"], "kwargs": {"param": "value"}}
+        input_params = {"kwargs": {"param": "value"}}
 
         event = ToolEvent(
             tool_name="SearchTool",
@@ -85,7 +85,7 @@ class TestToolEvent:
 
         payload = event.to_payload()
 
-        expected_tool_metadata = {**input_params, **custom_metrics}
+        expected_tool_metadata = {"param": "value", **custom_metrics}
 
         assert payload["tool_name"] == "SearchTool"
         assert payload["tool_version"] == "2.0.0"
@@ -118,7 +118,7 @@ class TestToolEvent:
 
     def test_get_tool_metadata(self):
         """Test get_tool_metadata method."""
-        input_params = {"args": ["test"], "kwargs": {"param": "value"}}
+        input_params = {"kwargs": {"param": "value"}}
         custom_metrics = {"duration_category": "fast", "result_size": "small"}
 
         event = ToolEvent(
@@ -133,7 +133,7 @@ class TestToolEvent:
 
         metadata = event.get_tool_metadata()
 
-        expected = {**input_params, **custom_metrics}
+        expected = {"param": "value", **custom_metrics}
         assert metadata == expected
 
     def test_get_status_code_success(self):

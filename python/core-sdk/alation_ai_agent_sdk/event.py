@@ -7,12 +7,8 @@ from functools import wraps
 from alation_ai_agent_sdk.errors import AlationAPIError
 from alation_ai_agent_sdk.utils import SDK_VERSION
 
-
 from .api import AlationAPI
 
-# Set the global logging level to DEBUG for testing
-# TODO remove
-logging.basicConfig(level=logging.DEBUG)
 
 logger = logging.getLogger(__name__)
 
@@ -71,8 +67,8 @@ class ToolEvent:
         Gathers and returns the tool metadata by combining input parameters and custom metrics.
         """
         tool_metadata = {}
-        # TODO clean up the input parameters from `{'args': [{'table': {'limit': 2}}]},`
-        tool_metadata.update(self.input_params)
+        kwargs = self.input_params.get("kwargs", {})
+        tool_metadata.update(kwargs)
         tool_metadata.update(self.custom_metrics)
         return tool_metadata
 
