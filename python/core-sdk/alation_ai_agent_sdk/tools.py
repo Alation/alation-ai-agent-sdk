@@ -539,29 +539,30 @@ class CheckDataQualityTool:
     @staticmethod
     def _get_description() -> str:
         return """
-            Check data quality of SQL queries or tables before/after execution.
-            
-            **Call this function when:**
+            Checks data quality for a list of tables or an individual SQL query.
+
+            WHEN TO USE:
             - User directly asks to "check data quality"
-            - User requests to "validate data quality" or "assess quality"
+            - User requests to "validate data quality" or "assess quality" of a sql query or table
             - User asks "is this data reliable/trustworthy?"
             - User says "run data quality check" or similar explicit request
-            
-            **Required:** Either table_ids OR sql_query
-            **Key parameters:**
-            - sql_query: SQL to analyze for quality issues
-            - table_ids: List of table IDs (max 30) - use alation_context to get IDs first
-            - ds_id: Required with table_ids, datasource ID from Alation
-            - db_uri: Database URI, alternative to ds_id for SQL analysis
-            - output_format: "JSON" (default) or "YAML_MARKDOWN" for readable reports
-            - dq_score_threshold: Quality threshold (0-100), tables below this are flagged
-            
-            **Parameter combinations:**
-            1. sql_query + ds_id (recommended for SQL validation)
-            2. sql_query + db_uri (when ds_id unknown)
-            3. table_ids (for specific table validation)
-            
-            Returns quality scores, issues, and recommendations in specified format. """
+
+            IMPORTANT: Either a table_ids or sql_query parameter is required. If sql_query is provided, either ds_id or db_uri must also be included.
+
+            VALID PARAMETER COMBINATIONS:
+            1. table_ids (for checking specific tables)
+            2. sql_query + ds_id (recommended for SQL query validation)
+            3. sql_query + db_uri (recommended for SQL query validation when ds_id is unknown)
+
+            PARAMETERS:
+            - table_ids: List of table identifiers (max 30) - use alation_context to get table ids first
+            - sql_query: SQL query to analyze for quality issues
+            - ds_id: A data source id from Alation
+            - db_uri: A database URI as an alternative to ds_id. e.g. postgresql://@host:port/dbname
+            - output_format: "json" (default) or "yaml_markdown" for more compact responses
+            - dq_score_threshold: Quality threshold (0-100), tables below this are flagged. Defaults to 70.
+
+            Returns a data quality summary and item level quality statements."""
 
     def run(
         self,
