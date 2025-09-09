@@ -15,6 +15,7 @@ from alation_ai_agent_sdk.api import (
     ServiceAccountAuthParams,
     SessionAuthParams,
 )
+from alation_ai_agent_sdk.utils import SDK_VERSION
 
 
 # --- Mock API Responses & Constants ---
@@ -444,3 +445,69 @@ def test_check_job_status_session_auth_restriction(mock_requests_get):
     error = exc_info.value
     assert "Session authentication is not supported for check_job_status" in str(error)
     assert error.reason == "Unsupported Authentication Method"
+
+
+@patch("alation_ai_agent_sdk.api.requests.get")
+def test_user_agent_header_populated_in_api_calls(
+    mock_requests_get_patch, mock_requests_post, mock_requests_get
+):
+    """Test that User-Agent header is correctly populated in API calls across all tools."""
+
+    # Set up mock responses for SDK initialization
+    mock_requests_post(
+        "createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS
+    )
+    mock_requests_get("license", response_json={"is_cloud": True})
+    mock_requests_get(
+        "full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"}
+    )
+
+    # Mock successful API response for context calls
+    mock_response = MagicMock(spec=requests.Response)
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"some_data": "test_response"}
+    mock_response.headers = {}
+    mock_response.raise_for_status.return_value = None
+    mock_requests_get_patch.return_value = mock_response
+
+    # Test 1: SDK with dist_version
+    sdk_with_dist = AlationAIAgentSDK(
+        base_url=MOCK_BASE_URL,
+        auth_method=AUTH_METHOD_USER_ACCOUNT,
+        auth_params=UserAccountAuthParams(MOCK_USER_ID, MOCK_REFRESH_TOKEN),
+        dist_version="mcp-2.1.0",
+    )
+
+    # Make an API call through the SDK (using context tool as example)
+    sdk_with_dist.api.get_context_from_catalog("test query")
+
+    # Verify User-Agent header includes both dist_version and SDK_VERSION
+    mock_requests_get_patch.assert_called()
+    call_args = mock_requests_get_patch.call_args
+    headers = call_args[1]["headers"]
+    expected_user_agent = f"mcp-2.1.0/sdk-{SDK_VERSION}"
+    assert "User-Agent" in headers
+    assert headers["User-Agent"] == expected_user_agent
+
+    # Test 2: SDK without dist_version
+    mock_requests_get_patch.reset_mock()
+    sdk_without_dist = AlationAIAgentSDK(
+        base_url=MOCK_BASE_URL,
+        auth_method=AUTH_METHOD_USER_ACCOUNT,
+        auth_params=UserAccountAuthParams(MOCK_USER_ID, MOCK_REFRESH_TOKEN),
+        dist_version=None,
+    )
+
+    # Make an API call
+    sdk_without_dist.api.get_context_from_catalog("test query")
+
+    # Verify User-Agent header includes only SDK_VERSION
+    call_args = mock_requests_get_patch.call_args
+    headers = call_args[1]["headers"]
+    if SDK_VERSION != "UNKNOWN":
+        expected_user_agent = f"sdk-{SDK_VERSION}"
+        assert "User-Agent" in headers
+        assert headers["User-Agent"] == expected_user_agent
+    else:
+        # If SDK_VERSION is unknown, no User-Agent should be set
+        assert "User-Agent" not in headers

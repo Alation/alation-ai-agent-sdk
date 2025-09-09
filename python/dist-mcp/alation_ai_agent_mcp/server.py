@@ -33,9 +33,8 @@ from .utils import (
     setup_logging,
     parse_arguments,
     prepare_server_config,
+    MCP_SERVER_VERSION,
 )
-
-MCP_SERVER_VERSION = "0.5.0"
 
 
 def create_fastmcp_server(
