@@ -1,6 +1,6 @@
 [project]
 name = "alation-ai-agent-mcp"
-version = "0.10.2"
+version = "0.11.0"
 description = "Alation Agent SDK with MCP support"
 dependencies = [
   "alation-ai-agent-sdk>=0.10.2",

@@ -4,7 +4,6 @@ import time
 import threading
 from typing import Any, Dict, Optional, Callable, Union
 from functools import wraps
-from alation_ai_agent_sdk.errors import AlationAPIError
 from alation_ai_agent_sdk.utils import SDK_VERSION
 
 from .api import AlationAPI
@@ -36,7 +35,7 @@ class ToolEvent:
         self.success = success
         self.error = error
         self.custom_metrics = custom_metrics or {}
-        self.timestamp = timestamp or datetime.datetime.now(datetime.UTC)
+        self.timestamp = timestamp or datetime.datetime.now(datetime.timezone.utc)
 
     def to_payload(self) -> Dict[str, Any]:
         """

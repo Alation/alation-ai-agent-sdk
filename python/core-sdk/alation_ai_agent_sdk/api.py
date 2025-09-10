@@ -802,7 +802,9 @@ class AlationAPI:
             "batch_size": (
                 limit
                 if processing_mode == LineageGraphProcessingOptions.COMPLETE
-                else pagination.get("batch_size", limit) if pagination else batch_size
+                else pagination.get("batch_size", limit)
+                if pagination
+                else batch_size
             ),
         }
         if show_temporal_objects:

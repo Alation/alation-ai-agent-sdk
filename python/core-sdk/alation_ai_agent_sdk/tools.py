@@ -792,7 +792,7 @@ class GetDataDictionaryInstructionsTool:
             return instructions
 
         except AlationAPIError as e:
-            return f"Error generating instructions: {e}"
+            return {"error": e.to_dict()}
 
 
 def csv_str_to_tool_list(tool_env_var: Optional[str] = None) -> List[str]:

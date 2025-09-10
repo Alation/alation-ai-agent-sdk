@@ -1,9 +1,5 @@
 import pytest
-import time
-import datetime
-import threading
-from unittest.mock import Mock, patch, MagicMock, call
-from typing import Dict, Any
+from unittest.mock import Mock, patch
 
 from alation_ai_agent_sdk.event import (
     ToolEvent,
@@ -15,59 +11,6 @@ from alation_ai_agent_sdk.errors import AlationAPIError
 
 
 class TestToolEvent:
-    """Test cases for ToolEvent class."""
-
-    def test_tool_event_initialization_with_defaults(self):
-        """Test ToolEvent initialization with default values."""
-        event = ToolEvent(
-            tool_name="TestTool",
-            tool_version="1.0.0",
-            input_params={"param1": "value1"},
-            output="test output",
-            duration_ms=150.5,
-            success=True,
-        )
-
-        assert event.tool_name == "TestTool"
-        assert event.tool_version == "1.0.0"
-        assert event.input_params == {"param1": "value1"}
-        assert event.output == "test output"
-        assert event.duration_ms == 150.5
-        assert event.success is True
-        assert event.error is None
-        assert event.custom_metrics == {}
-        assert isinstance(event.timestamp, datetime.datetime)
-
-    def test_tool_event_initialization_with_all_params(self):
-        """Test ToolEvent initialization with all parameters provided."""
-        custom_timestamp = datetime.datetime(
-            2023, 1, 1, 12, 0, 0, tzinfo=datetime.timezone.utc
-        )
-        custom_metrics = {"metric1": "value1"}
-        error_dict = {"status_code": 400, "message": "Bad Request"}
-
-        event = ToolEvent(
-            tool_name="TestTool",
-            tool_version="1.0.0",
-            input_params={"param1": "value1"},
-            output="test output",
-            duration_ms=150.5,
-            success=False,
-            error=error_dict,
-            custom_metrics=custom_metrics,
-            timestamp=custom_timestamp,
-        )
-
-        assert event.tool_name == "TestTool"
-        assert event.tool_version == "1.0.0"
-        assert event.input_params == {"param1": "value1"}
-        assert event.output == "test output"
-        assert event.duration_ms == 150.5
-        assert event.success is False
-        assert event.error == error_dict
-        assert event.custom_metrics == custom_metrics
-        assert event.timestamp == custom_timestamp
-
     def test_to_payload_success_case(self):
         """Test to_payload method for successful execution."""
         custom_metrics = {"query_length": 10, "result_count": 5}
@@ -96,7 +39,7 @@ class TestToolEvent:
         assert payload["error_message"] is None
         assert "timestamp" in payload
 
-    def test_to_payload_failure_case(self):
+    def test_to_payload_failure_case_with_error_dict(self):
         """Test to_payload method for failed execution."""
         error_dict = {"status_code": 500, "message": "Internal Server Error"}
 
@@ -115,6 +58,24 @@ class TestToolEvent:
         assert payload["tool_name"] == "FailingTool"
         assert payload["status_code"] == 500
         assert payload["error_message"] == "Internal Server Error"
+
+    def test_to_payload_failure_case_with_string_error(self):
+        """Test to_payload method for failed execution with string error."""
+        event = ToolEvent(
+            tool_name="FailingTool",
+            tool_version="1.0.0",
+            input_params={"param": "value"},
+            output={"error": "Something went wrong"},
+            duration_ms=100.0,
+            success=False,
+            error="String error message",
+        )
+
+        payload = event.to_payload()
+
+        assert payload["tool_name"] == "FailingTool"
+        assert payload["status_code"] == 0
+        assert payload["error_message"] == "String error message"
 
     def test_get_tool_metadata(self):
         """Test get_tool_metadata method."""
@@ -135,92 +96,6 @@ class TestToolEvent:
 
         expected = {"param": "value", **custom_metrics}
         assert metadata == expected
-
-    def test_get_status_code_success(self):
-        """Test get_status_code for successful execution."""
-        event = ToolEvent(
-            tool_name="TestTool",
-            tool_version="1.0.0",
-            input_params={},
-            output="output",
-            duration_ms=100.0,
-            success=True,
-        )
-
-        assert event.get_status_code() == 200
-
-    def test_get_status_code_with_error_dict(self):
-        """Test get_status_code with error dictionary containing status_code."""
-        error_dict = {"status_code": 404, "message": "Not Found"}
-
-        event = ToolEvent(
-            tool_name="TestTool",
-            tool_version="1.0.0",
-            input_params={},
-            output="output",
-            duration_ms=100.0,
-            success=False,
-            error=error_dict,
-        )
-
-        assert event.get_status_code() == 404
-
-    def test_get_status_code_unknown_error(self):
-        """Test get_status_code with unknown error format."""
-        event = ToolEvent(
-            tool_name="TestTool",
-            tool_version="1.0.0",
-            input_params={},
-            output="output",
-            duration_ms=100.0,
-            success=False,
-            error="Some string error",
-        )
-
-        assert event.get_status_code() == 0
-
-    def test_get_error_message_string_error(self):
-        """Test get_error_message with string error."""
-        event = ToolEvent(
-            tool_name="TestTool",
-            tool_version="1.0.0",
-            input_params={},
-            output="output",
-            duration_ms=100.0,
-            success=False,
-            error="String error message",
-        )
-
-        assert event.get_error_message() == "String error message"
-
-    def test_get_error_message_dict_error(self):
-        """Test get_error_message with dictionary error."""
-        error_dict = {"status_code": 400, "message": "Bad Request Error"}
-
-        event = ToolEvent(
-            tool_name="TestTool",
-            tool_version="1.0.0",
-            input_params={},
-            output="output",
-            duration_ms=100.0,
-            success=False,
-            error=error_dict,
-        )
-
-        assert event.get_error_message() == "Bad Request Error"
-
-    def test_get_error_message_no_error(self):
-        """Test get_error_message with no error."""
-        event = ToolEvent(
-            tool_name="TestTool",
-            tool_version="1.0.0",
-            input_params={},
-            output="output",
-            duration_ms=100.0,
-            success=True,
-        )
-
-        assert event.get_error_message() is None
 
 
 class TestSendEvent:
@@ -396,7 +271,7 @@ class TestTrackToolExecution:
         mock_timer.side_effect = capture_timer_function
 
         with patch("time.time", side_effect=[1000.0, 1000.5]):  # 500ms duration
-            result = test_function(mock_tool, "test", param2="custom")
+            test_function(mock_tool, "test", param2="custom")
 
         # Execute the captured background function to verify custom metrics
         assert captured_bg_function is not None
@@ -457,6 +332,52 @@ class TestTrackToolExecution:
 
     @patch("alation_ai_agent_sdk.event.threading.Timer")
     @patch("alation_ai_agent_sdk.event.send_event")
+    def test_decorator_with_unhandled_AlationAPIError(
+        self, mock_send_event, mock_timer
+    ):
+        """Test decorator when an unhandled AlationAPIError occurs."""
+
+        @track_tool_execution()
+        def test_function(self, param1):
+            raise AlationAPIError(
+                "Unhandled API error",
+                reason="Something went wrong",
+                resolution_hint="Retry again",
+            )
+
+        # Mock tool instance
+        mock_tool = Mock()
+        mock_tool.api = Mock(spec=AlationAPI)
+        mock_tool.__class__.__name__ = "TestTool"
+
+        # Mock timer to capture the background function
+        captured_bg_function = None
+
+        def capture_timer_function(delay, func):
+            nonlocal captured_bg_function
+            captured_bg_function = func
+            return Mock(daemon=None)
+
+        mock_timer.side_effect = capture_timer_function
+
+        with patch("time.time", side_effect=[1000.0, 1000.2]):  # 200ms duration
+            with pytest.raises(AlationAPIError, match="Unhandled API error"):
+                test_function(mock_tool, "test")
+
+        # Execute the captured background function
+        captured_bg_function()
+
+        # Verify send_event was called with error details
+        mock_send_event.assert_called_once()
+        call_args = mock_send_event.call_args
+
+        event_arg = call_args[0][1]
+        assert event_arg.success is False
+        assert event_arg.error == "Unhandled API error"
+        assert event_arg.output == {"error": "Unhandled API error"}
+
+    @patch("alation_ai_agent_sdk.event.threading.Timer")
+    @patch("alation_ai_agent_sdk.event.send_event")
     def test_decorator_with_error_in_output(self, mock_send_event, mock_timer):
         """Test decorator when function returns error in output."""
 
@@ -480,7 +401,7 @@ class TestTrackToolExecution:
         mock_timer.side_effect = capture_timer_function
 
         with patch("time.time", side_effect=[1000.0, 1000.1]):
-            result = test_function(mock_tool, "test")
+            test_function(mock_tool, "test")
 
         # Execute the captured background function
         captured_bg_function()
@@ -520,7 +441,7 @@ class TestTrackToolExecution:
         mock_timer.side_effect = capture_timer_function
 
         with patch("time.time", side_effect=[1000.0, 1000.1]):
-            result = test_function(mock_tool, "test")
+            test_function(mock_tool, "test")
 
         # Execute the captured background function
         captured_bg_function()

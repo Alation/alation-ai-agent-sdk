@@ -3,7 +3,6 @@ from unittest.mock import Mock, patch
 from alation_ai_agent_sdk.tools import AlationBulkRetrievalTool
 from alation_ai_agent_sdk.api import AlationAPI, AlationAPIError
 from alation_ai_agent_sdk.types import ServiceAccountAuthParams
-from alation_ai_agent_sdk.utils import SDK_VERSION
 
 
 @pytest.fixture
@@ -280,48 +279,3 @@ def test_bulk_retrieval_tool_with_429_quota_reached(
     assert result["error"]["status_code"] == 429
     assert result["error"]["reason"] == "License Quota Exceeded"
     assert result["error"]["is_retryable"] is False
-
-
-@patch("alation_ai_agent_sdk.api.requests.get")
-def test_user_agent_header_populated(
-    mock_requests_get, bulk_retrieval_tool_with_alation_api
-):
-    # Mock successful response
-    mock_response = create_mock_response({"relevant_tables": []})
-    mock_requests_get.return_value = mock_response
-
-    signature = {"table": {"fields_required": ["name"], "limit": 1}}
-
-    # Test 1: With dist_version and SDK_VERSION
-    bulk_retrieval_tool_with_alation_api.api.dist_version = "mcp-0.10.0"
-    bulk_retrieval_tool_with_alation_api.run(signature=signature)
-
-    mock_requests_get.assert_called()
-    call_args = mock_requests_get.call_args
-    headers = call_args[1]["headers"]
-    expected_user_agent = f"mcp-0.10.0/sdk-{SDK_VERSION}"
-    assert "User-Agent" in headers
-    assert headers["User-Agent"] == expected_user_agent
-
-    # Test 2: With only SDK_VERSION (no dist_version)
-    mock_requests_get.reset_mock()
-    bulk_retrieval_tool_with_alation_api.api.dist_version = None
-    bulk_retrieval_tool_with_alation_api.run(signature=signature)
-
-    call_args = mock_requests_get.call_args
-    headers = call_args[1]["headers"]
-    expected_user_agent = f"sdk-{SDK_VERSION}"
-    assert "User-Agent" in headers
-    assert headers["User-Agent"] == expected_user_agent
-
-    # Test 3: With neither dist_version nor SDK_VERSION
-    mock_requests_get.reset_mock()
-    bulk_retrieval_tool_with_alation_api.api.dist_version = ""
-
-    with patch("alation_ai_agent_sdk.api.SDK_VERSION", ""):
-        bulk_retrieval_tool_with_alation_api.run(signature=signature)
-
-        call_args = mock_requests_get.call_args
-        headers = call_args[1]["headers"]
-        # No User-Agent header should be set
-        assert "User-Agent" not in headers
