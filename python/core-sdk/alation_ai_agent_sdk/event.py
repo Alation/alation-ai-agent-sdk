@@ -111,7 +111,7 @@ def send_event(
         )
     except Exception as e:
         # Failure to send event should be non-blocking
-        logger.error(f"Unexpected error sending event: {e}")
+        logger.warning(f"Unexpected error sending event: {e}")
 
 
 def track_tool_execution(

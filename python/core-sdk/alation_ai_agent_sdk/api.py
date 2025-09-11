@@ -802,9 +802,7 @@ class AlationAPI:
             "batch_size": (
                 limit
                 if processing_mode == LineageGraphProcessingOptions.COMPLETE
-                else pagination.get("batch_size", limit)
-                if pagination
-                else batch_size
+                else pagination.get("batch_size", limit) if pagination else batch_size
             ),
         }
         if show_temporal_objects:
@@ -1019,7 +1017,7 @@ class AlationAPI:
                     if attempt == max_retries or not getattr(
                         api_error, "is_retryable", False
                     ):
-                        logger.error(
+                        logger.warning(
                             f"Max retries reached for event tracking: {event.get('tool_name', 'unknown')}"
                         )
                         raise
