@@ -91,7 +91,7 @@ def test_bulk_retrieval_tool_run_success(bulk_retrieval_tool, mock_api):
         "table": {"fields_required": ["name", "description", "url"], "limit": 1}
     }
 
-    result = bulk_retrieval_tool.run(signature)
+    result = bulk_retrieval_tool.run(signature=signature)
 
     # Verify API was called correctly
     mock_api.get_bulk_objects_from_catalog.assert_called_once_with(signature)
@@ -142,7 +142,7 @@ def test_bulk_retrieval_tool_run_api_error(bulk_retrieval_tool, mock_api):
 
     invalid_signature = {"unknown": {"fields_required": ["name"], "limit": 100}}
 
-    result = bulk_retrieval_tool.run(invalid_signature)
+    result = bulk_retrieval_tool.run(signature=invalid_signature)
 
     # Verify API was called
     mock_api.get_bulk_objects_from_catalog.assert_called_once_with(invalid_signature)
@@ -185,7 +185,7 @@ def test_bulk_retrieval_tool_run_usage_quota_warning(
         "table": {"fields_required": ["name", "description", "url"], "limit": 1}
     }
 
-    result = bulk_retrieval_tool_with_alation_api.run(signature)
+    result = bulk_retrieval_tool_with_alation_api.run(signature=signature)
 
     # Verify the requests.get was called
     mock_requests_get.assert_called_once()
@@ -236,7 +236,7 @@ def test_bulk_retrieval_tool_run_no_entitlement_warning(
         "table": {"fields_required": ["name", "description", "url"], "limit": 1}
     }
 
-    result = bulk_retrieval_tool_with_alation_api.run(signature)
+    result = bulk_retrieval_tool_with_alation_api.run(signature=signature)
 
     # Verify the requests.get was called
     mock_requests_get.assert_called_once()
@@ -268,7 +268,7 @@ def test_bulk_retrieval_tool_with_429_quota_reached(
         "table": {"fields_required": ["name", "description", "url"], "limit": 1}
     }
 
-    result = bulk_retrieval_tool_with_alation_api.run(signature)
+    result = bulk_retrieval_tool_with_alation_api.run(signature=signature)
 
     # Verify the requests.get was called
     mock_requests_get.assert_called_once()

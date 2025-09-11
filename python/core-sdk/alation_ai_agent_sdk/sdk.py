@@ -118,7 +118,7 @@ class AlationAIAgentSDK:
         - JSON context result (dict)
         - Error object with keys: message, reason, resolution_hint, response_body
         """
-        return self.context_tool.run(question, signature)
+        return self.context_tool.run(question=question, signature=signature)
 
     def get_bulk_objects(self, signature: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -141,7 +141,7 @@ class AlationAIAgentSDK:
                 }
             }
         """
-        return self.bulk_retrieval_tool.run(signature)
+        return self.bulk_retrieval_tool.run(signature=signature)
 
     def get_data_products(
         self, product_id: Optional[str] = None, query: Optional[str] = None
@@ -161,7 +161,7 @@ class AlationAIAgentSDK:
             ValueError: If neither product_id nor query is provided.
             AlationAPIError: On network, API, or response errors.
         """
-        return self.data_product_tool.run(product_id, query)
+        return self.data_product_tool.run(product_id=product_id, query=query)
 
     def get_lineage(
         self,
@@ -260,7 +260,9 @@ class AlationAIAgentSDK:
                       "code": "400000"
                   }
         """
-        return self.update_catalog_asset_metadata_tool.run(custom_field_values)
+        return self.update_catalog_asset_metadata_tool.run(
+            custom_field_values=custom_field_values
+        )
 
     def check_job_status(self, job_id: int) -> dict:
         """
@@ -272,7 +274,7 @@ class AlationAIAgentSDK:
         Returns:
             dict: The API response containing job status and details.
         """
-        return self.check_job_status_tool.run(job_id)
+        return self.check_job_status_tool.run(job_id=job_id)
 
     def check_data_quality(
         self,

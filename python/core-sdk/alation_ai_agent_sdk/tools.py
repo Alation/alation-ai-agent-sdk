@@ -39,6 +39,7 @@ from alation_ai_agent_sdk.fields import (
     get_built_in_fields_structured,
     get_built_in_usage_guide,
 )
+from alation_ai_agent_sdk.event import track_tool_execution
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +161,8 @@ class AlationContextTool:
 """
 
     @min_alation_version("2025.1.2")
-    def run(self, question: str, signature: Optional[Dict[str, Any]] = None):
+    @track_tool_execution()
+    def run(self, *, question: str, signature: Optional[Dict[str, Any]] = None):
         try:
             return self.api.get_context_from_catalog(question, signature)
         except AlationAPIError as e:
@@ -207,7 +209,8 @@ class AlationGetDataProductTool:
           Multiple results: Summary format (name, id, description, url)
           """
 
-    def run(self, product_id: Optional[str] = None, query: Optional[str] = None):
+    @track_tool_execution()
+    def run(self, *, product_id: Optional[str] = None, query: Optional[str] = None):
         try:
             return self.api.get_data_products(product_id=product_id, query=query)
         except AlationAPIError as e:
@@ -251,7 +254,8 @@ class AlationBulkRetrievalTool:
      - With relationships: bulk_retrieval(signature = {"table": {"fields_required": ["name", "columns"], "child_objects": {"columns": {"fields": ["name", "data_type"]}}, "limit": 10}})
     """
 
-    def run(self, signature: Optional[Dict[str, Any]] = None):
+    @track_tool_execution()
+    def run(self, *, signature: Optional[Dict[str, Any]] = None):
         if not signature:
             return {
                 "error": {
@@ -331,8 +335,10 @@ class AlationLineageTool:
         - Fully qualified names should be split into their component parts (period separated). The last element is the most specific name.
         """
 
+    @track_tool_execution()
     def run(
         self,
+        *,
         root_node: LineageRootNode,
         direction: LineageDirectionType,
         limit: Optional[int] = 1000,
@@ -433,7 +439,10 @@ class UpdateCatalogAssetMetadataTool:
             - TOOL: Use get_job_status tool with the returned job_id
             """
 
-    def run(self, custom_field_values: list[CatalogAssetMetadataPayloadItem]) -> dict:
+    @track_tool_execution()
+    def run(
+        self, *, custom_field_values: list[CatalogAssetMetadataPayloadItem]
+    ) -> dict:
         return self.api.update_catalog_asset_metadata(custom_field_values)
 
 
@@ -465,7 +474,8 @@ class CheckJobStatusTool:
         Returns the job status and details as a JSON object.
         """
 
-    def run(self, job_id: int) -> dict:
+    @track_tool_execution()
+    def run(self, *, job_id: int) -> dict:
         return self.api.check_job_status(job_id)
 
 
@@ -511,6 +521,7 @@ class GenerateDataProductTool:
         No parameters required - returns the complete instruction set with the latest schema from your Alation instance.
         """
 
+    @track_tool_execution()
     def run(self) -> str:
         """
         Assembles and returns the complete instructional prompt for creating
@@ -564,8 +575,10 @@ class CheckDataQualityTool:
 
             Returns a data quality summary and item level quality statements."""
 
+    @track_tool_execution()
     def run(
         self,
+        *,
         table_ids: Optional[list] = None,
         sql_query: Optional[str] = None,
         db_uri: Optional[str] = None,
@@ -650,6 +663,7 @@ class GetCustomFieldsDefinitionsTool:
         Non-admin users: Returns only built-in fields (id: 3 (title), 4 (description), 8 (steward))
         """
 
+    @track_tool_execution()
     def run(self) -> Dict[str, Any]:
         """
         Retrieve all custom field definitions from the Alation instance.
@@ -746,6 +760,7 @@ class GetDataDictionaryInstructionsTool:
         Complete instruction set with formatting rules, validation schemas, and examples
         """
 
+    @track_tool_execution()
     def run(self) -> str:
         """
         Generate comprehensive data dictionary CSV formatting instructions.
@@ -777,7 +792,7 @@ class GetDataDictionaryInstructionsTool:
             return instructions
 
         except AlationAPIError as e:
-            return f"Error generating instructions: {e}"
+            return {"error": e.to_dict()}
 
 
 def csv_str_to_tool_list(tool_env_var: Optional[str] = None) -> List[str]:
