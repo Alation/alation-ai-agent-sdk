@@ -18,7 +18,7 @@ def get_alation_context_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     alation_context_tool = sdk.context_tool
 
     def run_with_signature(question: str, signature: dict[str, Any] | None = None):
-        return alation_context_tool.run(question, signature)
+        return alation_context_tool.run(question=question, signature=signature)
 
     return StructuredTool.from_function(
         name=alation_context_tool.name,
@@ -62,7 +62,7 @@ def get_alation_bulk_retrieval_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
         else:
             signature = None
 
-        result = bulk_retrieval_tool.run(signature)
+        result = bulk_retrieval_tool.run(signature=signature)
         return result
 
     return StructuredTool.from_function(
@@ -98,7 +98,7 @@ def get_update_catalog_asset_metadata_tool(sdk: AlationAIAgentSDK) -> Structured
             custom_field_values = args[0]
         else:
             raise TypeError("custom_field_values argument is required")
-        return update_tool.run(custom_field_values)
+        return update_tool.run(custom_field_values=custom_field_values)
 
     return StructuredTool.from_function(
         name=update_tool.name,
@@ -112,7 +112,7 @@ def get_check_job_status_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     check_job_status_tool = sdk.check_job_status_tool
 
     def run_with_args(job_id: int):
-        return check_job_status_tool.run(job_id)
+        return check_job_status_tool.run(job_id=job_id)
 
     return StructuredTool.from_function(
         name=check_job_status_tool.name,
