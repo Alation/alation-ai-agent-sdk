@@ -147,9 +147,9 @@ class TestSendEvent:
         # Should not raise exception - errors are logged but not re-raised
         send_event(mock_api, event)
 
-        # Verify error was logged
-        mock_logger.error.assert_called_once()
-        assert "Unexpected error sending event" in mock_logger.error.call_args[0][0]
+        # Verify error was logged with warning level
+        mock_logger.warning.assert_called_once()
+        assert "Unexpected error sending event" in mock_logger.warning.call_args[0][0]
 
     @patch("alation_ai_agent_sdk.event.logger")
     def test_send_event_generic_exception(self, mock_logger):
@@ -169,9 +169,9 @@ class TestSendEvent:
         # Should not raise exception - errors are logged but not re-raised
         send_event(mock_api, event)
 
-        # Verify error was logged
-        mock_logger.error.assert_called_once()
-        assert "Unexpected error sending event" in mock_logger.error.call_args[0][0]
+        # Verify error was logged with warning level
+        mock_logger.warning.assert_called_once()
+        assert "Unexpected error sending event" in mock_logger.warning.call_args[0][0]
 
 
 class TestTrackToolExecution:
