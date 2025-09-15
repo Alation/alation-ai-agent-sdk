@@ -49,15 +49,7 @@ For production use, deploy to Azure Container Apps with:
 - **HTTPS Endpoint**: Your MCP server must be accessible via HTTPS (HTTP will not work with Power Apps)
 - **Network Accessibility**: The endpoint must be reachable by Microsoft Power Platform services
 - **Authentication**: OAuth 2.0 integration with your Alation instance (configured in later steps)
-
-### 4. Pre-Setup Verification Checklist
-Before proceeding with the connector setup, verify:
-
-- [ ] MCP server is running and accessible at `https://your-server/health`
-- [ ] You have the server's base URL (e.g., `https://your-server.azurecontainerapps.io`)
-- [ ] Your Alation instance OAuth endpoints are accessible
-- [ ] You have contact information for your Alation administrator (needed for OAuth app setup)
-
+  
 ---
 
 ## Connector Setup Instructions
