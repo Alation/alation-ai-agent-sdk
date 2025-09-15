@@ -9,6 +9,40 @@ You can create this connector using either method:
 1. **UI-Based Setup** (Recommended for beginners): Follow the step-by-step UI instructions below
 2. **OpenAPI Specification** (Advanced users): If you prefer working directly with YAML/JSON specifications, you can skip the UI steps and use the [Complete OpenAPI Specification](#complete-openapi-specification) section at the bottom of this guide to import the entire connector definition at once.
 
+## Authentication Options
+
+### Production Setup (Recommended): OAuth 2.0
+For production deployments, use OAuth 2.0 authentication as described in the main setup instructions below. This provides:
+- Long-lived authentication
+- User-specific permissions and personalized results
+- Secure credential rotation
+- Multi-user support
+
+### Testing Setup: API Key Authentication
+For **testing purposes only**, you can use API key authentication for faster setup. However, this approach has significant limitations:
+
+⚠️ **API Key Limitations (Not recommended for production):**
+- API keys are short-lived (default 24 hours TTL)
+- Tied to a single user account
+- Difficult to rotate securely
+- Do not provide personalized results
+- Less secure than OAuth
+
+**When to use API key authentication:**
+- Initial testing and proof of concept
+- Development environments
+- Quick demonstrations
+
+**API Key Setup Instructions:**
+1. Generate an API token following: [Create a refresh token via the UI](https://developer.alation.com/dev/docs/authentication-into-alation-apis#create-a-refresh-token-via-the-ui)
+2. For extended testing, you can request TTL extension beyond 24 hours
+3. Use the [API Key OpenAPI Specification](#api-key-openapi-specification) instead of the OAuth version
+4. When prompted for the API key in Power Apps, format it as: `Bearer <your-api-token>`
+   - **Critical**: The word "Bearer", the space, and the token format are mandatory
+   - Example: `Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJS...`
+
+For complete authentication details, refer to: [Authentication Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md)
+
 ## Prerequisites
 
 Before you begin, ensure you have the following:
@@ -259,7 +293,7 @@ For advanced users who prefer to work directly with the OpenAPI specification, y
 4. Update the placeholder values with your actual server details
 5. Configure OAuth credentials as described in Step 3 above
 
-### Complete YAML Specification
+### OAuth 2.0 YAML Specification (Production)
 
 ```yaml
 swagger: '2.0'
@@ -267,7 +301,7 @@ info:
   title: Alation
   description: MCP server to use Alation tools
   version: 1.0.0
-host: agents.alationcloud-dev.com
+host: your-mcp-server.example.com
 basePath: /
 schemes:
   - https
@@ -284,8 +318,8 @@ securityDefinitions:
   oauth2-auth:
     type: oauth2
     flow: accessCode
-    authorizationUrl: https://genai-gartner.mtse.alationcloud.com/oauth/v1/authorize/
-    tokenUrl: https://genai-gartner.mtse.alationcloud.com/oauth/v1/token/
+    authorizationUrl: https://your-alation-instance.com/oauth/v1/authorize/
+    tokenUrl: https://your-alation-instance.com/oauth/v1/token/
     scopes:
       openid: openid
 security:
@@ -297,11 +331,60 @@ security:
 
 Before importing this YAML, you must replace the following placeholders:
 
-1. **`host`**: Replace `your-server.azurecontainerapps.io` with your actual MCP server hostname
-2. **`authorizationUrl`**: Replace `your-alation-instance.com` with your actual Alation instance URL
-3. **`tokenUrl`**: Replace `your-alation-instance.com` with your actual Alation instance URL
+1. **`host`**: Replace `your-mcp-server.example.com` with your actual MCP server hostname
+2. **`authorizationUrl`**: Replace with your actual Alation instance OAuth URL
+3. **`tokenUrl`**: Replace with your actual Alation instance token URL
 
+### API Key OpenAPI Specification
 
+For **testing purposes only**, you can use this API key-based authentication version:
+
+```yaml
+swagger: '2.0'
+info:
+  title: Alation
+  description: MCP Test Specification, YAML for streamable MCP support in Copilot Studio
+  version: 1.0.0
+host: your-mcp-server.example.com  # Replace with your MCP server hostname
+basePath: /
+schemes:
+  - https
+paths:
+  /mcp:
+    post:
+      summary: Alation-mcp-server
+      x-ms-agentic-protocol: mcp-streamable-1.0
+      operationId: InvokeMCP
+      responses:
+        '200':
+          description: Success
+securityDefinitions:
+  api_key:
+    type: apiKey
+    in: header
+    name: Authorization
+security:
+  - api_key: []
+```
+
+**API Key Setup Instructions:**
+1. Replace `your-mcp-server.example.com` with your actual MCP server hostname
+2. Import this YAML into Power Apps
+3. When configuring the connection, enter your API key in the format: `Bearer <your-api-token>`
+4. Remember: This is for **testing only** - refer to [API Key Limitations](#testing-setup-api-key-authentication) above for details
+
+**⚠️ Important**: For production deployments, use the [OAuth 2.0 YAML Specification](#oauth-20-yaml-specification-production) instead.
+
+## Key Elements for Copilot Studio Integration
+
+The critical element that enables both OAuth and API key connectors to work with Copilot Studio is:
+```yaml
+x-ms-agentic-protocol: mcp-streamable-1.0
+```
+
+This property tells Power Platform that this connector supports the MCP streaming protocol used by Copilot Studio for AI agent interactions. Both YAML specifications above include this essential property.
+
+**Note**: Some documentation may reference `x-ms-service-protocol`, but the correct property for MCP integration is `x-ms-agentic-protocol`.
 
 
 Your custom connector is now fully configured and ready to be used in Power Apps and Power Automate.

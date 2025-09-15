@@ -23,6 +23,7 @@ Here are a handful of guides & examples to show you how to work with the Alation
 
 - [MCP Integration](./mcp/)
 - [Testing with MCP Inspector](./mcp/testing_with_mcp_inspector.md)
+- [Known Issues](./mcp/known_issues.md) - SSL certificate issues, VPN troubleshooting
 - [Claude Desktop Integration](./mcp/claude_desktop.md)
 - [LibreChat Integration](./mcp/librechat.md)
 - [Code Editor Integration](./mcp/code_editors.md)

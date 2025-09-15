@@ -16,6 +16,7 @@ The Model Context Protocol (MCP) server in this SDK allows AI agents to access A
 For quick testing and validation of the MCP server:
 - [Testing with MCP Inspector](./testing_with_mcp_inspector.md) - Step-by-step guide for testing your server in STDIO mode
 - [HTTP Mode Guide](./http_mode.md) - Complete guide for HTTP mode setup and usage
+- [Known Issues](./known_issues.md) - Solutions for common problems (SSL certificates, VPN issues, etc.)
 
 ## Client Integrations
 
