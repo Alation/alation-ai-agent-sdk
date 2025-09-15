@@ -139,9 +139,9 @@ def test_get_langchain_tools_returns_list_with_alation_tool(mock_sdk_with_contex
     assert len(tools_list) > 0, "The returned list of tools should not be empty."
 
     alation_tool = tools_list[0]
-    assert isinstance(
-        alation_tool, StructuredTool
-    ), "The Alation tool in the list should be an instance of StructuredTool."
+    assert isinstance(alation_tool, StructuredTool), (
+        "The Alation tool in the list should be an instance of StructuredTool."
+    )
 
 
 def test_get_langchain_tools_skips_beta_tools_by_default():
@@ -163,9 +163,9 @@ def test_get_langchain_tools_skips_beta_tools_by_default():
     )
 
     tools_list = get_langchain_tools(sdk)
-    assert all(
-        t.name != AlationTools.LINEAGE for t in tools_list
-    ), "Beta tools should be skipped."
+    assert all(t.name != AlationTools.LINEAGE for t in tools_list), (
+        "Beta tools should be skipped."
+    )
 
 
 def test_get_langchain_tools_skips_disabled_tools():
@@ -188,9 +188,9 @@ def test_get_langchain_tools_skips_disabled_tools():
     )
 
     tools_list = get_langchain_tools(sdk)
-    assert all(
-        t.name != AlationTools.AGGREGATED_CONTEXT for t in tools_list
-    ), "Disabled tools should be skipped."
+    assert all(t.name != AlationTools.AGGREGATED_CONTEXT for t in tools_list), (
+        "Disabled tools should be skipped."
+    )
 
 
 def test_alation_tool_properties_from_list(mock_sdk_with_context_tool):
@@ -205,9 +205,9 @@ def test_alation_tool_properties_from_list(mock_sdk_with_context_tool):
         t for t in tools_list if t.name == mock_sdk_with_context_tool.context_tool.name
     )
 
-    assert (
-        alation_tool.name == mock_sdk_with_context_tool.context_tool.name
-    ), "Tool name should match the name from the SDK's context_tool."
+    assert alation_tool.name == mock_sdk_with_context_tool.context_tool.name, (
+        "Tool name should match the name from the SDK's context_tool."
+    )
     assert (
         alation_tool.description == mock_sdk_with_context_tool.context_tool.description
     ), "Tool description should match the description from the SDK's context_tool."
@@ -237,9 +237,9 @@ def test_alation_tool_run_invokes_sdk_context_tool_no_signature(
         question=test_question, signature=None
     )
 
-    assert (
-        actual_result == expected_result
-    ), "The tool's function should return the result from the SDK's context_tool.run."
+    assert actual_result == expected_result, (
+        "The tool's function should return the result from the SDK's context_tool.run."
+    )
 
 
 def test_alation_tool_run_invokes_sdk_context_tool_with_signature(
@@ -265,9 +265,9 @@ def test_alation_tool_run_invokes_sdk_context_tool_with_signature(
     mock_sdk_with_context_tool.context_tool.run.assert_called_once_with(
         question=test_question, signature=test_signature
     )
-    assert (
-        actual_result == expected_result
-    ), "The tool's function should return the result from SDK's context_tool.run when a signature is provided."
+    assert actual_result == expected_result, (
+        "The tool's function should return the result from SDK's context_tool.run when a signature is provided."
+    )
 
 
 def test_alation_tool_func_can_be_called_multiple_times(mock_sdk_with_context_tool):
@@ -299,6 +299,6 @@ def test_alation_tool_func_can_be_called_multiple_times(mock_sdk_with_context_to
     )
 
     # Verify total calls to the mock
-    assert (
-        mock_sdk_with_context_tool.context_tool.run.call_count == 2
-    ), "SDK's context_tool.run should have been called twice."
+    assert mock_sdk_with_context_tool.context_tool.run.call_count == 2, (
+        "SDK's context_tool.run should have been called twice."
+    )
