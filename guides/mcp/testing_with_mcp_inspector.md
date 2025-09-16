@@ -2,6 +2,10 @@
 
 This guide walks through the process of testing your Alation AI Agent SDK's Model Context Protocol (MCP) server using the MCP Inspector tool.
 
+## Known Issues
+
+⚠️ **Corporate VPN Users**: If you encounter SSL certificate errors while using MCP Inspector (particularly with Zscaler or other corporate VPNs), refer to the [Known Issues Guide](./known_issues.md#ssl-certificate-issues-with-corporate-vpns) for solutions.
+
 ## Prerequisites
 
 - Python 3.10 or higher
