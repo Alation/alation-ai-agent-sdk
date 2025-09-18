@@ -1,3 +1,6 @@
+import base64
+import hashlib
+import hmac
 import time
 import logging
 import urllib.parse
@@ -117,6 +120,7 @@ class AlationAPI:
         self.alation_release_name = None
         self.alation_version_info = None
         self.dist_version = dist_version
+        self.tenant_id = None
 
         # Validate auth_method and auth_params
         if auth_method == AUTH_METHOD_USER_ACCOUNT:
@@ -168,6 +172,7 @@ class AlationAPI:
             license_data = license_resp.json()
             self.is_cloud = license_data.get("is_cloud", None)
             self.alation_license_info = license_data
+            self.tenant_id = license_data.get("tenant_id")
         except Exception as e:
             logger.warning(f"Could not fetch license info: {e}")
             self.is_cloud = None
@@ -980,6 +985,28 @@ class AlationAPI:
         except requests.RequestException as e:
             self._handle_request_error(e, "custom fields retrieval")
 
+    def _sign_tool_event_data(self, event_data):
+        """
+        Sign tool event data for secure transmission.
+
+        Args:
+            event_data (dict): The tool event data to sign
+
+        Returns:
+            dict: Contains 'data' and 'signature' fields
+        """
+        # Convert to JSON and encode to base64
+        json_data = json.dumps(event_data, separators=(",", ":"), sort_keys=True)
+        data_b64 = base64.b64encode(json_data.encode("utf-8")).decode("utf-8")
+
+        # Generate HMAC signature
+        signature = hmac.new(
+            self.tenant_id.encode("utf-8"), data_b64.encode("utf-8"), hashlib.sha256
+        ).digest()
+        signature_b64 = base64.b64encode(signature).decode("utf-8")
+
+        return {"data": data_b64, "signature": signature_b64}
+
     def post_tool_event(
         self,
         event: dict,
@@ -1002,10 +1029,12 @@ class AlationAPI:
 
         url = f"{self.base_url}/api/v1/ai_agent/tool/event/"
 
+        payload = self._sign_tool_event_data(event)
+
         for attempt in range(max_retries + 1):
             try:
                 response = requests.post(
-                    url, headers=headers, json=event, timeout=timeout
+                    url, headers=headers, json=payload, timeout=timeout
                 )
                 response.raise_for_status()
                 logger.debug(

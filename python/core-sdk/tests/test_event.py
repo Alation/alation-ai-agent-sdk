@@ -1,3 +1,7 @@
+import base64
+import json
+import hmac
+import hashlib
 import pytest
 from unittest.mock import Mock, patch
 
@@ -8,6 +12,8 @@ from alation_ai_agent_sdk.event import (
 )
 from alation_ai_agent_sdk.api import AlationAPI
 from alation_ai_agent_sdk.errors import AlationAPIError
+from alation_ai_agent_sdk.types import BearerTokenAuthParams
+from alation_ai_agent_sdk.utils import SDK_VERSION
 
 
 class TestToolEvent:
@@ -511,8 +517,6 @@ class TestTrackToolExecution:
                     test_function(mock_tool)
 
         # Verify tool version includes dist_version
-        from alation_ai_agent_sdk.utils import SDK_VERSION
-
         expected_version = f"my-dist-2.0/sdk-{SDK_VERSION}"
         assert captured_event.tool_version == expected_version
 
@@ -530,3 +534,85 @@ class TestTrackToolExecution:
         # Verify function metadata is preserved
         assert original_function.__name__ == "original_function"
         assert "Original function docstring." in original_function.__doc__
+
+
+class TestAlationAPIEventSigning:
+    """Test cases for AlationAPI _sign_tool_event_data method."""
+
+    def test_sign_tool_event_data(self):
+        """Test that _sign_tool_event_data correctly signs event data."""
+        # Create a mock API instance with tenant_id
+        api = Mock(spec=AlationAPI)
+        api.tenant_id = "test-tenant-123"
+
+        # Test event data
+        event_data = {
+            "tool_name": "TestTool",
+            "tool_version": "1.0.0",
+            "timestamp": "2023-01-01T00:00:00Z",
+            "status_code": 200,
+        }
+
+        # Call the actual method (we need to bind it to our mock instance)
+        result = AlationAPI._sign_tool_event_data(api, event_data)
+
+        # Verify the result structure
+        assert "data" in result
+        assert "signature" in result
+
+        # Verify the data is correctly base64 encoded JSON
+        decoded_data = base64.b64decode(result["data"]).decode("utf-8")
+        parsed_data = json.loads(decoded_data)
+        assert parsed_data == event_data
+
+        # Verify the signature is correct
+        json_data = json.dumps(event_data, separators=(",", ":"), sort_keys=True)
+        data_b64 = base64.b64encode(json_data.encode("utf-8")).decode("utf-8")
+        expected_signature = hmac.new(
+            api.tenant_id.encode("utf-8"), data_b64.encode("utf-8"), hashlib.sha256
+        ).digest()
+        expected_signature_b64 = base64.b64encode(expected_signature).decode("utf-8")
+
+        assert result["signature"] == expected_signature_b64
+
+    @patch("alation_ai_agent_sdk.api.requests.post")
+    def test_post_tool_event_calls_signing(self, mock_post):
+        """Test that post_tool_event calls _sign_tool_event_data."""
+        # Create a real API instance for testing
+        api = AlationAPI(
+            base_url="https://test.alation.com",
+            auth_method="bearer_token",
+            auth_params=BearerTokenAuthParams("test-token"),
+            skip_instance_info=True,
+        )
+        api.tenant_id = "test-tenant-123"
+
+        # Mock the signing method
+        with patch.object(api, "_sign_tool_event_data") as mock_sign:
+            mock_sign.return_value = {
+                "data": "signed-data",
+                "signature": "test-signature",
+            }
+
+            # Mock successful HTTP response
+            mock_response = Mock()
+            mock_response.raise_for_status.return_value = None
+            mock_response.status_code = 200
+            mock_post.return_value = mock_response
+
+            # Test event data
+            event_data = {"tool_name": "TestTool", "status_code": 200}
+
+            # Call post_tool_event
+            api.post_tool_event(event_data, timeout=5.0, max_retries=1)
+
+            # Verify signing was called with the event data
+            mock_sign.assert_called_once_with(event_data)
+
+            # Verify the signed payload was sent in the request
+            mock_post.assert_called_once()
+            call_args = mock_post.call_args
+            assert call_args[1]["json"] == {
+                "data": "signed-data",
+                "signature": "test-signature",
+            }
