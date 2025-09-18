@@ -1,10 +1,10 @@
-# Azure Power Apps Custom Connector Setup Guide
+# Azure Power Apps Custom Connector with openAPI spec Setup Guide
 
 ## Overview
 
 This guide walks you through setting up a custom connector in Microsoft Power Apps using the Alation Context API Swagger specification. The connector will enable Power Apps applications to query Alation's data catalog using natural language.
 
-**🆓 Freemium API**: The Alation Aggregated Context API includes a free tier of 2,000 API calls per tenant that doesn't reset. When you reach 90% of the quota (1,800 calls), you'll receive warnings in the API response headers. Rate limiting begins at 120% (2,400 calls) with HTTP 429 responses. Contact your Alation Account Manager for paid subscription options beyond the free tier. To learn more, refer to: https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta#free-tier-and-quotas
+>**⚠️ Freemium API**: The Alation Aggregated Context API includes a free tier of 2,000 API calls per tenant that doesn't reset. When you reach 90% of the quota (1,800 calls), you'll receive warnings in the API response headers. Rate limiting begins at 120% (2,400 calls) with HTTP 429 responses. Contact your Alation Account Manager for paid subscription options beyond the free tier. To learn more, refer to: https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta#free-tier-and-quotas
 
 ## Prerequisites
 
@@ -78,6 +78,8 @@ The following are automatically populated from your Swagger file:
 
 This configuration tells Power Apps that users will need to provide an API key in the header with the parameter name "TOKEN" when creating connections.
 
+**Want OAuth 2.0 instead?** If you prefer OAuth 2.0 authentication, refer to [Step 3: Configure OAuth 2.0 Authentication](./azure_custom_connector_mcp_server.md#step-3-configure-oauth-20-authentication-tab-2).
+
 ### Step 5: API Definition
 
 #### 3. Definition
@@ -108,7 +110,7 @@ Before you can test, you must create the connector first:
 1. Click **Create connector** to save your configuration
 2. After creation, return to the Test tab
 3. Click **+ New connection** to create a test connection
-![Connection Dialogue](../images/azure_power_apps_openapi_connector/enter-api-key.png)
+![Connection Dialogue](../images/azure_power_apps_openapi_connector/enter_api_key.png)
 4. In the connection dialog:
    - Enter your Alation API key in the "API Key" field
    - Click **Create**
