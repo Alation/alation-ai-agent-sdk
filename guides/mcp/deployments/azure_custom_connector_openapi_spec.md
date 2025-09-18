@@ -14,8 +14,7 @@ This guide walks you through setting up a custom connector in Microsoft Power Ap
 
 ## Important Notes Before Starting
 
-⚠️ **Critical Compatibility Requirements:**
-- Power Apps Custom Connectors **only support OpenAPI/Swagger 2.0**å
+- Power Apps Custom Connectors **only support OpenAPI/Swagger 2.0**
 - The Import OpenAPI file dialog can be buggy - if "Continue" is greyed out or shows errors, close the dialog and try again
 - The dialog may not update properly when you re-upload a corrected file - you may need to refresh the page
 
