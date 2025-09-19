@@ -1,0 +1,863 @@
+swagger: "2.0"
+info:
+  description: "This API takes user questions in natural language and retrieves the\
+    \ relevant catalog objects. It supports two modes: \n - Search mode for retrieving\
+    \ objects based on relevance\n - Bulk mode for directly retrieving specified objects\
+    \ to support bulk operations"
+  title: Aggregated Context API
+  version: 1.0.0
+host: localhost
+basePath: /integration/v2
+schemes:
+- http
+- https
+security:
+- APIKeyAuth: []
+paths:
+  /context/:
+    get:
+      description: "Retrieves relevant objects from the Alation catalog. The aggregated\
+        \ context response may contain the following object types: Schema, Table,\
+        \ Column, Query, Glossary, Document, Article, Term, BI Folder, BI Report,\
+        \ and BI Field.\n\n---\n\n> \U0001F4D8 Availability\n>\n> The Aggregated Context\
+        \ API is available for Alation Cloud Services customers only. The API includes\
+        \ a free tier of up to 2,000 calls."
+      operationId: GetAggregatedContext
+      produces:
+      - application/json
+      parameters:
+      - "$ref": "#/parameters/AggregatedContext_UserQuestion"
+      - "$ref": "#/parameters/AggregatedContext_Signature"
+      - "$ref": "#/parameters/AggregatedContext_Mode"
+      - "$ref": "#/parameters/AggregatedContext_RichTextFormat"
+      - "$ref": "#/parameters/AggregatedContext_OmitEmpty"
+      responses:
+        "200":
+          description: Aggregated context from the Alation catalog.
+          schema:
+            "$ref": "#/definitions/AggregatedContext_Response"
+        "400":
+          description: Bad Request
+          schema:
+            "$ref": "#/definitions/Error"
+        "401":
+          description: Unauthorized
+          schema:
+            "$ref": "#/definitions/Error"
+        "403":
+          description: Forbidden
+          schema:
+            "$ref": "#/definitions/Error"
+        "404":
+          description: Not Found
+          schema:
+            "$ref": "#/definitions/Error"
+        "429":
+          description: Too Many Requests
+          schema:
+            "$ref": "#/definitions/Error"
+        "500":
+          description: Internal Server Error
+          schema:
+            "$ref": "#/definitions/Error"
+      summary: Get relevant context from the Alation catalog
+      tags:
+      - Context
+tags:
+- description: API endpoints providing context from the Alation catalog.
+  name: Context
+securityDefinitions:
+  APIKeyAuth:
+    type: apiKey
+    in: header
+    name: TOKEN
+    description: API Key for the user.
+definitions:
+  Error:
+    type: object
+    properties:
+      error:
+        type: string
+        description: A message describing the error.
+  AggregatedContext_SignatureSearchFilterFlagValues:
+    type: string
+    enum:
+    - Endorsement
+    - Deprecation
+    - Warning
+  AggregatedContext_Response:
+    description: The aggregated context from Alation pertaining to the user question
+      or signature specification.
+    type: object
+    properties:
+      relevant_schemas:
+        description: The schemas relevant to the user question. Each schema returns
+          all required fields and may return any of the optional fields requested.
+        type: array
+        items:
+          "$ref": "#/definitions/AggregatedContext_SchemaObject"
+      relevant_tables:
+        description: The tables relevant to the user question. Each table returns
+          all required fields and may return any of the optional fields requested.
+        type: array
+        items:
+          "$ref": "#/definitions/AggregatedContext_TableObject"
+      relevant_columns:
+        description: The columns relevant to the user question. Each column returns
+          all required fields and may return any of the optional fields requested.
+        type: array
+        items:
+          "$ref": "#/definitions/AggregatedContext_ColumnObject"
+      relevant_documentations:
+        description: The documents relevant to the user question. Each document returns
+          all required fields and may return any of the optional fields requested.
+        type: array
+        items:
+          "$ref": "#/definitions/AggregatedContext_DocumentObject"
+      relevant_queries:
+        description: The queries relevant to the user question. Each query returns
+          all required fields and may return any of the optional fields requested.
+        type: array
+        items:
+          "$ref": "#/definitions/AggregatedContext_QueryObject"
+      relevant_bi_folders:
+        description: The BI folders relevant to the user question. Each folder returns
+          all required fields and may return any of the optional fields requested.
+        type: array
+        items:
+          "$ref": "#/definitions/AggregatedContext_BiFolderObject"
+      relevant_bi_reports:
+        description: The BI reports relevant to the user question. Each BI report
+          returns all required fields and may return any of the optional fields requested.
+        type: array
+        items:
+          "$ref": "#/definitions/AggregatedContext_BiReportObject"
+      relevant_bi_fields:
+        description: The BI fields relevant to the user question. Each BI field returns
+          all required fields and may return any of the optional fields requested.
+        type: array
+        items:
+          "$ref": "#/definitions/AggregatedContext_BiFieldObject"
+  AggregatedContext_SchemaObject:
+    description: The schema object returned by the Aggregated Context API.
+    type: object
+    properties:
+      object_type:
+        "$ref": "#/definitions/AggregatedContext_ObjectType"
+      object_id:
+        "$ref": "#/definitions/AggregatedContext_ObjectId"
+      name:
+        description: The name of the schema as it appears in the source database.
+        type: string
+      title:
+        description: The assigned title of the schema.
+        type: string
+      description:
+        description: The description of the schema.
+        type: string
+      url:
+        description: The URL to the table in Alation.
+        type: string
+      custom_fields:
+        "$ref": "#/definitions/AggregatedContext_CustomFieldsObject"
+      source_comment:
+        description: The description of the schema on the source database.
+        type: string
+  AggregatedContext_TableObject_AsChild:
+    description: The table object returned by the Aggregated Context API as a child
+      object.
+    type: object
+    properties:
+      object_type:
+        "$ref": "#/definitions/AggregatedContext_ObjectType"
+      object_id:
+        "$ref": "#/definitions/AggregatedContext_ObjectId"
+      name:
+        description: The name of the table as it appears in the source database.
+        type: string
+      title:
+        description: The assigned title of the table.
+        type: string
+      description:
+        description: The description of the table.
+        type: string
+      url:
+        description: The URL to the table in Alation.
+        type: string
+      common_joins:
+        description: Common SQL joins for this table.
+        type: array
+        items:
+          type: string
+      common_filters:
+        description: Common SQL filters for this table.
+        type: array
+        items:
+          type: string
+      columns:
+        description: The columns in the table.
+        type: array
+        items:
+          "$ref": "#/definitions/AggregatedContext_ColumnObject_AsChild"
+      source_comment:
+        description: The description of the table on the source database.
+        type: string
+  AggregatedContext_TableObject:
+    description: The table object returned by the Aggregated Context API.
+    type: object
+    properties:
+      object_type:
+        "$ref": "#/definitions/AggregatedContext_ObjectType"
+      object_id:
+        "$ref": "#/definitions/AggregatedContext_ObjectId"
+      name:
+        description: The name of the table as it appears in the source database.
+        type: string
+      title:
+        description: The assigned title of the table.
+        type: string
+      description:
+        description: The description of the table.
+        type: string
+      url:
+        description: The URL to the table in Alation.
+        type: string
+      common_joins:
+        description: Common SQL joins for this table.
+        type: array
+        items:
+          type: string
+      common_filters:
+        description: Common SQL filters for this table.
+        type: array
+        items:
+          type: string
+      columns:
+        description: The columns in the table.
+        type: array
+        items:
+          "$ref": "#/definitions/AggregatedContext_ColumnObject_AsChild"
+      source_comment:
+        description: The description of the table on the source database.
+        type: string
+      common_queries:
+        description: Common SQL queries for this table.
+        type: array
+        items:
+          "$ref": "#/definitions/AggregatedContext_QueryObject_AsChild"
+      custom_fields:
+        "$ref": "#/definitions/AggregatedContext_CustomFieldsObject"
+  AggregatedContext_ColumnObject_AsChild:
+    description: The column object returned by the Aggregated Context API as a child
+      object.
+    type: object
+    properties:
+      object_type:
+        "$ref": "#/definitions/AggregatedContext_ObjectType"
+      object_id:
+        "$ref": "#/definitions/AggregatedContext_ObjectId"
+      name:
+        description: The name of the column as it appears in the source database.
+        type: string
+      description:
+        description: The description of the column.
+        type: string
+      title:
+        description: The assigned title of the column.
+        type: string
+      data_type:
+        description: The data type of the column.
+        type: string
+      sample_values:
+        description: Sample values for the column.
+        type: array
+        items:
+          type: string
+      url:
+        description: The URL to the column in Alation.
+        type: string
+      source_comment:
+        description: The description of the column on the source database.
+        type: string
+  AggregatedContext_ColumnObject:
+    description: The column object returned by the Aggregated Context API.
+    type: object
+    properties:
+      object_type:
+        "$ref": "#/definitions/AggregatedContext_ObjectType"
+      object_id:
+        "$ref": "#/definitions/AggregatedContext_ObjectId"
+      name:
+        description: The name of the column as it appears in the source database.
+        type: string
+      description:
+        description: The description of the column.
+        type: string
+      title:
+        description: The assigned title of the column.
+        type: string
+      data_type:
+        description: The data type of the column.
+        type: string
+      sample_values:
+        description: Sample values for the column.
+        type: array
+        items:
+          type: string
+      url:
+        description: The URL to the column in Alation.
+        type: string
+      source_comment:
+        description: The description of the column on the source database.
+        type: string
+      custom_fields:
+        "$ref": "#/definitions/AggregatedContext_CustomFieldsObject"
+  AggregatedContext_DocumentObject:
+    description: The document object returned by the Aggregated Context API.
+    type: object
+    properties:
+      object_type:
+        "$ref": "#/definitions/AggregatedContext_ObjectType"
+      object_id:
+        "$ref": "#/definitions/AggregatedContext_ObjectId"
+      title:
+        description: The assigned title of the document.
+        type: string
+      content:
+        description: The document's main content (description).
+        type: string
+      url:
+        description: The URL to the document in Alation.
+        type: string
+      custom_fields:
+        "$ref": "#/definitions/AggregatedContext_CustomFieldsObject"
+  AggregatedContext_QueryObject_AsChild:
+    description: The query object returned by the Aggregated Context API as a child
+      object.
+    type: object
+    properties:
+      object_type:
+        "$ref": "#/definitions/AggregatedContext_ObjectType"
+      object_id:
+        "$ref": "#/definitions/AggregatedContext_ObjectId"
+      title:
+        description: The assigned title of the query.
+        type: string
+      description:
+        description: The description of the query.
+        type: string
+      content:
+        description: One or more executable SQL statements.
+        type: string
+      url:
+        description: The URL to the query in Alation.
+        type: string
+  AggregatedContext_QueryObject:
+    description: The query object returned by the Aggregated Context API.
+    type: object
+    properties:
+      object_type:
+        "$ref": "#/definitions/AggregatedContext_ObjectType"
+      object_id:
+        "$ref": "#/definitions/AggregatedContext_ObjectId"
+      title:
+        description: The assigned title of the query.
+        type: string
+      description:
+        description: The description of the query.
+        type: string
+      content:
+        description: One or more executable SQL statements.
+        type: string
+      url:
+        description: The URL to the query in Alation.
+        type: string
+      mentioned_tables:
+        description: The tables mentioned in the query.
+        type: array
+        items:
+          "$ref": "#/definitions/AggregatedContext_TableObject_AsChild"
+  AggregatedContext_BiFolderObject:
+    description: The BI folder object returned by the Aggregated Context API.
+    type: object
+    properties:
+      object_type:
+        "$ref": "#/definitions/AggregatedContext_ObjectType"
+      object_id:
+        "$ref": "#/definitions/AggregatedContext_ObjectId"
+      name:
+        description: The name of the BI folder.
+        type: string
+      description:
+        description: The description of the BI folder.
+        type: string
+      bi_object_type:
+        description: The BI tool specific type to capture BI specific terminology.
+          e.g., for Tableau, it can be used to differentiate projects and workbooks.
+        type: string
+      source_comment:
+        description: The description of the BI folder on the BI server.
+        type: string
+      url:
+        description: The URL to the BI folder in Alation.
+        type: string
+      custom_fields:
+        "$ref": "#/definitions/AggregatedContext_CustomFieldsObject"
+  AggregatedContext_BiReportObject:
+    description: The BI report object returned by the Aggregated Context API.
+    type: object
+    properties:
+      object_type:
+        "$ref": "#/definitions/AggregatedContext_ObjectType"
+      object_id:
+        "$ref": "#/definitions/AggregatedContext_ObjectId"
+      name:
+        description: The name of the BI report.
+        type: string
+      description:
+        description: The description of the BI report.
+        type: string
+      bi_object_type:
+        description: The BI tool specific type to capture BI specific terminology.
+          e.g., for Tableau, it can be used to differentiate projects and workbooks.
+        type: string
+      bi_fields:
+        description: The BI columns that affect the BI report.
+        type: array
+        items:
+          "$ref": "#/definitions/AggregatedContext_BiFieldObject_AsChild"
+      source_comment:
+        description: The description of the BI report on the BI server.
+        type: string
+      url:
+        description: The URL to the BI report in Alation.
+        type: string
+      custom_fields:
+        "$ref": "#/definitions/AggregatedContext_CustomFieldsObject"
+  AggregatedContext_BiFieldObject_AsChild:
+    description: The BI field object returned by the Aggregated Context API as a child
+      object.
+    type: object
+    properties:
+      name:
+        description: The name of the BI field.
+        type: string
+      description:
+        description: The description of the BI field.
+        type: string
+      data_type:
+        description: The data type of the BI field. e.g., string, integer etc.
+        type: string
+      role:
+        description: The role of the BI field in the BI report. e.g., dimension,
+          measure etc.
+        type: string
+      expression:
+        description: The expression used to calculate the BI field.
+        type: string
+  AggregatedContext_BiFieldObject:
+    description: The BI field object returned by the Aggregated Context API.
+    type: object
+    properties:
+      name:
+        description: The name of the BI field.
+        type: string
+      description:
+        description: The description of the BI field.
+        type: string
+      data_type:
+        description: The data type of the BI field. e.g., string, integer etc.
+        type: string
+      role:
+        description: The role of the BI field in the BI report. e.g., dimension,
+          measure etc.
+        type: string
+      expression:
+        description: The expression used to calculate the BI field.
+        type: string
+      object_type:
+        "$ref": "#/definitions/AggregatedContext_ObjectType"
+      object_id:
+        "$ref": "#/definitions/AggregatedContext_ObjectId"
+      bi_object_type:
+        description: The BI tool specific type to capture BI specific terminology.
+          e.g., for Tableau, it can be used to differentiate projects and workbooks.
+        type: string
+      source_comment:
+        description: The description of the BI field on the BI server.
+        type: string
+      url:
+        description: The URL to the BI field in Alation.
+        type: string
+      custom_fields:
+        "$ref": "#/definitions/AggregatedContext_CustomFieldsObject"
+  AggregatedContext_CustomFieldsObject:
+    description: "The custom field name and value pairs added to the object. The value for each custom field can be a string, an array of strings, or an array of objects with 'display_name' and 'url' properties."
+    type: object
+    additionalProperties: {}
+  AggregatedContext_ObjectType:
+    description: The object type name of the object. Object type is Alation's internal
+      identifier.
+    type: string
+  AggregatedContext_ObjectId:
+    description: The object ID of the object. Along with the object_type, it uniquely
+      identifies the object in Alation.
+    type: integer
+parameters:
+  AggregatedContext_UserQuestion:
+    name: question
+    in: query
+    description: |
+      The user question to be answered. Alation will analyze the question and return relevant catalog objects.
+
+      **Required in search mode, must be empty/omitted in bulk mode.**
+
+      **WARNING**: A maximum length of 2,000 characters is enforced.
+    required: false
+    type: string
+  AggregatedContext_Signature:
+    name: signature
+    in: query
+    description: |
+      ### Overview ###
+      We **strongly** encourage developers to craft a `signature` to adapt the Aggregated Context API to their specific needs.
+
+      In a nutshell the `signature` defines the contract for the Aggregated Context API both in terms of what is searched and how results are returned.
+      
+      **In search mode (default)**: Signature is optional. Requests without a `signature` will search the whole catalog. If you're interested in a subset, for instance trusted assets, use a `signature` to limit scope to only those objects.
+
+      **In bulk mode**: Signature is required. Documentation object type is not supported in bulk mode.
+
+      A `signature` is expressed as a URL-encoded JSON object string with top level keys controlling which object types to search. Each object type value can independently configure which fields are returned with the objects and which slice of the catalog to search.
+
+      The object type value's search filters should be used to narrow the set of objects down that best match the agent's goal. For instance, returning content specific to an organization or objects that are gold certified etc.
+
+      ### Supported Object Types ###
+      These following object types are supported as top level keys in the `signature` parameter of the Aggregated Context API.
+      
+      **Search mode**:  `schema`, `table`, `column`, `query`, `documentation`, `bi_folder`, `bi_report`, `bi_field`  
+      **Bulk mode**: `schema`, `table`, `column`, `query`, `bi_folder`, `bi_report`, `bi_field` (documentation object type is not supported)
+
+      ### Signature Object Parameters ###
+      Each object type can be configured with the following:
+      - `fields_required`: The fields that **MUST** be returned with any matching objects.
+      - `fields_optional`: The fields that **MAY** be returned with any matching objects if they are deemed relevant to the user question.
+      - `search_filters`: The search filters to apply along with the object type.
+      - `child_objects`: A configuration specific to child objects.
+      - `limit`: The maximum number of objects to return for this type (optional, uses mode default if not specified).
+      - `custom_fields`: A list of custom field IDs or names to be returned with the object. To use this, you must include `custom_fields` in the `fields_required` parameter.
+
+      #### Limits ####
+      - **Search mode**: Default limit is 2 objects per type
+      - **Bulk mode**: Default limit is 50 objects per type
+      - **Maximum**: 1,000 objects per type
+
+      #### Object Fields ####
+      Each object supports only its own set of fields and is expressed as a list of field identifiers.
+
+      When both `fields_required` and `fields_optional` are omitted: Default values for both are used.
+
+      When either one is used and the other is omitted or empty.
+      - If `fields_required` is omitted or empty: No fields are guaranteed in responses.
+      - If `fields_optional` is omitted or empty: No optional field selection occurs.
+
+      For more detail, see the relevant entry under Supported Object Fields below.
+
+      #### Search Filters ####
+      
+      The Aggregated Context API supports the same set of search filters as the **[Search API](https://developer.alation.com/dev/reference/getsearchresults)**. As the **[Search API](https://developer.alation.com/dev/reference/getsearchresults)** is modified to support new filters, they will be reflected here as well.
+
+      Here is a non-exhaustive set of search filters we imagine you should consider using.
+      - `domain_ids`: The data domain IDs to filter on. These may be useful for agents specific to a department or business unit.
+      - `fields`: The fields to filter on. These can target built-in Alation fields such as tags, data sources etc or any custom field values.
+      - `flags`: The trust flags to filter on. If your organization uses endorsements to indicate canonical objects this may be a useful filter. Please note these values are case sensitive.
+
+      Certain field values support filtering. For instance, the `tag_ids` field can be used to filter on tags. This may be useful for agents to only use a subset of data. For instance a set of high quality (gold) tables.
+      ```json
+
+        {
+          "table": {
+            "search_filters": {
+              "fields": {
+                "tag_ids": [1] 
+              }
+            }
+          }
+        }
+
+      ```
+
+      See futher Search Filter examples in the Examples section.
+      
+      #### Child Objects ####
+
+      When a field represents an object type, it's possible to control which fields are returned with them through `child_objects` configuration.
+      For instance, a table object may have `columns` and `common_queries` as child object fields.
+
+      We enforce an upper limit of 50 `columns`, `common_queries`, and `mentioned_tables` child objects per parent object, and an upper limit of 100 `bi_fields` child objects per `bi_report` object.
+      `common_queries` and `mentioned_tables` fields can only be included as top level child object fields.
+      This is to keep the response size small which helps with the performance of subsequent LLM calls and token usage.
+
+      The configuration value of `child_objects` is keyed by the same parent object's field identifier and indicates which fields should be included with each child object.
+
+      The structure of child_objects mirrors the nesting of object fields. If a parent field (e.g. `mentioned_tables`) includes child objects (e.g. `columns`),
+      those are configured by nesting another `child_objects` object inside.
+      ```json
+        
+        {
+          "query": {
+            "fields_required": ["title", "description", "content", "mentioned_tables"],
+            "child_objects": {
+              "mentioned_tables": {
+                "fields": ["name", "title", "columns"],
+                "child_objects": {
+                  "columns": {
+                    "fields": ["name", "data_type", "sample_values"]
+                  }
+                }
+              }
+            }
+          }
+        }
+
+      ```
+
+      #### Custom Fields ####
+
+      When "custom_fields" is included in `fields_required`, all available custom fields on the object will be returned.
+      To return a specific set of custom fields, use the `custom_fields` parameter to specify a list of custom field ids or names to be returned with the object.
+
+      The request fails when the requested custom fields share the same name. Work with your Alation admin to ensure custom field names are unique, or ensure the requested custom fields do not contain duplicate names.
+      ```json
+        
+        {
+          "schema": {
+            "fields_required": ["title", "name", "custom_fields"],
+            "custom_fields": [8, "Completion Date", 10013]
+          }
+        }
+
+      ```
+
+      ### Supported Object Fields ###
+      
+      #### Schema Object Fields ####
+      Schema objects support the following fields:
+      - `description`: The description of the schema.
+      - `name`: The name of the schema as it appears in the database.
+      - `object_id`: The unique identifier for the schema object.
+      - `object_type`: The object type name, "schema". This is Alation's internal identifier.
+      - `source_comment`: The description of the schema on the source database.
+      - `title`: The assigned title of the schema.
+      - `url`: The URL to the schema in Alation.
+      - `custom_fields`: The custom field name and value pairs added to the schema.
+
+      The following fields are required by default: `description`, `name`, `title`, and `url`
+      #### Table Object Fields ####
+      Table objects support the following fields:
+      - `description`: The description of the table.
+      - `common_joins`: Common SQL joins for this table.
+      - `common_filters`: Common SQL filters for this table.
+      - `common_queries`: Common SQL queries for this table.
+      - `columns`: The columns belonging to the table.
+      - `name`: The name of the table as it appears in the database.
+      - `object_id`: The unique identifier for the table object.
+      - `object_type`: The object type name, "table". This is Alation's internal identifier.
+      - `source_comment`: The description of the table on the source database.
+      - `title`: The assigned title of the table.
+      - `url`: The URL to the table in Alation.
+      - `custom_fields`: The custom field name and value pairs added to the table.
+
+      The following fields are required by default: `description`, `name`, `title`, and `url`
+      #### Column Object Fields ####
+      Column objects support the following fields:
+      - `data_type`: The data type of the column.
+      - `description`: The description of the column.
+      - `name`: The name of the column as it appears in the database.
+      - `object_id`: The unique identifier for the column object.
+      - `object_type`: The object type name, "attribute". This is Alation's internal identifier.
+      - `sample_values`: Sample values for the column.
+      - `source_comment`: The description of the column on the source database.
+      - `title`: The assigned title of the column.
+      - `url`: The URL to the column in Alation.
+      - `custom_fields`: The custom field name and value pairs added to the column.
+
+      The following fields are required by default: `name`, `title`, `data_type`, and `url`
+      #### Query Object Fields ####
+      Query objects support the following fields:
+      - `content`: The content of the query.
+      - `description`: The description of the query.
+      - `mentioned_tables`: The tables mentioned in the query.
+      - `object_id`: The unique identifier for the query object.
+      - `object_type`: The object type name, "query". This is Alation's internal identifier.
+      - `title`: The assigned title of the query.
+      - `url`: The URL to the query in Alation.
+
+      The following fields are required by default: `title`, `description`, `content`, and `url`
+      
+      #### Documentation Object Fields ####
+      Documentation objects support the following fields:
+      - `content`: The content of the documentation.
+      - `object_id`: The object ID of the documentation object. With `object_type`, it uniquely identifies the object in Alation.
+      - `object_type`: The object type name. It can be one of "glossary_v3", "glossary_term", "custom_glossary", and "article". This is Alation's internal identifier.
+      - `title`: The assigned title of the documentation.
+      - `url`: The URL to the documentation in Alation.
+      - `custom_fields`: The custom field name and value pairs added to the documentation.
+
+      The following fields are required by default: `title`, `content`, and `url`
+
+      #### BI Folder Object Fields ####
+      BI Folder objects support the following fields:
+      - `bi_object_type`: The BI tool specific type to capture BI specific terminology. e.g., for Tableau, "site", "project", "workbook", "dashboard", and "worksheet" can be returned, and for Power BI, "workspace", "report", and "dashboard" can be returned.
+      - `custom_fields`: The custom field name and value pairs added to the BI folder.
+      - `description`: The description of the BI folder.
+      - `name`: The name of the BI folder.
+      - `object_id`: The unique identifier for the bi folder object.
+      - `object_type`: The object type name, "bi_folder". This is Alation's internal identifier.
+      - `source_comment`: The description of the BI folder on the BI server.
+      - `url`: The URL to the BI folder in Alation.
+
+      The following fields are required by default: `name`, `description`, `bi_object_type`, and `url`
+
+      #### BI Report Object Fields ####
+      BI Report objects support the following fields:
+      - `bi_fields`: The BI columns that affect the BI report.
+      - `bi_object_type`: The BI tool specific type to capture BI specific terminology. e.g., for Tableau, "site", "project", "workbook", "dashboard", and "worksheet" can be returned, and for Power BI, "workspace", "report", and "dashboard" can be returned.
+      - `custom_fields`: The custom field name and value pairs added to the BI report.
+      - `description`: The description of the BI report.
+      - `name`: The name of the BI report.
+      - `object_id`: The unique identifier for the BI report object.
+      - `object_type`: The object type name, "bi_report". This is Alation's internal identifier.
+      - `source_comment`: The description of the BI report on the BI server.
+      - `url`: The URL to the BI report in Alation.
+
+      The following fields are required by default: `name`, `description`, `bi_object_type`, `bi_fields`, and `url`
+
+      #### BI Field Object Fields ####
+      BI Field objects support the following fields:
+      - `bi_object_type`: The BI tool specific type to capture BI specific terminology. e.g., for Tableau, "site", "project", "workbook", "dashboard", and "worksheet" can be returned, and for Power BI, "workspace", "report", and "dashboard" can be returned.
+      - `custom_fields`: The custom field name and value pairs added to the BI field.
+      - `data_type`: The data type of the BI field. e.g., string, integer etc.
+      - `description`: The description of the BI field.
+      - `expression`: The expression used to calculate the BI field.
+      - `name`: The name of the BI field.
+      - `object_id`: The unique identifier for the BI field object.
+      - `object_type`: The object type name, "bi_report_column". This is Alation's internal identifier.
+        - **Note**: While BI Field objects are requested with "bi_field" in the signature, the object_type returned is "bi_report_column".
+      - `role`: The role of the BI field in the BI report. e.g., dimension, measure etc.
+      - `source_comment`: The description of the BI field on the BI server.
+      - `url`: The URL to the BI field in Alation.
+
+      The following fields are required by default: `name`, `description`, `data_type`, `role`, `expression`, and `bi_object_type`
+
+      ### Example Signatures ###
+
+      #### Only return relational database objects ignoring query and documentation ####
+      ```json
+
+        {
+          "schema": {},
+          "table": {},
+          "column": {}
+        }
+
+      ```
+
+      #### Relational Database objects with additional required fields ####
+      ```json
+        
+        {
+          "schema": {},
+          "table": {
+            "fields_optional": ["common_joins", "common_filters"],
+          },
+          "column": {
+            "fields_required": ["description", "name", "title", "url", "sample_values"],
+          }
+        }
+
+      ```
+
+      #### Only return table and column objects from a given domain with limit ####
+      ```json
+        
+        {
+          "table": {
+            "search_filters": {
+              "domain_ids": [1]
+            },
+            "limit": 50,
+          },
+          "column": {
+            "search_filters": {
+              "domain_ids": [1]
+            },
+            "limit": 100,
+          },
+
+        }
+
+      ```
+
+      #### Only return tables with a specific tag ####
+      ```json
+        
+        {
+          "table": {
+            "search_filters": {
+              "fields": {
+                "tag_ids": [1]
+              }
+            }
+          }
+        }
+
+      ```
+    type: string
+  AggregatedContext_Mode:
+    name: mode
+    in: query
+    description: |
+      The operation mode for the Context API.
+
+      **search** (default): Conversational mode where you provide a natural language question. It understands your question and returns relevant catalog objects.
+
+      **bulk**: Direct object retrieval mode for bulk operations. In this mode:
+
+      - The `question` parameter must be empty or omitted
+      - The `signature` parameter is required and defines exactly what objects to retrieve
+      - Documentation object type is not supported
+      - Default limit is 50
+
+      Use bulk mode for workflows like:
+
+      - Analyzing a set of SQL queries under a data source or tag
+      - Getting a set of table inventories for data discovery under a data source or tag
+      - Retrieving objects without search
+    required: false
+    type: string
+    enum:
+    - search
+    - bulk
+    default: search
+  AggregatedContext_RichTextFormat:
+    name: rich_text_format
+    in: query
+    description: The format of the rich text content returned by the Aggregated Context
+      API.
+    required: false
+    type: string
+    enum:
+    - html
+    - text
+    default: html
+  AggregatedContext_OmitEmpty:
+    name: omit_empty
+    in: query
+    description: |
+      Whether to omit empty fields from the response.
+      **Default**: `false` - Empty fields are returned.
+      **Set to `true`** to omit empty fields in the response.
+    required: false
+    type: boolean
+    default: false
