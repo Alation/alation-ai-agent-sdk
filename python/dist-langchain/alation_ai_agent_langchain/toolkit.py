@@ -71,7 +71,7 @@ def get_tools(sdk: AlationAIAgentSDK):
     ):
         tools.append(get_signature_creation_tool(sdk))
     if is_tool_enabled(
-        AlationTools.SEARCH_AGENT, sdk.disabled_tools, sdk.enabled_beta_tools
+        AlationTools.ANALYZE_CATALOG_QUESTION, sdk.disabled_tools, sdk.enabled_beta_tools
     ):
         tools.append(get_analyze_catalog_question_tool(sdk))
 

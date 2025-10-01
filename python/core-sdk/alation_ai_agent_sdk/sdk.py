@@ -436,7 +436,7 @@ class AlationAIAgentSDK:
         ):
             tools.append(self.signature_creation_tool)
         if is_tool_enabled(
-            AlationTools.SEARCH_AGENT,
+            AlationTools.ANALYZE_CATALOG_QUESTION,
             self.disabled_tools,
             self.enabled_beta_tools,
         ):
