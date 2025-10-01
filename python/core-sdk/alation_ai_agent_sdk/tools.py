@@ -1054,13 +1054,13 @@ class SignatureCreationTool:
     <supported_filters_by_object_type>
     {
       "Schema": {
-        "supported_filters": ["ds", "database_catalog_facet_name", "dbtype", "tag_ids", "flag_types", "domain_ids", "policy_ids", "custom_field_value"]
+        "supported_filters": ["ds", "tag_ids", "flag_types", "domain_ids", "policy_ids", "custom_field_value"]
       },
       "Table": {
-        "supported_filters": ["ds", "database_catalog_facet_name", "schema_name", "table_type", "dbtype", "tag_ids", "flag_types", "domain_ids", "policy_ids", "custom_field_value", "schema"]
+        "supported_filters": ["ds", "schema_name", "table_type", "tag_ids", "flag_types", "domain_ids", "policy_ids", "custom_field_value", "schema"]
       },
       "Column (Attribute)": {
-        "supported_filters": ["ds", "database_catalog_facet_name", "schema_name", "schema", "data_type", "table", "dbtype", "tag_ids", "flag_types", "domain_ids", "policy_ids", "custom_field_value"]
+        "supported_filters": ["ds", "schema_name", "schema", "data_type", "table", "tag_ids", "flag_types", "domain_ids", "policy_ids", "custom_field_value"]
       },
       "BI Folder": {
         "supported_filters": ["bi_server_id", "parent_folder", "bi_owner", "tag_ids", "flag_types", "domain_ids", "policy_ids", "custom_field_value"]
@@ -1093,7 +1093,6 @@ class SignatureCreationTool:
           "bi_server_id": {"description": "Filter by BI server ID. RDBMS DS ID and BI server ID are different", "type": "list[int]", "example": "\"bi_server_id\": [123]"},
           "cf[field_id]": {"description": "Filter by custom field value", "type": "list[str or int]", "example": "\"cf[12345]\": [\"value1\"]"},
           "data_type": {"description": "Filter by attribute data type", "type": "list[str]", "example": "\"data_type\": [\"varchar\"]"},
-          "database_catalog_facet_name": {"description": "Filter by database catalog name", "type": "list[str]", "example": "\"database_catalog_facet_name\": [\"production_db\"]"},
           "domain_ids": {"description": "Filter by domain ID", "type": "list[int]", "example": "\"domain_ids\": [42, 123]"},
           "ds": {"description": "Filter by data source ID", "type": "list[int]", "example": "\"ds\": [1, 5]"},
           "flag_types": {"description": "Filter by trust flags", "type": "list[str]", "accepted_values": ["Endorsement", "Deprecation", "Warning"], "example": "\"flag_types\": [\"Endorsement\"]"},
@@ -1150,7 +1149,7 @@ class SignatureCreationTool:
     Before adding ANY filter to search_filters:
     1. Look up object type in supported_filters_by_object_type
     2. Check if filter exists in that object's supported_filters list
-    3. If NOT in list → DO NOT INCLUDE that filter
+    3. If NOT in list → DO NOT INCLUDE that filter. ex: We have schema_name but there is no "name" or "table_name" or "ds_name" filter for any object type.
     4. If in list → Include in correct location (domain_ids vs fields)
     5. Data source IDs are for RDBMS objects (tables/queries). BI server IDs are separate and not provided in context. Only use if user has provided it.
     
