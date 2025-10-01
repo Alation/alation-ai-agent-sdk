@@ -1538,7 +1538,129 @@ class AnalyzeCatalogQuestionTool:
     3. Evaluate results
     4. If insufficient: Try more specific filters OR ask for clarification
     
+    ═══════════════════════════════════════════════════════════
+    STEP 6: CONSTRUCT RESPONSE WITH EXPLANATIONS
+    ═══════════════════════════════════════════════════════════
     
+    WHEN TO EXPLAIN THE PROCESS:
+    ────────────────────────────
+    
+    Include process explanations when:
+    ✓ Multiple filters were applied (domain, custom fields, schema, etc.)
+    ✓ Custom field filtering was used
+    ✓ Complex queries with multiple object types
+    ✓ User might benefit from understanding the search scope
+    ✓ Results are filtered/limited in non-obvious ways
+    
+    Skip process explanations when:
+    ✗ Simple, single-filter queries ("tables in schema X")
+    ✗ Self-evident searches (user asked for exactly what was returned)
+    ✗ Follow-up questions in same context
+    
+    HOW TO EXPLAIN THE PROCESS:
+    ────────────────────────────
+    
+    Format: Brief, natural language summary BEFORE presenting results
+    
+    Template Structure:
+    "I searched for [object types] [with these criteria]:
+    - [Filter 1]: [value/explanation]
+    - [Filter 2]: [value/explanation]
+    [Additional context if relevant]
+    
+    Here's what I found:"
+    
+    Examples:
+    
+    Example 1 - Custom Field Filter:
+    "I searched for tables in the Marketing domain (ID: 42) that are classified 
+    as 'PII' in the Data Classification custom field. Here's what I found:"
+    
+    Example 2 - Multiple Filters:
+    "I searched for published queries from the Sales data source (ID: 5) that 
+    are endorsed. Here's what I found:"
+    
+    Example 3 - Semantic Search:
+    "I searched for tables related to 'customer revenue' across the Finance 
+    domain, looking at table names, descriptions, and documentation. Here's 
+    what I found:"
+    
+    ═══════════════════════════════════════════════════════════
+    STEP 7: EXPLAIN RESULT COUNTS AND LIMITS
+    ═══════════════════════════════════════════════════════════
+    
+    WHEN TO EXPLAIN COUNTS/LIMITS:
+    ───────────────────────────────
+    
+    ALWAYS explain for:
+    ✓ List/enumeration queries ("list all", "show all", "what are the")
+    ✓ When limit was reached (returned count = signature limit)
+    ✓ Bulk retrieval operations
+    ✓ When results are clearly truncated
+    
+    SKIP count explanations for:
+    ✗ Single object queries ("tell me about X table")
+    ✗ Specific named object lookups
+    ✗ When returned results are less than signature limit (obviously complete)
+    ✗ Documentation/explanation queries
+    
+    HOW TO EXPLAIN COUNTS:
+    ──────────────────────
+    
+    <count_explanation_logic>
+    IF returned_count < limit:
+        → Optional: "Found [N] [objects]"
+        → No need to mention more might exist
+    
+    IF returned_count == limit:
+        → Required: "Found [N] [objects] (showing first [limit]). There may be 
+           additional [objects] matching your criteria."
+
+    </count_explanation_logic>
+    
+    Placement: Add count explanation AFTER process explanation, BEFORE results
+    
+    Examples:
+    
+    Example 1 - Limit Reached:
+    "I searched for tables in the Finance schema classified as 'Confidential'.
+    
+    Found 20 tables (showing first 20). There may be additional tables matching 
+    your criteria. Let me know if you'd like to see more results.
+    
+    Here are the tables:"
+    
+    Example 2 - Limit Not Reached:
+    "I searched for endorsed BI reports in the Sales dashboard folder.
+    
+    Found 7 reports:
+    [results...]"
+    
+    ═══════════════════════════════════════════════════════════
+    COMBINED EXAMPLE WITH BOTH EXPLANATIONS
+    ═══════════════════════════════════════════════════════════
+    
+    Question: "List all PII tables in the Marketing domain"
+    
+    Response:
+    "I searched for tables in the Marketing domain (ID: 42) that are classified 
+    as 'PII' or 'Sensitive PII' in the Data Classification custom field.
+    
+    Found 20 tables (showing first 20). There may be additional PII tables in 
+    this domain. Let me know if you'd like to see more results.
+    
+    Here are the tables:
+    
+    1. **customer_email_list**
+       - Description: Contains customer contact information including emails
+       - URL: [link]
+       - Classification: Sensitive PII
+    
+    2. **user_profiles**
+       - Description: User account data with personal information
+       - URL: [link]
+       - Classification: PII
+
     ═══════════════════════════════════════════════════════════
     SELF-CHECK BEFORE EXECUTING
     ═══════════════════════════════════════════════════════════
@@ -1550,6 +1672,9 @@ class AnalyzeCatalogQuestionTool:
     □ Did I choose between BULK vs SEMANTIC with clear reasoning?
     □ Do I have a plan that limits searches to maximum 2 calls?
     □ If question is not actionable, did I prepare a clarification message?
+    □ Did I plan to explain the process for complex/filtered queries?
+    □ Did I plan to explain result counts for enumeration queries?
+    □ If limit == returned_count, did I plan to mention potential truncation?
     </self_validation>
     
     If ANY box is unchecked → REVISE before proceeding.
@@ -1568,10 +1693,10 @@ class AnalyzeCatalogQuestionTool:
     "Please provide more context. For example: 'Find customer transaction tables in the finance schema for churn analysis'"
     
     ═══════════════════════════════════════════════════════════
-    COMPLETE EXAMPLE
+    COMPLETE EXAMPLE WITH EXPLANATIONS
     ═══════════════════════════════════════════════════════════
     
-    Question: "Find sales tables in the marketing domain"
+    Question: "List all sales tables in the marketing domain"
     
     <orchestration_analysis>
       <actionability_check>
@@ -1581,7 +1706,7 @@ class AnalyzeCatalogQuestionTool:
       </actionability_check>
     
       <object_detection>
-        Keywords found: "tables", "marketing domain"
+        Keywords found: "tables", "marketing domain", "sales"
         Object types detected: table
         Reasoning: "tables" maps directly to table object type
       </object_detection>
@@ -1593,12 +1718,23 @@ class AnalyzeCatalogQuestionTool:
       </custom_fields_check>
     
       <routing_decision>
-        Pattern detected: CONCEPT DISCOVERY
+        Pattern detected: CONCEPT DISCOVERY + ENUMERATION
         Has semantic concepts? YES ("sales")
-        Wants everything in location? NO (wants "sales" tables, not ALL tables)
-        → Decision: alation_context
-        Reasoning: Need to discover which tables match "sales" concept
+        Wants everything in location? YES ("list all")
+        → Decision: alation_context (semantic needed for "sales" concept)
+        Reasoning: Need to discover which tables match "sales" concept within domain
       </routing_decision>
+      
+      <explanation_planning>
+        Should explain process? YES
+        Reason: Domain filter applied + semantic search for "sales"
+        
+        Should explain counts? YES
+        Reason: Enumeration query ("list all")
+        
+        Check for truncation? YES
+        Reason: If limit reached, mention more may exist
+      </explanation_planning>
     </orchestration_analysis>
     
     <self_validation>
@@ -1608,14 +1744,39 @@ class AnalyzeCatalogQuestionTool:
     ☑ Routing decision made (SEMANTIC)
     ☑ Plan limits to 2 searches
     ☑ Question is actionable
+    ☑ Process explanation planned
+    ☑ Count explanation planned
+    ☑ Truncation check planned
     </self_validation>
     
     EXECUTION PLAN:
     1. Call: get_signature_creation_instructions()
-    2. Build signature for table object with domain filter
+    2. Build signature for table object with domain filter, limit=20
     3. Call: alation_context("sales tables", signature_with_marketing_domain)
-    4. Evaluate results
-    5. If insufficient: Provide answer with available data and explain what you have and what is missing.
+    4. Check: returned_count vs limit
+    5. Construct response with explanations
+    
+    EXAMPLE RESPONSE:
+    
+    "I searched for tables related to 'sales' in the Marketing domain (ID: 42), 
+    examining table names, descriptions, and associated documentation.
+    
+    Found 20 tables (showing first 20). There may be additional sales-related 
+    tables in this domain. Let me know if you'd like to see more results.
+    
+    Here are the sales tables:
+    
+    1. **sales_transactions**
+       - Description: Daily sales transaction records
+       - URL: [link]
+       - Columns: transaction_id, customer_id, amount, date
+    
+    2. **sales_forecasts**
+       - Description: Monthly sales forecast data
+       - URL: [link]
+       - Columns: period, product_id, forecast_amount
+    
+    [...]"
     
     ═══════════════════════════════════════════════════════════
     CRITICAL REMINDERS
