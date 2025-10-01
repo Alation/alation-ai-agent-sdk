@@ -84,6 +84,36 @@ If you cannot obtain service account credentials (admin only), see the [User Acc
 
 ## Supported Tools
 
+### alation_search_agent
+
+<details>
+<summary>
+An orchestration tool that analyzes questions and provides workflow guidance for LLM agents.
+</summary>
+<br />
+
+**NOTE**: This tool is designed for LLM orchestration (MCP servers, autonomous agents). For direct Python SDK usage, call `get_context` or `bulk_retrieval` directly.
+
+**Functionality**
+- Analyzes natural language questions about the data catalog
+- Determines optimal search strategy (bulk enumeration vs semantic discovery)
+- Identifies required metadata gathering steps (custom fields, signatures)
+- Returns step-by-step execution instructions for LLMs
+- Provides actionability assessment and routing decisions
+
+**Input Parameters**
+- `question` (string): The natural language query
+
+**Returns**
+- Formatted text containing workflow analysis and execution plan
+
+**When to Use**
+- MCP server implementations (Claude Desktop)
+- Autonomous LLM agents that need query routing logic
+- Applications where LLMs orchestrate multiple tool calls
+
+</details>
+
 ### alation_context
 
 <details>
@@ -348,6 +378,29 @@ Complete instruction set with custom fields and examples for generating data dic
 
 </details>
 
+### get_signature_creation_instructions
+
+<details>
+<summary>
+A helper tool that provides comprehensive instructions for building API signatures.
+</summary>
+<br />
+
+**Functionality**
+- Returns complete reference for available object types and fields
+- Documents all supported filters with validation rules
+- Includes field selection logic and construction examples
+- Provides validation workflows and best practices
+- Single source of truth for signature specifications
+
+**Input Parameters**
+
+No parameters required
+
+**Returns**
+
+Complete instruction set with object types, fields, filters, and examples
+</details>
 
 ## Shape the SDK to your needs
 

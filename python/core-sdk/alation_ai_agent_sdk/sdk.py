@@ -22,6 +22,8 @@ from .tools import (
     GenerateDataProductTool,
     GetCustomFieldsDefinitionsTool,
     GetDataDictionaryInstructionsTool,
+    SignatureCreationTool,
+    AnalyzeCatalogQuestionTool,
 )
 from .lineage import (
     LineageToolResponse,
@@ -49,6 +51,8 @@ class AlationTools:
     GENERATE_DATA_PRODUCT = "generate_data_product"
     GET_CUSTOM_FIELDS_DEFINITIONS = "get_custom_fields_definitions"
     GET_DATA_DICTIONARY_INSTRUCTIONS = "get_data_dictionary_instructions"
+    SIGNATURE_CREATION = "signature_creation"
+    ANALYZE_CATALOG_QUESTION = "analyze_catalog_question"
 
 
 class AlationAIAgentSDK:
@@ -105,6 +109,8 @@ class AlationAIAgentSDK:
         self.get_data_dictionary_instructions_tool = GetDataDictionaryInstructionsTool(
             self.api
         )
+        self.signature_creation_tool = SignatureCreationTool(self.api)
+        self.analyze_catalog_question_tool = AnalyzeCatalogQuestionTool(self.api)
 
     BETA_TOOLS = {AlationTools.LINEAGE}
 
@@ -341,6 +347,36 @@ class AlationAIAgentSDK:
         """
         return self.get_data_dictionary_instructions_tool.run()
 
+    def get_signature_creation_instructions(self) -> str:
+        """
+        Get comprehensive instructions for creating Alation API signatures.
+
+
+        Returns:
+            Comprehensive signature creation instructions including:
+                - Basic structure patterns
+                - Object types and fields reference
+                - Field inclusion logic
+                - Parameter specifications
+                - Decision workflow
+                - Validation rules
+        """
+        return self.signature_creation_tool.run()
+
+    def analyze_catalog_question(self, question: str) -> str:
+        """
+        Analyze a catalog question and return workflow guidance.
+
+        PRIMARY ENTRY POINT for LLM agents. Analyzes the question and provides
+        step-by-step instructions for answering it using other tools.
+
+        Args:
+            question (str): Natural language question about the data catalog
+
+        Returns:
+            str: Formatted workflow instructions including
+        """
+        return self.analyze_catalog_question_tool.run(question=question)
     def get_tools(self):
         from .utils import is_tool_enabled
 
@@ -393,4 +429,16 @@ class AlationAIAgentSDK:
             self.enabled_beta_tools,
         ):
             tools.append(self.get_data_dictionary_instructions_tool)
+        if is_tool_enabled(
+            AlationTools.SIGNATURE_CREATION,
+            self.disabled_tools,
+            self.enabled_beta_tools,
+        ):
+            tools.append(self.signature_creation_tool)
+        if is_tool_enabled(
+            AlationTools.SEARCH_AGENT,
+            self.disabled_tools,
+            self.enabled_beta_tools,
+        ):
+            tools.append(self.analyze_catalog_question_tool)
         return tools

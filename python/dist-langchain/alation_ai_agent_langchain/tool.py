@@ -235,3 +235,30 @@ def get_data_dictionary_instructions_tool(sdk: AlationAIAgentSDK) -> StructuredT
         func=run_with_no_args,
         args_schema=None,
     )
+
+def get_signature_creation_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
+    signature_creation_tool = sdk.signature_creation_tool
+
+    def run_with_no_args():
+        return signature_creation_tool.run()
+
+    return StructuredTool.from_function(
+        name=signature_creation_tool.name,
+        description=signature_creation_tool.description,
+        func=run_with_no_args,
+        args_schema=None,
+    )
+
+
+def get_analyze_catalog_question_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
+    analyze_tool = sdk.analyze_catalog_question_tool
+
+    def run_with_question(question: str):
+        return analyze_tool.run(question=question)
+
+    return StructuredTool.from_function(
+        name=analyze_tool.name,
+        description=analyze_tool.description,
+        func=run_with_question,
+        args_schema=None,
+    )
