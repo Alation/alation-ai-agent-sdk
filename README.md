@@ -84,7 +84,7 @@ If you cannot obtain service account credentials (admin only), see the [User Acc
 
 ## Supported Tools
 
-### alation_search_agent
+### analyze_catalog_question
 
 <details>
 <summary>
