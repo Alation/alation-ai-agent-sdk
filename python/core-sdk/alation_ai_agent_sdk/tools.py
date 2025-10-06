@@ -805,7 +805,8 @@ class SignatureCreationTool:
 
     @staticmethod
     def _get_description() -> str:
-        return """Returns comprehensive instructions for creating Alation API signatures.
+        return """Returns comprehensive instructions for creating the signature parameter for alation_context
+        and bulk_retrieval tools.
 
         Provides object type guidance, field selection rules, filter application logic,
         and signature templates for use with alation_context and bulk_retrieval tools.
@@ -828,7 +829,7 @@ class SignatureCreationTool:
         return """ALATION SIGNATURE CREATION GUIDE
     
     ## PRIMARY TASK
-    Generate a valid JSON signature for Alation API calls based on user questions.
+    Generate a valid JSON signature for alation_context and bulk_retrieval tools calls based on user questions.
     
     ## REQUIRED OUTPUT FORMAT
     Your response must be ONLY valid JSON in this structure:
