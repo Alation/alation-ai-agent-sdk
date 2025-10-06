@@ -349,17 +349,17 @@ class AlationAIAgentSDK:
 
     def get_signature_creation_instructions(self) -> str:
         """
-        Get comprehensive instructions for creating Alation API signatures.
-
+        Returns comprehensive instructions for creating the signature parameter for alation_context
+        and bulk_retrieval tools.
 
         Returns:
-            Comprehensive signature creation instructions including:
-                - Basic structure patterns
-                - Object types and fields reference
-                - Field inclusion logic
-                - Parameter specifications
-                - Decision workflow
-                - Validation rules
+        Comprehensive signature creation instructions including:
+            - Basic structure patterns
+            - Object types and fields reference
+            - Field inclusion logic
+            - Parameter specifications
+            - Decision workflow
+            - Validation rules
         """
         return self.signature_creation_tool.run()
 

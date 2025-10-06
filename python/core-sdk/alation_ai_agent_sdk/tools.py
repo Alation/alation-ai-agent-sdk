@@ -111,42 +111,37 @@ class AlationContextTool:
     @staticmethod
     def _get_description() -> str:
         return """
+    CRITICAL: DO NOT CALL THIS TOOL DIRECTLY
+    
     LOW-LEVEL TOOL: Semantic search of Alation's data catalog using natural language.
 
-    FOR MOST QUERIES: Use analyze_catalog_question first to determine optimal strategy.
-    
+    You MUST call analyze_catalog_question first to determine workflow.
     USE THIS DIRECTLY ONLY WHEN:
     - User explicitly requests "use alation_context"
     - Following analyze_catalog_question instructions
     - User provides a pre-built signature
-    
-    ═══════════════════════════════════════════════════════════
-    WHAT THIS TOOL DOES
-    ═══════════════════════════════════════════════════════════
-    
+
+    ## WHAT THIS TOOL DOES
+
     Translates natural language into catalog queries. Returns structured data
     about tables, columns, documentation, queries, and BI objects.
-    
-    ═══════════════════════════════════════════════════════════
-    PARAMETERS
-    ═══════════════════════════════════════════════════════════
-    
+
+    ## PARAMETERS
+
     question (required): Exact user question, unmodified
     signature (optional): JSON specification of fields/filters
-    
+
     For signature structure: call get_signature_creation_instructions()
-    
-    ═══════════════════════════════════════════════════════════
-    USE CASES
-    ═══════════════════════════════════════════════════════════
-    
+
+    ## USE CASES
+
     ✓ "Find sales-related tables" (concept discovery)
     ✓ "Tables about customer data" (semantic search)
     ✓ "Documentation on data warehouse" (content search)
-    
+
     ✗ "List ALL tables in schema" → use bulk_retrieval (enumeration)
     ✗ "Get all endorsed tables" → use bulk_retrieval (filter-based list)
-    
+
     See analyze_catalog_question for workflow orchestration.
     See get_signature_creation_instructions for signature details.
     """
@@ -221,45 +216,41 @@ class AlationBulkRetrievalTool:
     @staticmethod
     def _get_description() -> str:
         return """
-        LOW-LEVEL TOOL: Direct bulk enumeration of catalog objects with filters.
+    CRITICAL: DO NOT CALL THIS TOOL DIRECTLY
+    
+    LOW-LEVEL TOOL: Direct bulk enumeration of catalog objects with filters.
 
-        FOR MOST QUERIES: Use analyze_catalog_question first to determine if this is appropriate.
+    You MUST call analyze_catalog_question first to determine workflow.
 
-        USE THIS DIRECTLY ONLY WHEN:
-        - User explicitly requests "bulk tool" or "bulk_retrieval"
-        - Following instructions from analyze_catalog_question
-        
-        ═══════════════════════════════════════════════════════════
-        WHAT THIS TOOL DOES
-        ═══════════════════════════════════════════════════════════
+    USE THIS DIRECTLY ONLY WHEN:
+    - User explicitly requests "bulk tool" or "bulk_retrieval"
+    - Following instructions from analyze_catalog_question
 
-        Fetches complete sets of catalog objects without semantic search.
-        Use for structural enumeration, not concept discovery.
+    ## WHAT THIS TOOL DOES
 
-        Supported: table, column, schema, query
-        Not supported: documentation objects
+    Fetches complete sets of catalog objects without semantic search.
+    Use for structural enumeration, not concept discovery.
 
-        ═══════════════════════════════════════════════════════════
-        PARAMETERS
-        ═══════════════════════════════════════════════════════════
+    Supported: table, column, schema, query
+    Not supported: documentation objects
 
-        signature (required, JSON):
-            For complete signature specification, field options, and filter rules,
-            call get_signature_creation_instructions() first.
+    ## PARAMETERS
 
-        ═══════════════════════════════════════════════════════════
-        USE CASES
-        ═══════════════════════════════════════════════════════════
+    signature (required, JSON):
+        For complete signature specification, field options, and filter rules,
+        call get_signature_creation_instructions() first.
 
-        ✓ "List ALL tables in finance schema"
-        ✓ "Get all endorsed tables from data source 5"
-        ✓ "Show tables with PII classification"
+    ## USE CASES
 
-        ✗ "Find sales-related tables" → use alation_context (concept discovery)
-        ✗ "Tables about customers" → use alation_context (semantic search)
+    ✓ "List ALL tables in finance schema"
+    ✓ "Get all endorsed tables from data source 5"
+    ✓ "Show tables with PII classification"
 
-        See get_signature_creation_instructions() for complete usage guide.
-        """
+    ✗ "Find sales-related tables" → use alation_context (concept discovery)
+    ✗ "Tables about customers" → use alation_context (semantic search)
+
+    See get_signature_creation_instructions() for complete usage guide.
+    """
 
     @track_tool_execution()
     def run(self, *, signature: Optional[Dict[str, Any]] = None):
@@ -280,7 +271,6 @@ class AlationBulkRetrievalTool:
             }
 
         try:
-            print("Inside bulk tool")
             return self.api.get_bulk_objects_from_catalog(signature)
         except AlationAPIError as e:
             return {"error": e.to_dict()}
@@ -837,14 +827,10 @@ class SignatureCreationTool:
     def run(self):
         return """ALATION SIGNATURE CREATION GUIDE
     
-    ═══════════════════════════════════════════════════════════
-    PRIMARY TASK
-    ═══════════════════════════════════════════════════════════
+    ## PRIMARY TASK
     Generate a valid JSON signature for Alation API calls based on user questions.
     
-    ═══════════════════════════════════════════════════════════
-    REQUIRED OUTPUT FORMAT
-    ═══════════════════════════════════════════════════════════
+    ## REQUIRED OUTPUT FORMAT
     Your response must be ONLY valid JSON in this structure:
     
     {
@@ -867,9 +853,7 @@ class SignatureCreationTool:
     
     Do NOT include explanations, markdown formatting, or text outside the JSON.
     
-    ═══════════════════════════════════════════════════════════
-    MANDATORY VALIDATION BEFORE OUTPUT
-    ═══════════════════════════════════════════════════════════
+    ## MANDATORY VALIDATION BEFORE OUTPUT
     You MUST complete this validation and show your work:
     
     <validation_check>
@@ -889,12 +873,10 @@ class SignatureCreationTool:
     
     CRITICAL: Only include filters that pass validation (YES).
     
-    ═══════════════════════════════════════════════════════════
-    STEP-BY-STEP PROCESS
-    ═══════════════════════════════════════════════════════════
     
-    STEP 1: ANALYZE QUESTION FOR OBJECT TYPES
-    ─────────────────────────────────────────
+    ## STEP-BY-STEP PROCESS
+    
+    ### STEP 1: ANALYZE QUESTION FOR OBJECT TYPES
     
     Available Object Types: schema, table, column, query (SQL query), documentation, bi_report, bi_field, bi_folder
     
@@ -912,8 +894,7 @@ class SignatureCreationTool:
     - Ambiguous question → Multiple types
       Example: "Find customer information" → table + documentation + bi_report
     
-    STEP 2: CHOOSE FIELDS FOR EACH OBJECT TYPE
-    ─────────────────────────────────────────
+    ### STEP 2: CHOOSE FIELDS FOR EACH OBJECT TYPE
     
     <available_fields>
     Object Type         | Required Fields                                                 | Optional Fields
@@ -965,8 +946,7 @@ class SignatureCreationTool:
     - FIELDS → "fields_required"
     - FILTERS → "search_filters"
     
-    STEP 2.1: CHOOSE CHILD OBJECTS (IF NEEDED)
-    ─────────────────────────────────────────
+    ### STEP 2.1: CHOOSE CHILD OBJECTS (IF NEEDED)
     
     <supported_child_objects>
     {
@@ -1013,9 +993,8 @@ class SignatureCreationTool:
     
     For bi_reports with bi_fields, ALWAYS include: name, description, expression, role, data_type.
     
-    STEP 2.2: HANDLE CUSTOM FIELDS
-    ─────────────────────────────────────────
-    
+    ### STEP 2.2: HANDLE CUSTOM FIELDS
+
     If the question mentions attributes NOT in predefined lists → Assume custom field
     
     Example custom field indicators:
@@ -1048,8 +1027,7 @@ class SignatureCreationTool:
       }
     }
     
-    STEP 3: APPLY FILTERS WITH VALIDATION
-    ─────────────────────────────────────────
+    ### STEP 3: APPLY FILTERS WITH VALIDATION
     
     <supported_filters_by_object_type>
     {
@@ -1112,8 +1090,7 @@ class SignatureCreationTool:
     }
     </filter_usage_guide>
     
-    STEP 3.0: IDENTIFY FILTERING INTENT (MANDATORY)
-    ────────────────────────────────────────────────
+    ### STEP 3.0: IDENTIFY FILTERING INTENT (MANDATORY)
     
     Before selecting filters, systematically extract constraints from the question:
     
@@ -1142,8 +1119,7 @@ class SignatureCreationTool:
     - [object_type]: [filter_name] with value [X]
     </filter_intent_analysis>
     
-    STEP 3.1: VALIDATE AGAINST SCHEMA
-    ──────────────────────────────────
+    ### STEP 3.1: VALIDATE AGAINST SCHEMA
 
     CRITICAL VALIDATION RULE:
     Before adding ANY filter to search_filters:
@@ -1168,8 +1144,7 @@ class SignatureCreationTool:
       Answer: YES → Include "bi_server_id": [10]
     
     
-    STEP 4: CONSTRUCT FINAL JSON SIGNATURE
-    ─────────────────────────────────────────
+    ### STEP 4: CONSTRUCT FINAL JSON SIGNATURE
     
     Structure Rules:
     - Top level: object types as keys
@@ -1204,9 +1179,7 @@ class SignatureCreationTool:
       }
     }
     
-    ═══════════════════════════════════════════════════════════
-    SELF-CHECK BEFORE FINALIZING
-    ═══════════════════════════════════════════════════════════
+    ## SELF-CHECK BEFORE FINALIZING
     
     <self_validation>
     □ Did I complete the <validation_check> for ALL filters?
@@ -1220,9 +1193,7 @@ class SignatureCreationTool:
     
     If ANY box is unchecked → REVISE before outputting.
     
-    ═══════════════════════════════════════════════════════════
-    COMPLETE EXAMPLE
-    ═══════════════════════════════════════════════════════════
+    ## COMPLETE EXAMPLE
     
     User Question: "Show me the top 5 sales tables in the marketing domain, including their columns and any related queries."
     
@@ -1306,7 +1277,9 @@ class AnalyzeCatalogQuestionTool:
 
     @staticmethod
     def _get_description() -> str:
-        return """PRIMARY ENTRY POINT: Analyzes catalog questions and returns workflow guidance.
+        return """MANDATORY FIRST STEP - CALL THIS FIRST
+        
+        PRIMARY ENTRY POINT: Analyzes catalog questions and returns workflow guidance.
 
         Call this tool FIRST for all data catalog questions.
 
@@ -1331,25 +1304,19 @@ class AnalyzeCatalogQuestionTool:
     def run(self, *, question: str):
         return f"""CATALOG QUESTION ANALYSIS WORKFLOW
     
-    ═══════════════════════════════════════════════════════════
-    PRIMARY TASK
-    ═══════════════════════════════════════════════════════════
+    ## PRIMARY TASK
     Analyze this question and orchestrate the optimal search strategy:
     
     **Question:** "{question}"
     
-    ═══════════════════════════════════════════════════════════
-    REQUIRED OUTPUT: ORCHESTRATION DECISION
-    ═══════════════════════════════════════════════════════════
+    ## REQUIRED OUTPUT: ORCHESTRATION DECISION
     You must produce a clear decision on:
     1. Is the question actionable?
     2. Which object types to search for?
     3. Whether to use BULK or SEMANTIC search
     4. Which tools to call and in what order
     
-    ═══════════════════════════════════════════════════════════
-    MANDATORY ANALYSIS BEFORE ORCHESTRATION
-    ═══════════════════════════════════════════════════════════
+    ## MANDATORY ANALYSIS BEFORE ORCHESTRATION
     
     <orchestration_analysis>
       <actionability_check>
@@ -1380,12 +1347,9 @@ class AnalyzeCatalogQuestionTool:
       </routing_decision>
     </orchestration_analysis>
     
-    ═══════════════════════════════════════════════════════════
-    STEP-BY-STEP WORKFLOW
-    ═══════════════════════════════════════════════════════════
+    ## STEP-BY-STEP WORKFLOW
     
-    STEP 1: ACTIONABILITY CHECK
-    ─────────────────────────────────────────
+    ### STEP 1: ACTIONABILITY CHECK
     
     ❌ STOP & CLARIFY IF:
     - Catalog-wide requests without constraints:
@@ -1400,8 +1364,7 @@ class AnalyzeCatalogQuestionTool:
     - Clear business context provided
     - Catalog-related request
     
-    STEP 2: GATHER METADATA (Always Required)
-    ─────────────────────────────────────────
+    ### STEP 2: GATHER METADATA (Always Required)
     
     A. ALWAYS call: get_signature_creation_instructions()
        → Provides object types, fields, and standard filters
@@ -1418,8 +1381,7 @@ class AnalyzeCatalogQuestionTool:
        - Standard filters: data source, schema, domain, table names
        - Built-in object properties
     
-    STEP 3: DETECT OBJECT TYPES (Before Analysis)
-    ─────────────────────────────────────────
+    ### STEP 3: DETECT OBJECT TYPES (Before Analysis)
     
     <object_type_mapping>
     Keyword in Question       → Object Type    → Context Check
@@ -1427,6 +1389,7 @@ class AnalyzeCatalogQuestionTool:
     "query"/"queries" (noun)  → query          → "explain X query", "find queries"
     "query" (verb)            → -              → "how to query data" (skip)
     "table"/"tables"          → table          → Always include
+    "view"/"views"            → table          → Tables include views (filter by table_type to "VIEW")
     "column"/"columns"        → column         → Always include
     "attribute"/"field"       → column         → Always include
     "schema"/"schemas"        → schema         → Always include
@@ -1439,11 +1402,9 @@ class AnalyzeCatalogQuestionTool:
     
     CRITICAL: Detect object types BEFORE reformulating the question.
     
-    STEP 4: ROUTE TO SEARCH METHOD
-    ─────────────────────────────────────────
+    ### STEP 4: ROUTE TO SEARCH METHOD
     
-    CRITICAL LIMITATION: BULK RETRIEVAL CANNOT SEARCH BY NAME
-    ────────────────────────────────────────────────────────────
+    #### CRITICAL LIMITATION: BULK RETRIEVAL CANNOT SEARCH BY NAME
     bulk_retrieval only supports filtering by:
     - Data source ID (ds)
     - Schema name (schema_name) or ID (schema)
@@ -1461,8 +1422,7 @@ class AnalyzeCatalogQuestionTool:
 
     IMPORTANT: Apply these checks IN ORDER (Priority 1 → Priority 2 → Priority 3)
     
-    PRIORITY 1: CUSTOM FIELD ENUMERATION
-    ────────────────────────────────────
+    #### PRIORITY 1: CUSTOM FIELD ENUMERATION
     If custom_fields_definitions() was called AND question matches:
     - "Show [objects] that contain [custom_field_value]"
     - "Get [objects] with [custom_field_value]"
@@ -1474,8 +1434,7 @@ class AnalyzeCatalogQuestionTool:
     → USE BULK RETRIEVAL
     Why: These are exact enumeration with custom field filters, not concept discovery
     
-    PRIORITY 2: STRUCTURAL ENUMERATION
-    ───────────────────────────────────
+    #### PRIORITY 2: STRUCTURAL ENUMERATION
     If question matches:
     - "List ALL [objects] in [location]"
     - "Show ALL [objects] in [container]"
@@ -1485,8 +1444,7 @@ class AnalyzeCatalogQuestionTool:
     → USE BULK RETRIEVAL
     Why: Wants complete list from known location
     
-    PRIORITY 3: CONCEPT DISCOVERY
-    ──────────────────────────────
+    #### PRIORITY 3: CONCEPT DISCOVERY
     If question matches:
     - "Find [CONCEPT] in [optional location]"
     - "[business domain term] data"
@@ -1509,8 +1467,7 @@ class AnalyzeCatalogQuestionTool:
     | "List ALL tables in finance schema" | P2 | BULK | Structural enumeration |
     | "Find SALES tables in finance" | P3 | SEMANTIC | Concept discovery |
     
-    STEP 5: EXECUTE SEARCH (Maximum 2 Calls)
-    ─────────────────────────────────────────
+    ### STEP 5: EXECUTE SEARCH (Maximum 2 Calls)
     
     EXECUTION RULES:
     1. Make first search call with optimal signature
@@ -1538,12 +1495,9 @@ class AnalyzeCatalogQuestionTool:
     3. Evaluate results
     4. If insufficient: Try more specific filters OR ask for clarification
     
-    ═══════════════════════════════════════════════════════════
-    STEP 6: CONSTRUCT RESPONSE WITH EXPLANATIONS
-    ═══════════════════════════════════════════════════════════
+    ## STEP 6: CONSTRUCT RESPONSE WITH EXPLANATIONS
     
-    WHEN TO EXPLAIN THE PROCESS:
-    ────────────────────────────
+    ### WHEN TO EXPLAIN THE PROCESS:
     
     Include process explanations when:
     ✓ Multiple filters were applied (domain, custom fields, schema, etc.)
@@ -1557,8 +1511,7 @@ class AnalyzeCatalogQuestionTool:
     ✗ Self-evident searches (user asked for exactly what was returned)
     ✗ Follow-up questions in same context
     
-    HOW TO EXPLAIN THE PROCESS:
-    ────────────────────────────
+    ### HOW TO EXPLAIN THE PROCESS:
     
     Format: Brief, natural language summary BEFORE presenting results
     
@@ -1585,12 +1538,9 @@ class AnalyzeCatalogQuestionTool:
     domain, looking at table names, descriptions, and documentation. Here's 
     what I found:"
     
-    ═══════════════════════════════════════════════════════════
-    STEP 7: EXPLAIN RESULT COUNTS AND LIMITS
-    ═══════════════════════════════════════════════════════════
+    ## STEP 7: EXPLAIN RESULT COUNTS AND LIMITS
     
-    WHEN TO EXPLAIN COUNTS/LIMITS:
-    ───────────────────────────────
+    ### WHEN TO EXPLAIN COUNTS/LIMITS:
     
     ALWAYS explain for:
     ✓ List/enumeration queries ("list all", "show all", "what are the")
@@ -1604,8 +1554,7 @@ class AnalyzeCatalogQuestionTool:
     ✗ When returned results are less than signature limit (obviously complete)
     ✗ Documentation/explanation queries
     
-    HOW TO EXPLAIN COUNTS:
-    ──────────────────────
+    ### HOW TO EXPLAIN COUNTS:
     
     <count_explanation_logic>
     IF returned_count < limit:
@@ -1636,9 +1585,7 @@ class AnalyzeCatalogQuestionTool:
     Found 7 reports:
     [results...]"
     
-    ═══════════════════════════════════════════════════════════
-    COMBINED EXAMPLE WITH BOTH EXPLANATIONS
-    ═══════════════════════════════════════════════════════════
+    ## COMBINED EXAMPLE WITH BOTH EXPLANATIONS
     
     Question: "List all PII tables in the Marketing domain"
     
@@ -1661,9 +1608,7 @@ class AnalyzeCatalogQuestionTool:
        - URL: [link]
        - Classification: PII
 
-    ═══════════════════════════════════════════════════════════
-    SELF-CHECK BEFORE EXECUTING
-    ═══════════════════════════════════════════════════════════
+    ## SELF-CHECK BEFORE EXECUTING
     
     <self_validation>
     □ Did I complete <orchestration_analysis> for this question?
@@ -1679,9 +1624,7 @@ class AnalyzeCatalogQuestionTool:
     
     If ANY box is unchecked → REVISE before proceeding.
     
-    ═══════════════════════════════════════════════════════════
-    CLARIFICATION TEMPLATES
-    ═══════════════════════════════════════════════════════════
+    ## CLARIFICATION TEMPLATES
     
     TOO BROAD:
     "There are many [objects] in the catalog. Please specify which data source or schema you're interested in, and which specific [objects] you need."
@@ -1692,9 +1635,7 @@ class AnalyzeCatalogQuestionTool:
     VAGUE:
     "Please provide more context. For example: 'Find customer transaction tables in the finance schema for churn analysis'"
     
-    ═══════════════════════════════════════════════════════════
-    COMPLETE EXAMPLE WITH EXPLANATIONS
-    ═══════════════════════════════════════════════════════════
+    ## COMPLETE EXAMPLE WITH EXPLANATIONS
     
     Question: "List all sales tables in the marketing domain"
     
@@ -1778,13 +1719,11 @@ class AnalyzeCatalogQuestionTool:
     
     [...]"
     
-    ═══════════════════════════════════════════════════════════
-    CRITICAL REMINDERS
-    ═══════════════════════════════════════════════════════════
+    ## CRITICAL REMINDERS
     
     - ALWAYS complete <orchestration_analysis> before acting
     - ALWAYS detect object types from ORIGINAL question
-    - Maximum 2 search calls per question
+    - Maximum 2 search calls per questionß
     - Stop after first search if results are sufficient
     - Use BULK for enumeration, SEMANTIC for concept discovery
     """
