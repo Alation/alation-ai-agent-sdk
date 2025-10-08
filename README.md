@@ -84,6 +84,36 @@ If you cannot obtain service account credentials (admin only), see the [User Acc
 
 ## Supported Tools
 
+### analyze_catalog_question
+
+<details>
+<summary>
+An orchestration tool that analyzes questions and provides workflow guidance for LLM agents.
+</summary>
+<br />
+
+**NOTE**: This tool is designed for LLM orchestration (MCP servers, autonomous agents). For direct Python SDK usage, call `get_context` or `bulk_retrieval` directly.
+
+**Functionality**
+- Analyzes natural language questions about the data catalog
+- Determines optimal search strategy (bulk enumeration vs semantic discovery)
+- Identifies required metadata gathering steps (custom fields, signatures)
+- Returns step-by-step execution instructions for LLMs
+- Provides actionability assessment and routing decisions
+
+**Input Parameters**
+- `question` (string): The natural language query
+
+**Returns**
+- Formatted text containing workflow analysis and execution plan
+
+**When to Use**
+- MCP server implementations (Claude Desktop)
+- Autonomous LLM agents that need query routing logic
+- Applications where LLMs orchestrate multiple tool calls
+
+</details>
+
 ### alation_context
 
 <details>
@@ -348,6 +378,72 @@ Complete instruction set with custom fields and examples for generating data dic
 
 </details>
 
+### get_signature_creation_instructions
+
+<details>
+<summary>
+A helper tool that provides comprehensive instructions for building API signatures.
+</summary>
+<br />
+
+**Functionality**
+- Returns complete reference for available object types and fields
+- Documents all supported filters with validation rules
+- Includes field selection logic and construction examples
+- Provides validation workflows and best practices
+- Single source of truth for signature specifications
+
+**Input Parameters**
+
+No parameters required
+
+**Returns**
+
+Complete instruction set with object types, fields, filters, and examples
+</details>
+
+### check_data_quality
+
+<details>
+<summary>
+A validation tool that checks data quality for tables or SQL queries using Alation's Data Quality API.
+</summary>
+
+<br />
+
+**NOTE**: This BETA feature must be enabled on the Alation instance. 
+
+**Functionality**
+- Validates data quality for specific tables by table ID
+- Analyzes SQL queries for potential data quality issues
+- Returns quality scores and detailed quality statements
+- Identifies tables below quality threshold
+- Supports multiple output formats (JSON or YAML Markdown)
+
+
+**Input Parameters**
+- `table_ids` (list, optional): List of table identifiers to check (maximum 30 tables). Use `alation_context` to get table IDs first.
+- `sql_query` (string, optional): SQL query to analyze for quality issues
+- `ds_id` (int, optional): Data source ID from Alation (required when using `sql_query`)
+- `db_uri` (string, optional): Database URI as alternative to `ds_id` (e.g., `postgresql://@host:port/dbname`)
+- `output_format` (string, optional): Response format - `"json"` (default) or `"yaml_markdown"` for compact responses
+- `dq_score_threshold` (int, optional): Quality threshold from 0-100. Tables below this threshold are flagged. Defaults to 70.
+- `bypassed_dq_sources` (list, optional): Data quality sources to exclude from analysis
+- `default_schema_name` (string, optional): Default schema name for query parsing
+
+**Valid Parameter Combinations**
+1. `table_ids` alone - Check quality for specific tables
+2. `sql_query` + `ds_id` - Validate SQL query with data source ID (recommended)
+3. `sql_query` + `db_uri` - Validate SQL query with database URI (when ds_id is unknown)
+
+**Returns**
+- JSON-formatted response (default) or YAML Markdown string containing:
+  - Data quality summary with overall scores
+  - Item-level quality statements for each table or query element
+  - List of tables below the quality threshold
+  - Detailed quality metrics and recommendations
+
+</details>
 
 ## Shape the SDK to your needs
 

@@ -33,6 +33,8 @@ from alation_ai_agent_sdk.tools import (
     GenerateDataProductTool,
     GetCustomFieldsDefinitionsTool,
     GetDataDictionaryInstructionsTool,
+    SignatureCreationTool,
+    AnalyzeCatalogQuestionTool,
 )
 from mcp.server.fastmcp import FastMCP
 from fastmcp.server.dependencies import get_access_token
@@ -259,4 +261,26 @@ def register_tools(
         def get_data_dictionary_instructions():
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.get_data_dictionary_instructions()
+            return result
+
+    if is_tool_enabled(
+            AlationTools.SIGNATURE_CREATION, config_disabled, config_enabled_beta
+    ):
+        metadata = get_tool_metadata(SignatureCreationTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def get_signature_creation_instructions():
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.get_signature_creation_instructions()
+            return result
+
+    if is_tool_enabled(
+            AlationTools.ANALYZE_CATALOG_QUESTION, config_disabled, config_enabled_beta
+    ):
+        metadata = get_tool_metadata(AnalyzeCatalogQuestionTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def analyze_catalog_question(question: str):
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.analyze_catalog_question(question)
             return result

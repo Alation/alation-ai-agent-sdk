@@ -97,6 +97,14 @@ def get_sdk_mock():
         "Gets data dictionary instructions"
     )
 
+    mock_sdk.signature_creation_tool = MagicMock()
+    mock_sdk.signature_creation_tool.name = "get_signature_creation_instructions"
+    mock_sdk.signature_creation_tool.description = "Gets signature creation instructions"
+
+    mock_sdk.analyze_catalog_question_tool = MagicMock()
+    mock_sdk.analyze_catalog_question_tool.name = "analyze_catalog_question"
+    mock_sdk.analyze_catalog_question_tool.description = "Analyze catalog question and orchestrate"
+
     # Patch .run for StructuredTool.func compatibility
     def run_with_signature(*args, **kwargs):
         return mock_sdk.context_tool.run(*args, **kwargs)
@@ -161,6 +169,7 @@ def test_get_langchain_tools_skips_beta_tools_by_default():
         )
         is False
     )
+
 
     tools_list = get_langchain_tools(sdk)
     assert all(t.name != AlationTools.LINEAGE for t in tools_list), (

@@ -15,6 +15,8 @@ from .tool import (
     get_check_data_quality_tool,
     get_custom_fields_definitions_tool,
     get_data_dictionary_instructions_tool,
+    get_signature_creation_tool,
+    get_analyze_catalog_question_tool,
 )
 
 
@@ -64,4 +66,13 @@ def get_tools(sdk: AlationAIAgentSDK):
         sdk.enabled_beta_tools,
     ):
         tools.append(get_data_dictionary_instructions_tool(sdk))
+    if is_tool_enabled(
+        AlationTools.SIGNATURE_CREATION, sdk.disabled_tools, sdk.enabled_beta_tools
+    ):
+        tools.append(get_signature_creation_tool(sdk))
+    if is_tool_enabled(
+        AlationTools.ANALYZE_CATALOG_QUESTION, sdk.disabled_tools, sdk.enabled_beta_tools
+    ):
+        tools.append(get_analyze_catalog_question_tool(sdk))
+
     return tools
