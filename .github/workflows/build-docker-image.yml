@@ -47,7 +47,7 @@ jobs:
             type=raw,value=latest
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./python/dist-mcp
           # This is a manual workflow, so we always push the image.
