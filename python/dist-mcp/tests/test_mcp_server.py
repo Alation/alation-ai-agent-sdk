@@ -255,7 +255,7 @@ def test_alation_context_tool_logic(
 
     result = tool_func(question=question_input)
 
-    mock_sdk_instance.get_context.assert_called_once_with(question_input, None)
+    mock_sdk_instance.get_context.assert_called_once_with(question_input, None, chat_id=None)
     assert result == expected_sdk_result
 
     mock_sdk_instance.get_context.reset_mock()
@@ -268,7 +268,7 @@ def test_alation_context_tool_logic(
     result_sig = tool_func(question=question_input, signature=signature_input)
 
     mock_sdk_instance.get_context.assert_called_once_with(
-        question_input, signature_input
+        question_input, signature_input, chat_id=None
     )
     assert result_sig == expected_sdk_result_sig
 
