@@ -98,6 +98,13 @@ def is_version_supported(current: str, minimum: str) -> bool:
         return False
 
 
+
+
+# XXX: Missing
+#
+# - /api/v1/chats/agent/default/data_product_question_suggestion_agent/stream
+
+
 class AlationContextTool:
     def __init__(self, api: AlationAPI):
         self.api = api
@@ -648,7 +655,7 @@ class GetCustomFieldsDefinitionsTool:
         - Use the 'allowed_otypes' field to understand which object types each field supports
         - Field types include: TEXT, RICH_TEXT, PICKER, MULTI_PICKER, OBJECT_SET, DATE, etc.
         - If users asks for updating custom fields, please do the below step by step
-            1. Pleast format the objects to show the changes in a csv format with object id, name and changed custom field value. 
+            1. Please format the objects to show the changes in a csv format with object id, name and changed custom field value. 
             2. Once you showed the csv file, say the user can call generate_data_dictionary_instructions tool to create a data dictionary which could be uploaded to alation UI for bulk updates.
 
         No parameters required - returns all custom field definitions for the instance.
@@ -785,6 +792,7 @@ class GetDataDictionaryInstructionsTool:
             return {"error": e.to_dict()}
 
 
+# XXX: might want to rename to GetSignatureCreationInstructionsTool
 class SignatureCreationTool:
     def __init__(self, api: AlationAPI):
         self.api = api
@@ -793,7 +801,7 @@ class SignatureCreationTool:
 
     @staticmethod
     def _get_name() -> str:
-        return "get_signature_creation_instructions"
+        return "get_signature_creation_instructions_tool"  # XXX: ??
 
     @staticmethod
     def _get_description() -> str:
@@ -899,10 +907,10 @@ class BiReportSearchTool:
 
     @track_tool_execution()
     def run(self, *, search_term: str, limit: int = 20):
-        kwargs = {
-            "search_term": search_term,
-            "limit": limit
-        }
+        # XXX: should allow `filters` argument
+        #
+        # Ref: https://master-uat-use1.mtqa.alationcloud.com/ai/docs#/Chats/invoke_bi_report_search_tool
+        kwargs = {"search_term": search_term, "limit": limit}
         try:
             ref = self.api.search_bi_reports_stream(**kwargs)
             return ref if self.api.enable_streaming else next(ref)
@@ -1046,6 +1054,9 @@ class ChartCreateAgentTool:
 
     @track_tool_execution()
     def run(self, *, message: str):
+        # XXX: needs data_product_id
+        #
+        # ref: https://master-uat-use1.mtqa.alationcloud.com/ai/docs#/Chats/post_chart_create_agent_message
         try:
             ref = self.api.chart_create_agent_stream(
                 message=message,
@@ -1122,6 +1133,7 @@ class DeepResearchAgentTool:
 
     @track_tool_execution()
     def run(self, *, message: str):
+        # XXX: needs pre_exec_sql
         try:
             ref = self.api.deep_research_agent_stream(
                 message=message,
@@ -1158,6 +1170,7 @@ class QueryFlowAgentTool:
 
     @track_tool_execution()
     def run(self, *, message: str):
+        # XXX: needs marketplace id
         try:
             ref = self.api.query_flow_agent_stream(
                 message=message,
@@ -1194,6 +1207,7 @@ class SqlQueryAgentTool:
 
     @track_tool_execution()
     def run(self, *, message: str):
+        # XXX: needs data_product_id
         try:
             ref = self.api.sql_query_agent_stream(
                 message=message,
@@ -1438,6 +1452,23 @@ class SearchCatalogTool:
     @track_tool_execution()
     def run(self, *, search_term: str, object_types: Optional[List[str]] = None,
             filters: Optional[Dict[str, Any]] = None):
+            # XXX: filters is pretty lax here, the OpenAPI spec says this is the
+            # required format
+            # {
+            #   "search_term": "string",
+            #   "object_types": [
+            #     "table"
+            #   ],
+            #   "filters": [
+            #     {
+            #       "filter_id": 0,
+            #       "filter_values": [
+            #         "string"
+            #       ]
+            #     }
+            #   ],
+            #   "limit": 20
+            # }
         try:
             ref = self.api.search_catalog_tool_stream(
                 search_term=search_term,
@@ -1533,7 +1564,7 @@ class CustomAgentTool:
 
     @staticmethod
     def _get_name() -> str:
-        return "custom_agent"
+        return "custom_agent_tool"  # XXX: ??
 
     @staticmethod
     def _get_description() -> str:
