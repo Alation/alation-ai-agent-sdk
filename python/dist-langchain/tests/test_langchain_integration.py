@@ -317,7 +317,7 @@ def test_alation_tool_run_invokes_sdk_context_tool_no_signature(
     actual_result = alation_tool.func(question=test_question, signature=None)
 
     mock_sdk_with_context_tool.context_tool.run.assert_called_once_with(
-        question=test_question, signature=None
+        question=test_question, signature=None, chat_id=None
     )
 
     assert actual_result == expected_result, (
@@ -346,7 +346,7 @@ def test_alation_tool_run_invokes_sdk_context_tool_with_signature(
     actual_result = alation_tool.func(question=test_question, signature=test_signature)
 
     mock_sdk_with_context_tool.context_tool.run.assert_called_once_with(
-        question=test_question, signature=test_signature
+        question=test_question, signature=test_signature, chat_id=None
     )
     assert actual_result == expected_result, (
         "The tool's function should return the result from SDK's context_tool.run when a signature is provided."
@@ -372,13 +372,13 @@ def test_alation_tool_func_can_be_called_multiple_times(mock_sdk_with_context_to
     # First call with signature
     alation_tool_function(question=question1, signature=signature1)
     mock_sdk_with_context_tool.context_tool.run.assert_called_with(
-        question=question1, signature=signature1
+        question=question1, signature=signature1, chat_id=None
     )
 
     # Second call without signature
     alation_tool_function(question=question2, signature=None)
     mock_sdk_with_context_tool.context_tool.run.assert_called_with(
-        question=question2, signature=None
+        question=question2, signature=None, chat_id=None
     )
 
     # Verify total calls to the mock
@@ -421,7 +421,7 @@ def test_bi_report_agent_tool_wrapper():
 
     # Test the tool function
     result = bi_tool.func(message="test message")
-    mock_sdk.bi_report_agent_tool.run.assert_called_once_with(message="test message")
+    mock_sdk.bi_report_agent_tool.run.assert_called_once_with(message="test message", chat_id=None)
     assert result == {"result": "test bi report agent response"}
 
 
@@ -441,7 +441,7 @@ def test_catalog_search_agent_tool_wrapper():
 
     # Test the tool function
     result = catalog_tool.func(message="search query")
-    mock_sdk.catalog_search_agent_tool.run.assert_called_once_with(message="search query")
+    mock_sdk.catalog_search_agent_tool.run.assert_called_once_with(message="search query", chat_id=None)
     assert result == {"results": ["catalog item 1", "catalog item 2"]}
 
 
@@ -470,7 +470,8 @@ def test_sql_execution_tool_wrapper():
         sql="SELECT * FROM test_table",
         result_table_name="results",
         pre_exec_sql=None,
-        auth_id=None
+        auth_id=None,
+        chat_id=None,
     )
     assert result == {"rows": [{"id": 1, "name": "test"}]}
 
@@ -494,7 +495,8 @@ def test_data_product_query_agent_tool_wrapper():
     mock_sdk.data_product_query_agent_tool.run.assert_called_once_with(
         message="test query",
         data_product_id="dp-456",
-        auth_id=None
+        auth_id=None,
+        chat_id=None,
     )
     assert result == {"query_result": "data product response"}
 
@@ -518,7 +520,8 @@ def test_search_catalog_tool_wrapper():
     mock_sdk.search_catalog_tool.run.assert_called_once_with(
         search_term="customer",
         object_types=["table"],
-        filters={"steward": "john"}
+        filters={"steward": "john"},
+        chat_id=None,
     )
     assert result == {"objects": ["table1", "table2"]}
 
@@ -542,6 +545,7 @@ def test_custom_agent_tool_wrapper():
     result = custom_tool.func(agent_config_id="config-123", payload=test_payload)
     mock_sdk.custom_agent_tool.run.assert_called_once_with(
         agent_config_id="config-123",
-        payload=test_payload
+        payload=test_payload,
+        chat_id=None,
     )
     assert result == {"agent_response": "custom result"}
