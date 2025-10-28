@@ -103,6 +103,7 @@ def test_bulk_retrieval_tool_run_success(bulk_retrieval_tool, mock_api):
     # Verify API was called correctly
     mock_api.bulk_retrieval_stream.assert_called_once_with(
         signature=signature,
+        chat_id=None,
     )
 
     # Verify result
@@ -155,7 +156,8 @@ def test_bulk_retrieval_tool_run_api_error(bulk_retrieval_tool, mock_api):
 
     # Verify API was called
     mock_api.bulk_retrieval_stream.assert_called_once_with(
-        signature=invalid_signature
+        signature=invalid_signature,
+        chat_id=None,
     )
 
     # Verify error handling

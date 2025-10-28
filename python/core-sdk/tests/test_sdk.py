@@ -227,7 +227,7 @@ def test_sdk_valid_initialization_session_auth(mock_requests_get):
         (
             "invalid_method",
             (MOCK_USER_ID, MOCK_REFRESH_TOKEN),
-            "auth_method must be 'user_account', 'service_account', 'bearer_token', or 'session'",
+            "auth_method must be 'service_account', 'bearer_token', or 'session'",
         ),
     ],
 )

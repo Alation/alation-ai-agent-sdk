@@ -51,7 +51,8 @@ Provides step-by-step guidance on handling complex data catalog queries.
 
     # Verify API was called correctly
     mock_api.analyze_catalog_question_stream.assert_called_once_with(
-        question=question
+        question=question,
+        chat_id=None
     )
 
     # Verify result is a string

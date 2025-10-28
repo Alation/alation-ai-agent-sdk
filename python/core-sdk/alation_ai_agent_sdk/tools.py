@@ -128,8 +128,9 @@ class AlationContextTool:
 
     ## PARAMETERS
 
-    question (required): Exact user question, unmodified
-    signature (optional): JSON specification of fields/filters
+    - question (required): Exact user question, unmodified
+    - signature (optional): JSON specification of fields/filters
+    - chat_id (optional): Chat session identifier for context-aware searches
 
     For signature structure: call get_signature_creation_instructions()
 
@@ -148,11 +149,12 @@ class AlationContextTool:
 
     @min_alation_version("2025.1.2")
     @track_tool_execution()
-    def run(self, *, question: str, signature: Optional[Dict[str, Any]] = None):
+    def run(self, *, question: str, signature: Optional[Dict[str, Any]] = None, chat_id: Optional[str] = None):
         try:
             ref = self.api.alation_context_stream(
                 question=question,
-                signature=signature
+                signature=signature,
+                chat_id=chat_id,
             )
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
@@ -240,9 +242,10 @@ class AlationBulkRetrievalTool:
 
     ## PARAMETERS
 
-    signature (required, JSON):
+    - signature (required, JSON):
         For complete signature specification, field options, and filter rules,
         call get_signature_creation_instructions() first.
+    - chat_id (optional): Chat session identifier
 
     ## USE CASES
 
@@ -257,7 +260,7 @@ class AlationBulkRetrievalTool:
     """
 
     @track_tool_execution()
-    def run(self, *, signature: Optional[Dict[str, Any]] = None):
+    def run(self, *, signature: Optional[Dict[str, Any]] = None, chat_id: Optional[str] = None):
         if not signature:
             return {
                 "error": {
@@ -276,7 +279,8 @@ class AlationBulkRetrievalTool:
 
         try:
             ref = self.api.bulk_retrieval_stream(
-                signature=signature
+                signature=signature,
+                chat_id=chat_id
             )
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
@@ -651,7 +655,10 @@ class GetCustomFieldsDefinitionsTool:
             1. Pleast format the objects to show the changes in a csv format with object id, name and changed custom field value. 
             2. Once you showed the csv file, say the user can call generate_data_dictionary_instructions tool to create a data dictionary which could be uploaded to alation UI for bulk updates.
 
+        Parameters:
         No parameters required - returns all custom field definitions for the instance.
+        chat_id (optional): Chat session identifier.
+
 
         Returns:
         List of custom field objects with exactly these properties:
@@ -669,7 +676,7 @@ class GetCustomFieldsDefinitionsTool:
         """
 
     @track_tool_execution()
-    def run(self) -> Dict[str, Any]:
+    def run(self, chat_id: Optional[str] = None) -> Dict[str, Any]:
         """
         Retrieve all custom field definitions from the Alation instance.
 
@@ -680,7 +687,7 @@ class GetCustomFieldsDefinitionsTool:
             - Error: {"error": {...}} with error details
         """
         try:
-            ref = self.api.get_custom_field_definitions_stream()
+            ref = self.api.get_custom_field_definitions_stream(chat_id=chat_id)
             return next(ref)
         except AlationAPIError as e:
             return {"error": e.to_dict()}
@@ -809,6 +816,9 @@ class SignatureCreationTool:
         - Building complex queries with filters
         - Learning signature format and structure
 
+        PARAMETERS:
+        chat_id (optional): Chat session identifier
+
         RETURNS:
         - Complete signature creation instructions
         - Templates and examples
@@ -817,9 +827,9 @@ class SignatureCreationTool:
 
 
     @track_tool_execution()
-    def run(self):
+    def run(self, chat_id: Optional[str] = None):
         try:
-            ref = self.api.get_signature_creation_instructions_stream()
+            ref = self.api.get_signature_creation_instructions_stream(chat_id=chat_id)
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
             return {"error": e.to_dict()}
@@ -861,10 +871,11 @@ class AnalyzeCatalogQuestionTool:
 
 
     @track_tool_execution()
-    def run(self, *, question: str):
+    def run(self, *, question: str, chat_id: Optional[str] = None):
         try:
             ref = self.api.analyze_catalog_question_stream(
-                question=question
+                question=question,
+                chat_id=chat_id,
             )
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
@@ -891,6 +902,7 @@ class BiReportSearchTool:
         Parameters:
         - search_term (required, str): Search term to filter BI reports by name
         - limit (optional, int): Maximum number of results to return (default: 20, max: 100)
+        - chat_id (optional, str): Chat session identifier
 
         Returns:
         A list of BI report objects that match the search query parameters, including
@@ -898,10 +910,11 @@ class BiReportSearchTool:
         """
 
     @track_tool_execution()
-    def run(self, *, search_term: str, limit: int = 20):
+    def run(self, *, search_term: str, limit: int = 20, chat_id: Optional[str] = None):
         kwargs = {
             "search_term": search_term,
-            "limit": limit
+            "limit": limit,
+            "chat_id": chat_id
         }
         try:
             ref = self.api.search_bi_reports_stream(**kwargs)
@@ -930,6 +943,7 @@ class BiReportAgentTool:
 
         Parameters:
         - message (required, str): Natural language message describing what you're looking for
+        - chat_id (optional, str): Chat session identifier
 
         Returns:
         Detailed information about BI reports matching your request, including metadata,
@@ -937,10 +951,11 @@ class BiReportAgentTool:
         """
 
     @track_tool_execution()
-    def run(self, *, message: str):
+    def run(self, *, message: str, chat_id: Optional[str] = None):
         try:
             ref = self.api.bi_report_agent_stream(
-                message=message
+                message=message,
+                chat_id=chat_id,
             )
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
@@ -967,16 +982,18 @@ class CatalogContextSearchAgentTool:
 
         Parameters:
         - message (required, str): Natural language description of what you're searching for
+        - chat_id (optional, str): Chat session identifier
 
         Returns:
         Contextually-aware search results with enhanced metadata and relationships.
         """
 
     @track_tool_execution()
-    def run(self, *, message: str):
+    def run(self, *, message: str, chat_id: Optional[str] = None):
         try:
             ref = self.api.catalog_context_search_agent_stream(
                 message=message,
+                chat_id=chat_id,
             )
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
@@ -1003,16 +1020,18 @@ class CatalogSearchAgentTool:
 
         Parameters:
         - message (required, str): Natural language search query
+        - chat_id (optional, str): Chat session identifier
 
         Returns:
         Search results from the data catalog matching your query.
         """
 
     @track_tool_execution()
-    def run(self, *, message: str):
+    def run(self, *, message: str, chat_id: Optional[str] = None):
         try:
             ref = self.api.catalog_search_agent_stream(
                 message=message,
+                chat_id=chat_id,
             )
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
@@ -1039,16 +1058,18 @@ class ChartCreateAgentTool:
 
         Parameters:
         - message (required, str): Description of the chart or visualization you want to create
+        - chat_id (optional, str): Chat session identifier
 
         Returns:
         Chart creation guidance, code, or visualization assets based on your requirements.
         """
 
     @track_tool_execution()
-    def run(self, *, message: str):
+    def run(self, *, message: str, chat_id: Optional[str] = None):
         try:
             ref = self.api.chart_create_agent_stream(
                 message=message,
+                chat_id=chat_id,
             )
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
@@ -1077,18 +1098,20 @@ class DataProductQueryAgentTool:
         - message (required, str): Your query or request related to the data product
         - data_product_id (required, str): The ID of the data product to work with
         - auth_id (optional, str): Authentication ID for data access
+        - chat_id (optional, str): Chat session identifier
 
         Returns:
         Query results, analysis, or guidance specific to the requested data product.
         """
 
     @track_tool_execution()
-    def run(self, *, message: str, data_product_id: str, auth_id: Optional[str] = None):
+    def run(self, *, message: str, data_product_id: str, auth_id: Optional[str] = None, chat_id: Optional[str] = None):
         try:
             ref = self.api.data_product_query_agent_stream(
                 message=message,
                 data_product_id=data_product_id,
                 auth_id=auth_id,
+                chat_id=chat_id,
             )
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
@@ -1115,16 +1138,18 @@ class DeepResearchAgentTool:
 
         Parameters:
         - message (required, str): Research question or topic you want to investigate
+        - chat_id (optional, str): Chat session identifier
 
         Returns:
         Comprehensive research results with detailed analysis and insights.
         """
 
     @track_tool_execution()
-    def run(self, *, message: str):
+    def run(self, *, message: str, chat_id: Optional[str] = None):
         try:
             ref = self.api.deep_research_agent_stream(
                 message=message,
+                chat_id=chat_id,
             )
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
@@ -1151,16 +1176,18 @@ class QueryFlowAgentTool:
 
         Parameters:
         - message (required, str): Description of your query workflow needs
+        - chat_id (optional, str): Chat session identifier
 
         Returns:
         Query workflow guidance, optimization suggestions, and execution plans.
         """
 
     @track_tool_execution()
-    def run(self, *, message: str):
+    def run(self, *, message: str, chat_id: Optional[str] = None):
         try:
             ref = self.api.query_flow_agent_stream(
                 message=message,
+                chat_id=chat_id,
             )
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
@@ -1187,16 +1214,18 @@ class SqlQueryAgentTool:
 
         Parameters:
         - message (required, str): Description of the data you need or SQL task
+        - chat_id (optional, str): Chat session identifier
 
         Returns:
         SQL queries, query analysis, optimization suggestions, and execution guidance.
         """
 
     @track_tool_execution()
-    def run(self, *, message: str):
+    def run(self, *, message: str, chat_id: Optional[str] = None):
         try:
             ref = self.api.sql_query_agent_stream(
                 message=message,
+                chat_id=chat_id,
             )
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
@@ -1225,6 +1254,7 @@ class SqlExecutionTool:
         - result_table_name (required, str): Name for the result table
         - pre_exec_sql (optional, str): SQL to execute before the main query
         - auth_id (optional, str): Authentication ID for data access
+        - chat_id (optional, str): Chat session identifier
 
         Returns:
         Query execution results including data and metadata.
@@ -1233,6 +1263,7 @@ class SqlExecutionTool:
     @track_tool_execution()
     def run(self, *, data_product_id: str, sql: str, result_table_name: str,
             pre_exec_sql: Optional[str] = None, auth_id: Optional[str] = None,
+            chat_id: Optional[str] = None
     ):
         try:
             ref = self.api.sql_execution_tool_stream(
@@ -1241,6 +1272,7 @@ class SqlExecutionTool:
                 result_table_name=result_table_name,
                 pre_exec_sql=pre_exec_sql,
                 auth_id=auth_id,
+                chat_id=chat_id,
             )
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
@@ -1271,6 +1303,7 @@ class GenerateChartFromSqlAndCodeTool:
         - image_title (required, str): Title for the generated chart image
         - pre_exec_sql (optional, str): SQL to execute before the main query
         - auth_id (optional, str): Authentication ID for data access
+        - chat_id = (optional, str): Chat session identifier
 
         Returns:
         Generated chart data and visualization assets.
@@ -1279,6 +1312,7 @@ class GenerateChartFromSqlAndCodeTool:
     @track_tool_execution()
     def run(self, *, data_product_id: str, sql: str, chart_code_snippet: str, image_title: str,
             pre_exec_sql: Optional[str] = None, auth_id: Optional[str] = None,
+            chat_id: Optional[str] = None
     ):
         try:
             ref = self.api.generate_chart_from_sql_and_code_tool_stream(
@@ -1288,6 +1322,7 @@ class GenerateChartFromSqlAndCodeTool:
                 image_title=image_title,
                 pre_exec_sql=pre_exec_sql,
                 auth_id=auth_id,
+                chat_id=chat_id,
             )
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
@@ -1315,6 +1350,7 @@ class GetDataSchemaTool:
         - data_product_id (required, str): The ID of the data product to get schema for
         - pre_exec_sql (optional, str): SQL to execute before schema retrieval
         - auth_id (optional, str): Authentication ID for data access
+        - chat_id (optional, str): Chat session identifier
 
         Returns:
         Data schema information including table structures and metadata.
@@ -1322,12 +1358,13 @@ class GetDataSchemaTool:
 
     @track_tool_execution()
     def run(self, *, data_product_id: str, pre_exec_sql: Optional[str] = None,
-            auth_id: Optional[str] = None):
+            auth_id: Optional[str] = None, chat_id: Optional[str] = None):
         try:
             ref = self.api.get_data_schema_tool_stream(
                 data_product_id=data_product_id,
                 pre_exec_sql=pre_exec_sql,
                 auth_id=auth_id,
+                chat_id=chat_id,
             )
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
@@ -1353,16 +1390,18 @@ class GetDataSourcesTool:
 
         Parameters:
         - limit (optional, int): Maximum number of data sources to return (default: 100)
+        - chat_id (optional, str): Chat session identifier
 
         Returns:
         List of available data sources with their metadata and connection information.
         """
 
     @track_tool_execution()
-    def run(self, *, limit: int = 100):
+    def run(self, *, limit: int = 100, chat_id: Optional[str] = None):
         try:
             ref = self.api.get_data_sources_tool_stream(
                 limit=limit,
+                chat_id=chat_id
             )
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
@@ -1390,6 +1429,7 @@ class ListDataProductsTool:
         - search_term (required, str): Search term to filter data products
         - limit (optional, int): Maximum number of results to return (default: 5)
         - marketplace_id (optional, str): ID of the marketplace to search in
+        - chat_id (optional, str): Chat session identifier
 
         Returns:
         List of data products matching the search criteria.
@@ -1397,12 +1437,14 @@ class ListDataProductsTool:
 
     @track_tool_execution()
     def run(self, *, search_term: str, limit: int = 5, marketplace_id: Optional[str] = None,
+            chat_id: Optional[str] = None
     ):
         try:
             ref = self.api.list_data_products_tool_stream(
                 search_term=search_term,
                 limit=limit,
                 marketplace_id=marketplace_id,
+                chat_id=chat_id,
             )
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
@@ -1430,6 +1472,7 @@ class SearchCatalogTool:
         - search_term (required, str): Search term to match against catalog objects
         - object_types (optional, List[str]): List of object types to filter by
         - filters (optional, Dict[str, Any]): Additional filters to apply to the search
+        - chat_id (optional, str): Chat session identifier
 
         Returns:
         Search results matching the specified criteria with object metadata.
@@ -1437,12 +1480,13 @@ class SearchCatalogTool:
 
     @track_tool_execution()
     def run(self, *, search_term: str, object_types: Optional[List[str]] = None,
-            filters: Optional[Dict[str, Any]] = None):
+            filters: Optional[Dict[str, Any]] = None, chat_id: Optional[str] = None):
         try:
             ref = self.api.search_catalog_tool_stream(
                 search_term=search_term,
                 object_types=object_types,
                 filters=filters,
+                chat_id=chat_id,
             )
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
@@ -1469,17 +1513,19 @@ class GetSearchFilterFieldsTool:
         Parameters:
         - search_term (required, str): Search term to match against filter field names
         - limit (optional, int): Maximum number of filter fields to return (default: 10)
+        - chat_id (optional, str): Chat session identifier
 
         Returns:
         List of available search filter fields with their metadata and usage information.
         """
 
     @track_tool_execution()
-    def run(self, *, search_term: str, limit: int = 10):
+    def run(self, *, search_term: str, limit: int = 10, chat_id: Optional[str] = None):
         try:
             ref = self.api.get_search_filter_fields_tool_stream(
                 search_term=search_term,
                 limit=limit,
+                chat_id=chat_id,
             )
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
@@ -1507,18 +1553,20 @@ class GetSearchFilterValuesTool:
         - field_id (required, int): ID of the filter field to get values for
         - search_term (required, str): Search term to match against filter values
         - limit (optional, int): Maximum number of filter values to return (default: 10)
+        - chat_id (optional, str): Chat session identifier
 
         Returns:
         List of available values for the specified filter field.
         """
 
     @track_tool_execution()
-    def run(self, *, field_id: int, search_term: str, limit: int = 10):
+    def run(self, *, field_id: int, search_term: str, limit: int = 10, chat_id: Optional[str] = None):
         try:
             ref = self.api.get_search_filter_values_tool_stream(
                 field_id=field_id,
                 search_term=search_term,
                 limit=limit,
+                chat_id=chat_id,
             )
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
@@ -1549,6 +1597,7 @@ class CustomAgentTool:
           to the agent's specific input JSON schema. Common patterns include:
           * {"message": "your question"} for most conversational agents
           * More complex schemas depending on the agent's configuration
+        - chat_id (optional, str): Chat session identifier
 
         Returns:
         Agent response based on the specific agent's capabilities and output schema.
@@ -1564,11 +1613,12 @@ class CustomAgentTool:
         """
 
     @track_tool_execution()
-    def run(self, *, agent_config_id: str, payload: Dict[str, Any]):
+    def run(self, *, agent_config_id: str, payload: Dict[str, Any], chat_id: Optional[str] = None):
         try:
             ref = self.api.custom_agent_stream(
                 agent_config_id=agent_config_id,
                 payload=payload,
+                chat_id=chat_id
             )
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
