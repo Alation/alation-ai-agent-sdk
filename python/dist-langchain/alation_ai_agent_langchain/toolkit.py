@@ -8,71 +8,163 @@ from .tool import (
     get_alation_context_tool,
     get_alation_bulk_retrieval_tool,
     get_alation_data_products_tool,
-    get_update_catalog_asset_metadata_tool,
-    get_check_job_status_tool,
-    get_generate_data_product_tool,
-    get_alation_lineage_tool,
+    get_analyze_catalog_question_tool,
+    get_bi_report_agent_tool,
+    get_bi_report_search_tool,
+    get_catalog_context_search_agent_tool,
+    get_catalog_search_agent_tool,
+    get_chart_create_agent_tool,
     get_check_data_quality_tool,
+    get_check_job_status_tool,
+    get_custom_agent_tool,
     get_custom_fields_definitions_tool,
     get_data_dictionary_instructions_tool,
+    get_data_product_query_agent_tool,
+    get_data_schema_tool,
+    get_data_sources_tool,
+    get_deep_research_agent_tool,
+    get_generate_chart_from_sql_and_code_tool,
+    get_generate_data_product_tool,
+    get_alation_lineage_tool,
+    get_list_data_products_tool,
+    get_query_flow_agent_tool,
+    get_search_catalog_tool,
+    get_search_filter_fields_tool,
+    get_search_filter_values_tool,
     get_signature_creation_tool,
-    get_analyze_catalog_question_tool,
+    get_sql_execution_tool,
+    get_sql_query_agent_tool,
+    get_update_catalog_asset_metadata_tool,
 )
 
 
 def get_tools(sdk: AlationAIAgentSDK):
     tools = []
     if is_tool_enabled(
-        AlationTools.AGGREGATED_CONTEXT, sdk.disabled_tools, sdk.enabled_beta_tools
+        AlationTools.AGGREGATED_CONTEXT, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
     ):
         tools.append(get_alation_context_tool(sdk))
     if is_tool_enabled(
-        AlationTools.BULK_RETRIEVAL, sdk.disabled_tools, sdk.enabled_beta_tools
+        AlationTools.ANALYZE_CATALOG_QUESTION, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
+    ):
+        tools.append(get_analyze_catalog_question_tool(sdk))
+    if is_tool_enabled(
+        AlationTools.BI_REPORT_AGENT, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
+    ):
+        tools.append(get_bi_report_agent_tool(sdk))
+    if is_tool_enabled(
+        AlationTools.BI_REPORT_SEARCH, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
+    ):
+        tools.append(get_bi_report_search_tool(sdk))
+    if is_tool_enabled(
+        AlationTools.BULK_RETRIEVAL, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
     ):
         tools.append(get_alation_bulk_retrieval_tool(sdk))
     if is_tool_enabled(
-        AlationTools.DATA_PRODUCT, sdk.disabled_tools, sdk.enabled_beta_tools
+        AlationTools.CATALOG_CONTEXT_SEARCH_AGENT, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
     ):
-        tools.append(get_alation_data_products_tool(sdk))
+        tools.append(get_catalog_context_search_agent_tool(sdk))
     if is_tool_enabled(
-        AlationTools.UPDATE_METADATA, sdk.disabled_tools, sdk.enabled_beta_tools
+        AlationTools.CATALOG_SEARCH_AGENT, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
     ):
-        tools.append(get_update_catalog_asset_metadata_tool(sdk))
+        tools.append(get_catalog_search_agent_tool(sdk))
     if is_tool_enabled(
-        AlationTools.CHECK_JOB_STATUS, sdk.disabled_tools, sdk.enabled_beta_tools
+        AlationTools.CATALOG_SEARCH, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
+    ):
+        tools.append(get_search_catalog_tool(sdk))
+    if is_tool_enabled(
+        AlationTools.CHART_CREATE_AGENT, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
+    ):
+        tools.append(get_chart_create_agent_tool(sdk))
+    if is_tool_enabled(
+        AlationTools.CHECK_JOB_STATUS, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
     ):
         tools.append(get_check_job_status_tool(sdk))
     if is_tool_enabled(
-        AlationTools.LINEAGE, sdk.disabled_tools, sdk.enabled_beta_tools
+        AlationTools.CUSTOM_AGENT, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
     ):
-        tools.append(get_alation_lineage_tool(sdk))
+        tools.append(get_custom_agent_tool(sdk))
     if is_tool_enabled(
-        AlationTools.DATA_QUALITY, sdk.disabled_tools, sdk.enabled_beta_tools
+        AlationTools.DATA_PRODUCT_QUERY_AGENT, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
+    ):
+        tools.append(get_data_product_query_agent_tool(sdk))
+    if is_tool_enabled(
+        AlationTools.DATA_QUALITY, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
     ):
         tools.append(get_check_data_quality_tool(sdk))
     if is_tool_enabled(
-        AlationTools.GENERATE_DATA_PRODUCT, sdk.disabled_tools, sdk.enabled_beta_tools
+        AlationTools.DEEP_RESEARCH_AGENT, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
+    ):
+        tools.append(get_deep_research_agent_tool(sdk))
+    if is_tool_enabled(
+        AlationTools.GENERATE_CHART_FROM_SQL_AND_CODE, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
+    ):
+        tools.append(get_generate_chart_from_sql_and_code_tool(sdk))
+    if is_tool_enabled(
+        AlationTools.GENERATE_DATA_PRODUCT, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
     ):
         tools.append(get_generate_data_product_tool(sdk))
     if is_tool_enabled(
         AlationTools.GET_CUSTOM_FIELDS_DEFINITIONS,
+        sdk.enabled_tools,
         sdk.disabled_tools,
         sdk.enabled_beta_tools,
     ):
         tools.append(get_custom_fields_definitions_tool(sdk))
     if is_tool_enabled(
         AlationTools.GET_DATA_DICTIONARY_INSTRUCTIONS,
+        sdk.enabled_tools,
         sdk.disabled_tools,
         sdk.enabled_beta_tools,
     ):
         tools.append(get_data_dictionary_instructions_tool(sdk))
     if is_tool_enabled(
-        AlationTools.SIGNATURE_CREATION, sdk.disabled_tools, sdk.enabled_beta_tools
+        AlationTools.GET_DATA_PRODUCT, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
+    ):
+        tools.append(get_alation_data_products_tool(sdk))
+    if is_tool_enabled(
+        AlationTools.GET_DATA_SCHEMA, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
+    ):
+        tools.append(get_data_schema_tool(sdk))
+    if is_tool_enabled(
+        AlationTools.GET_DATA_SOURCES, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
+    ):
+        tools.append(get_data_sources_tool(sdk))
+    if is_tool_enabled(
+        AlationTools.GET_SEARCH_FILTER_FIELDS, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
+    ):
+        tools.append(get_search_filter_fields_tool(sdk))
+    if is_tool_enabled(
+        AlationTools.GET_SEARCH_FILTER_VALUES, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
+    ):
+        tools.append(get_search_filter_values_tool(sdk))
+    if is_tool_enabled(
+        AlationTools.LINEAGE, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
+    ):
+        tools.append(get_alation_lineage_tool(sdk))
+    if is_tool_enabled(
+        AlationTools.LIST_DATA_PRODUCTS, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
+    ):
+        tools.append(get_list_data_products_tool(sdk))
+    if is_tool_enabled(
+        AlationTools.QUERY_FLOW_AGENT, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
+    ):
+        tools.append(get_query_flow_agent_tool(sdk))
+    if is_tool_enabled(
+        AlationTools.SIGNATURE_CREATION, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
     ):
         tools.append(get_signature_creation_tool(sdk))
     if is_tool_enabled(
-        AlationTools.ANALYZE_CATALOG_QUESTION, sdk.disabled_tools, sdk.enabled_beta_tools
+        AlationTools.SQL_EXECUTION, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
     ):
-        tools.append(get_analyze_catalog_question_tool(sdk))
+        tools.append(get_sql_execution_tool(sdk))
+    if is_tool_enabled(
+        AlationTools.SQL_QUERY_AGENT, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
+    ):
+        tools.append(get_sql_query_agent_tool(sdk))
+    if is_tool_enabled(
+        AlationTools.UPDATE_METADATA, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
+    ):
+        tools.append(get_update_catalog_asset_metadata_tool(sdk))
 
     return tools

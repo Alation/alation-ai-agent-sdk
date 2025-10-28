@@ -19,7 +19,7 @@ from alation_ai_agent_sdk.tools import AlationLineageTool
 from alation_ai_agent_sdk.api import (
     AlationAPI,
     AlationAPIError,
-    UserAccountAuthParams,
+    ServiceAccountAuthParams,
 )
 from .test_sdk import (
     REFRESH_TOKEN_RESPONSE_SUCCESS,
@@ -381,8 +381,8 @@ def test_alation_lineage_tool_raises_value_errors_during_validation(
 
     api = AlationAPI(
         base_url="https://api.alation.com",
-        auth_method="user_account",
-        auth_params=UserAccountAuthParams(111, refresh_token="mock-refresh-token"),
+        auth_method="service_account",
+        auth_params=ServiceAccountAuthParams("mock-client-id", "mock-client-secret"),
     )
     with pytest.raises(ValueError) as ex:
         api.get_bulk_lineage(
@@ -480,8 +480,8 @@ def alation_api(
     """Fixture to initialize AlationAPI instance."""
     api = AlationAPI(
         base_url="https://api.alation.com",
-        auth_method="user_account",
-        auth_params=UserAccountAuthParams(111, refresh_token="mock-refresh-token"),
+        auth_method="service_account",
+        auth_params=ServiceAccountAuthParams("mock-client-id", "mock-client-secret"),
     )
     return api
 

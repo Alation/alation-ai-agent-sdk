@@ -31,7 +31,7 @@ pip install -r requirements.txt
 ```bash
 # Alation credentials
 export ALATION_BASE_URL="https://your-alation-instance.com"
-export ALATION_AUTH_METHOD="service_account"  # or "user_account"
+export ALATION_AUTH_METHOD="service_account"
 
 # For service account authentication (recommended)
 export ALATION_CLIENT_ID="your-client-id"

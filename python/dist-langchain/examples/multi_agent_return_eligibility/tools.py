@@ -4,14 +4,11 @@ import sqlite3
 
 from alation_ai_agent_langchain import (
     AlationAIAgentSDK,
-    UserAccountAuthParams,
     ServiceAccountAuthParams,
     get_langchain_tools,
 )
 from config import (
     ALATION_BASE_URL,
-    ALATION_USER_ID,
-    ALATION_REFRESH_TOKEN,
     ALATION_AUTH_METHOD,
     ALATION_CLIENT_ID,
     ALATION_CLIENT_SECRET,
@@ -21,15 +18,7 @@ from database import DB_PATH, init_database
 
 def initialize_alation_sdk() -> AlationAIAgentSDK:
     """Initialize and return the Alation SDK instance."""
-    if ALATION_AUTH_METHOD == "user_account":
-        sdk = AlationAIAgentSDK(
-            base_url=ALATION_BASE_URL,
-            auth_method=ALATION_AUTH_METHOD,
-            auth_params=UserAccountAuthParams(
-                user_id=ALATION_USER_ID, refresh_token=ALATION_REFRESH_TOKEN
-            ),
-        )
-    elif ALATION_AUTH_METHOD == "service_account":
+    if ALATION_AUTH_METHOD == "service_account":
         sdk = AlationAIAgentSDK(
             base_url=ALATION_BASE_URL,
             auth_method=ALATION_AUTH_METHOD,

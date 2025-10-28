@@ -18,6 +18,7 @@ except PackageNotFoundError:
 
 def is_tool_enabled(
     tool_name: str,
+    enabled_tools: set[str],
     disabled_tools: set[str],
     enabled_beta_tools: set[str],
     beta_tools: set[str] | None = None,
@@ -27,6 +28,7 @@ def is_tool_enabled(
 
     Args:
         tool_name: Tool identifier (e.g., AlationTools.LINEAGE)
+        enabled_tools: Set of enabled tool names
         disabled_tools: Set of disabled tool names
         enabled_beta_tools: Set of enabled beta tool names
         beta_tools: Set of beta tools (defaults to SDK's BETA_TOOLS)
@@ -43,6 +45,8 @@ def is_tool_enabled(
     if tool_name in disabled_tools:
         return False
     if tool_name not in beta_tools:
+        if len(enabled_tools) > 0:
+            return tool_name in enabled_tools
         return True
     return tool_name in enabled_beta_tools
 

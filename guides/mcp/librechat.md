@@ -57,12 +57,7 @@ mcpServers:
       - "start-alation-mcp-server"
     env:
       ALATION_BASE_URL: "https://your-alation-instance.com"
-      ALATION_AUTH_METHOD: "user_account"  # or "service_account"
-
-      # For user account authentication
-      ALATION_USER_ID: "your-user-id"
-      ALATION_REFRESH_TOKEN: "your-refresh-token"
-
+      ALATION_AUTH_METHOD: "service_account"
       # For service account authentication
       ALATION_CLIENT_ID: "your-client-id"
       ALATION_CLIENT_SECRET: "your-client-secret"

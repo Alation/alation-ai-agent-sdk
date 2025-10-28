@@ -150,7 +150,11 @@ class AlationContextTool:
     @track_tool_execution()
     def run(self, *, question: str, signature: Optional[Dict[str, Any]] = None):
         try:
-            return self.api.get_context_from_catalog(question, signature)
+            ref = self.api.alation_context_stream(
+                question=question,
+                signature=signature
+            )
+            return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
             return {"error": e.to_dict()}
 
@@ -271,7 +275,10 @@ class AlationBulkRetrievalTool:
             }
 
         try:
-            return self.api.get_bulk_objects_from_catalog(signature)
+            ref = self.api.bulk_retrieval_stream(
+                signature=signature
+            )
+            return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
             return {"error": e.to_dict()}
 
@@ -673,25 +680,10 @@ class GetCustomFieldsDefinitionsTool:
             - Error: {"error": {...}} with error details
         """
         try:
-            raw_custom_fields = self.api.get_custom_fields()
-            filtered_custom_fields = filter_field_properties(raw_custom_fields)
-
-            return {
-                "custom_fields": filtered_custom_fields,
-                "usage_guide": {
-                    "object_compatibility": "For Object Set fields, the 'allowed_otypes' array specifies what type of Alation objects can be selected as the value for this field. For example, a 'Business Owner' field would have ['user', 'groupprofile'] as its allowed otypes because only users or groups can be assigned as the value. This does not control which objects the field can be applied to.",
-                    "value_validation": "For PICKER and MULTI_PICKER fields, the 'options' array contains all valid values that can be entered. For other field types, 'options' is null. The 'allow_multiple' field indicates whether a single value or multiple values can be provided. MULTI_PICKER fields always allow multiple values, OBJECT_SET fields vary based on 'allow_multiple', and TEXT/RICH_TEXT/PICKER/DATE fields are always single-value.",
-                    "display_names": "Use 'name_singular' for field labels and column headers in user interfaces. Use 'name_plural' when displaying fields that have multiple values selected (when 'allow_multiple' is true). If 'name_plural' is empty, fall back to 'name_singular' or add 's' for pluralization.",
-                    "field_types": "TEXT = single line text, RICH_TEXT = formatted text with HTML, PICKER = single selection dropdown, MULTI_PICKER = multiple selection checkboxes, OBJECT_SET = references to users/groups/objects, DATE = date picker. Use 'field_type' to determine appropriate input validation and UI controls.",
-                    "csv_headers": "For data dictionary CSV files, use a combination of the field's ID and name for the column headers. The required format is id|field_name (e.g., 4|description or 10020|Business Owner). This is required for Alation to recognize which field to update.",
-                },
-            }
+            ref = self.api.get_custom_field_definitions_stream()
+            return next(ref)
         except AlationAPIError as e:
-            if e.status_code == 403:
-                logger.info("Non-admin user detected, providing built-in fields only")
-                return self._get_built_in_fields_response()
-            else:
-                return {"error": e.to_dict()}
+            return {"error": e.to_dict()}
 
     def _get_built_in_fields_response(self) -> Dict[str, Any]:
         """
@@ -826,444 +818,11 @@ class SignatureCreationTool:
 
     @track_tool_execution()
     def run(self):
-        return """ALATION SIGNATURE CREATION GUIDE
-    
-    ## PRIMARY TASK
-    Generate a valid JSON signature for alation_context and bulk_retrieval tools calls based on user questions.
-    
-    ## REQUIRED OUTPUT FORMAT
-    Your response must be ONLY valid JSON in this structure:
-    
-    {
-      "object_type": {
-        "fields_required": ["field1", "field2", ...],
-        "search_filters": {
-          "domain_ids": [123],
-          "fields": {
-            "filter_name": [value1, value2]
-          }
-        },
-        "child_objects": {
-          "child_type": {
-            "fields": ["field1", "field2"]
-          }
-        },
-        "limit": 10
-      }
-    }
-    
-    Do NOT include explanations, markdown formatting, or text outside the JSON.
-    
-    ## MANDATORY VALIDATION BEFORE OUTPUT
-    You MUST complete this validation and show your work:
-    
-    <validation_check>
-    For each object type in your planned signature:
-      <object type="[name]">
-        Fields to include: [list]
-        → Check: All fields exist in this object's Available Fields? [YES/NO]
-    
-        Filters to include: [list]
-        → Check each filter:
-          <filter name="[filter_name]">
-            Is "[filter_name]" in this object's supported_filters? [YES/NO]
-            Decision: [INCLUDE/REMOVE]
-          </filter>
-      </object>
-    </validation_check>
-    
-    CRITICAL: Only include filters that pass validation (YES).
-    
-    
-    ## STEP-BY-STEP PROCESS
-    
-    ### STEP 1: ANALYZE QUESTION FOR OBJECT TYPES
-    
-    Available Object Types: schema, table, column, query (SQL query), documentation, bi_report, bi_field, bi_folder
-    
-    Selection Rules:
-    - User specified object type → Use only that type
-      Example: "What are the sales tables in ABC domain" → table only
-      Example: "Explain the sales forecast query" → query only
-    
-    - Cross-reference needed → Multiple types
-      Example: "Policies about sales data" → table + documentation
-    
-    - Comprehensive information → Multiple types
-      Example: "Everything about revenue" → table + query + bi_report + documentation
-    
-    - Ambiguous question → Multiple types
-      Example: "Find customer information" → table + documentation + bi_report
-    
-    ### STEP 2: CHOOSE FIELDS FOR EACH OBJECT TYPE
-    
-    <available_fields>
-    Object Type         | Required Fields                                                 | Optional Fields
-    ────────────────────|─────────────────────────────────────────────────────────────────|────────────────────────────────────
-    table               | name, title, description, url, object_id                        | columns, common_joins, common_filters, source_comment, custom_fields
-    schema              | name, title, description, url, object_id                        | source_comment, custom_fields
-    column              | name, title, data_type, url, object_id                          | description, sample_values, source_comment, custom_fields
-    documentation       | title, content, url, object_id, custom_fields                   | -
-    query               | title, description, content, url, object_id                     | mentioned_tables, custom_fields
-    bi_report           | name, description, bi_object_type, url, object_id, bi_fields    | source_comment, custom_fields
-    bi_field            | name, description, bi_object_type, url, object_id               | data_type, role, expression, source_comment, custom_fields
-    bi_folder           | name, description, bi_object_type, url, object_id               | source_comment, custom_fields
-    </available_fields>
-    
-    Field Selection Logic:
-    
-    ALWAYS INCLUDE: Required Fields for each object type
-    
-    OVERRIDE RULE - Explicit User Requests (HIGHEST PRIORITY):
-    - "show me joins" / "how does it connect" / "relationships" → common_joins
-    - "show me filters" / "how is it used" / "usage patterns" → common_filters
-    - "show me columns" / "table structure" / "schema" → columns
-    - "show me sample data" / "example values" / "what looks like" → sample_values
-    - "what tables does this query use" → mentioned_tables
-    - "how is [X] calculated" / "formula" / "calculation logic" → bi_fields (with expression)
-    - "show me fields" / "what fields in report" → bi_fields
-    
-    DEFAULT FOR DETAILED INFORMATION REQUESTS (not bulk enumeration):
-    When asking about specific named objects OR comprehensive understanding:
-    - "Tell me about [object_name]"
-    - "Explain [object_name]"
-    - "What is [object_name]?"
-    - "How does X work?"
-    
-    → Include for tables: columns, common_joins, common_filters
-    → Include for columns: sample_values
-    → Include for bi_reports: bi_fields
-    
-    DEFAULT FOR BULK ENUMERATION REQUESTS:
-    When listing/finding/discovering many objects:
-    - "List all tables"
-    - "Show me sales tables"
-    - "What tables contain..."
-    
-    → Do NOT include: common_joins, common_filters, sample_values
-    → Include only: Required Fields
-    
-    IMPORTANT: FIELDS ≠ FILTERS
-    - FIELDS → "fields_required"
-    - FILTERS → "search_filters"
-    
-    ### STEP 2.1: CHOOSE CHILD OBJECTS (IF NEEDED)
-    
-    <supported_child_objects>
-    {
-      "Table": {
-        "supported_child_objects": {
-          "columns": {
-            "otype": "column",
-            "allowed_fields": ["name", "title", "description", "data_type", "url", "sample_values", "object_id", "object_type", "source_comment"]
-          }
-        }
-      },
-      "Query": {
-        "supported_child_objects": {
-          "mentioned_tables": {
-            "otype": "table",
-            "allowed_fields": ["name", "title", "description", "url", "common_joins", "common_filters", "columns", "object_id", "object_type"]
-          }
-        }
-      },
-      "BI Report": {
-        "supported_child_objects": {
-          "bi_fields": {
-            "otype": "bi_report_column",
-            "allowed_fields": ["name", "data_type", "role", "description", "expression"]
-          }
-        }
-      }
-    }
-    </supported_child_objects>
-    
-    Rule: If you include an optional field that represents a child object (columns, mentioned_tables, bi_fields), you MUST define a child_objects block.
-    
-    Example:
-    {
-      "table": {
-        "fields_required": ["name", "title", "description", "url", "columns"],
-        "child_objects": {
-          "columns": {
-            "fields": ["name", "data_type", "description"]
-          }
-        }
-      }
-    }
-    
-    For bi_reports with bi_fields, ALWAYS include: name, description, expression, role, data_type.
-    
-    ### STEP 2.2: HANDLE CUSTOM FIELDS
-
-    If the question mentions attributes NOT in predefined lists → Assume custom field
-    
-    Example custom field indicators:
-    - "PII Classification"
-    - "Data Classification"
-    - "Department"
-    - "Priority Level"
-    
-    Workflow:
-    1. Identify potential custom field in question
-    2. Use custom field definitions provided by get_custom_fields_definitions()
-    3. Add "custom_fields" to fields_required
-    4. Add field IDs to custom_fields list
-    5. To filter: use cf[field_id] format in search_filters
-    
-    Example:
-    Question: "Fetch all tables that are PII"
-    
-    Signature:
-    {
-      "table": {
-        "fields_required": ["name", "title", "description", "url", "custom_fields"],
-        "custom_fields": [25],
-        "search_filters": {
-          "fields": {
-            "cf[25]": ["PII", "Verified PII", "Sensitive PII"]
-          }
-        },
-        "limit": 50
-      }
-    }
-    
-    ### STEP 3: APPLY FILTERS WITH VALIDATION
-    
-    <supported_filters_by_object_type>
-    {
-      "Schema": {
-        "supported_filters": ["ds", "tag_ids", "flag_types", "domain_ids", "policy_ids", "custom_field_value"]
-      },
-      "Table": {
-        "supported_filters": ["ds", "schema_name", "table_type", "tag_ids", "flag_types", "domain_ids", "policy_ids", "custom_field_value", "schema"]
-      },
-      "Column (Attribute)": {
-        "supported_filters": ["ds", "schema_name", "schema", "data_type", "table", "tag_ids", "flag_types", "domain_ids", "policy_ids", "custom_field_value"]
-      },
-      "BI Folder": {
-        "supported_filters": ["bi_server_id", "parent_folder", "bi_owner", "tag_ids", "flag_types", "domain_ids", "policy_ids", "custom_field_value"]
-      },
-      "BI Report": {
-        "supported_filters": ["bi_server_id", "parent_folder", "bi_owner", "is_dashboard", "tag_ids", "flag_types", "domain_ids", "policy_ids", "custom_field_value"]
-      },
-      "BI Field": {
-        "supported_filters": ["bi_server_id", "tag_ids", "flag_types", "domain_ids", "policy_ids", "custom_field_value"]
-      },
-      "Query": {
-        "supported_filters": ["ds", "author", "published", "scheduled", "tag_ids", "flag_types", "domain_ids", "policy_ids", "custom_field_value"]
-      },
-      "Documentation": {
-        "supported_filters": ["tag_ids", "flag_types", "domain_ids", "policy_ids", "custom_field_value", "folder"]
-      }
-    }
-    </supported_filters_by_object_type>
-    
-    <filter_usage_guide>
-    {
-      "filter_instructions": {
-        "general_notes": [
-          "Filters go in 'search_filters' section",
-          "All filter values must be lists, even for single values"
-        ],
-        "filters": {
-          "author": {"description": "Filter by query author ID", "type": "list[int]", "example": "\"author\": [123]"},
-          "bi_owner": {"description": "Filter by BI object owner", "type": "list[str]", "example": "\"bi_owner\": [\"John Doe\"]"},
-          "bi_server_id": {"description": "Filter by BI server ID. RDBMS DS ID and BI server ID are different", "type": "list[int]", "example": "\"bi_server_id\": [123]"},
-          "cf[field_id]": {"description": "Filter by custom field value", "type": "list[str or int]", "example": "\"cf[12345]\": [\"value1\"]"},
-          "data_type": {"description": "Filter by attribute data type", "type": "list[str]", "example": "\"data_type\": [\"varchar\"]"},
-          "domain_ids": {"description": "Filter by domain ID", "type": "list[int]", "example": "\"domain_ids\": [42, 123]"},
-          "ds": {"description": "Filter by data source ID", "type": "list[int]", "example": "\"ds\": [1, 5]"},
-          "flag_types": {"description": "Filter by trust flags", "type": "list[str]", "accepted_values": ["Endorsement", "Deprecation", "Warning"], "example": "\"flag_types\": [\"Endorsement\"]"},
-          "folder": {"description": "Filter by folder ID for documentation", "type": "list[int]", "example": "\"folder\": [123]"},
-          "is_dashboard": {"description": "Filter BI reports that are dashboards", "type": "list[bool]", "example": "\"is_dashboard\": [true]"},
-          "parent_folder": {"description": "Filter by parent folder of BI object", "type": "list[str]", "example": "\"parent_folder\": [\"Sales Reports\"]"},
-          "policy_ids": {"description": "Filter by policy ID", "type": "list[int]", "example": "\"policy_ids\": [10, 20]"},
-          "published": {"description": "Filter by published status", "type": "list[bool]", "example": "\"published\": [true]"},
-          "scheduled": {"description": "Filter queries that are scheduled", "type": "list[bool]", "example": "\"scheduled\": [true]"},
-          "schema": {"description": "Filter by schema ID", "type": "list[int]", "example": "\"schema\": [123]"},
-          "schema_name": {"description": "Filter by schema name", "type": "list[str]", "example": "\"schema_name\": [\"finance\"]"},
-          "table": {"description": "Filter by table ID", "type": "list[int]", "example": "\"table\": [123]"},
-          "table_type": {"description": "Filter by table type", "type": "list[str]", "accepted_values": ["VIEW", "TABLE"], "example": "\"table_type\": [\"VIEW\"]"},
-          "tag_ids": {"description": "Filter by tag ID", "type": "list[int]", "example": "\"tag_ids\": [1, 20]"}
-        }
-      }
-    }
-    </filter_usage_guide>
-    
-    ### STEP 3.0: IDENTIFY FILTERING INTENT (MANDATORY)
-    
-    Before selecting filters, systematically extract constraints from the question:
-    
-    <filter_intent_analysis>
-    1. Identify constraint phrases:
-       Scan for: "in [X]", "from [X]", "within [X]", "of [X]", "at [X]", "by [X]"
-       Found phrases: [list them]
-    
-    2. For each phrase, determine constraint type:
-       - Is it a container name? (specific named location)
-       - Is it a category? (type, status, classification)
-       - Is it an identifier? (ID, name with specific format)
-       
-    3. Match constraint to filter category:
-       - Hierarchical location: folder, schema, workbook, parent_folder
-       - System identifier: ds, bi_server_id, domain_ids
-       - Metadata attribute: table_type, published, scheduled
-       - Owner/Author: bi_owner, author
-       - Custom attribute: cf[field_id]
-    
-    4. For each object type in your signature:
-       Look up its supported_filters list
-       Check which filters match your identified constraints
-       
-    Final filter mapping:
-    - [object_type]: [filter_name] with value [X]
-    </filter_intent_analysis>
-    
-    ### STEP 3.1: VALIDATE AGAINST SCHEMA
-
-    CRITICAL VALIDATION RULE:
-    Before adding ANY filter to search_filters:
-    1. Look up object type in supported_filters_by_object_type
-    2. Check if filter exists in that object's supported_filters list
-    3. If NOT in list → DO NOT INCLUDE that filter. ex: We have schema_name but there is no "name" or "table_name" or "ds_name" filter for any object type.
-    4. If in list → Include in correct location (domain_ids vs fields)
-    5. Data source IDs are for RDBMS objects (tables/queries). BI server IDs are separate and not provided in context. Only use if user has provided it.
-    
-    
-    Example validation:
-    Question: "Show me sales tables and dashboards from the Analytics data source (id=10)"
-    
-    For TABLE:
-      Check: Is "ds" in Table's supported_filters?
-      Answer: YES → Include "ds": [10]
-    
-    For BI_REPORT:
-      Check: Is "ds" in BI Report's supported_filters?
-      Answer: NO → Do NOT include "ds"
-      Check: Is "bi_server_id" in BI Report's supported_filters?
-      Answer: YES → Include "bi_server_id": [10]
-    
-    
-    ### STEP 4: CONSTRUCT FINAL JSON SIGNATURE
-    
-    Structure Rules:
-    - Top level: object types as keys
-    - Each object has: fields_required, search_filters (optional), child_objects (optional), limit (optional)
-    - search_filters structure:
-      - domain_ids → direct child of search_filters
-      - All other filters → nested under "fields" key
-    
-    Validation Table Format:
-    | Object Type | Filter | Supported? | Action |
-    |-------------|--------|-----------|--------|
-    | table       | ds     | ✓ YES     | INCLUDE |
-    | bi_report   | ds     | ✗ NO      | REMOVE  |
-    | bi_report   | bi_server_id | ✓ YES | INCLUDE |
-    
-    Example Structure:
-    {
-      "table": {
-        "fields_required": ["name", "title", "description", "url", "object_id", "columns"],
-        "search_filters": {
-          "domain_ids": [42],
-          "fields": {
-            "tag_ids": [101]
-          }
-        },
-        "child_objects": {
-          "columns": {
-            "fields": ["name", "data_type", "description"]
-          }
-        },
-        "limit": 10
-      }
-    }
-    
-    ## SELF-CHECK BEFORE FINALIZING
-    
-    <self_validation>
-    □ Did I complete the <validation_check> for ALL filters?
-    □ Did I remove ALL filters not in supported_filters list?
-    □ Are domain_ids and other filters in correct locations?
-    □ Did I include ALL required fields for each object type?
-    □ Did I define child_objects for columns/mentioned_tables/bi_fields?
-    □ Is my JSON valid with proper syntax?
-    □ Did I include ONLY JSON with no explanations or markdown?
-    </self_validation>
-    
-    If ANY box is unchecked → REVISE before outputting.
-    
-    ## COMPLETE EXAMPLE
-    
-    User Question: "Show me the top 5 sales tables in the marketing domain, including their columns and any related queries."
-    
-    <validation_check>
-      <object type="table">
-        Fields: name, title, description, url, object_id, columns
-        → Check: All in table's Available Fields? YES
-    
-        Filters: domain_ids
-        → <filter name="domain_ids">
-            In table's supported_filters? YES
-            Decision: INCLUDE
-          </filter>
-      </object>
-    
-      <object type="query">
-        Fields: title, description, content, url, object_id
-        → Check: All in query's Available Fields? YES
-    
-        Filters: none
-      </object>
-    </validation_check>
-    
-    <self_validation>
-    ☑ Validation complete for all filters
-    ☑ All required fields included
-    ☑ Child objects defined for columns
-    ☑ JSON is valid
-    ☑ Output is JSON only
-    </self_validation>
-    
-    Expected Output:
-    {
-      "table": {
-        "fields_required": [
-          "name",
-          "title",
-          "description",
-          "url",
-          "object_id",
-          "columns"
-        ],
-        "search_filters": {
-          "domain_ids": [123]
-        },
-        "child_objects": {
-          "columns": {
-            "fields": [
-              "name",
-              "title",
-              "data_type",
-              "description"
-            ]
-          }
-        },
-        "limit": 5
-      },
-      "query": {
-        "fields_required": [
-          "title",
-          "description",
-          "content",
-          "url",
-          "object_id"
-        ],
-        "search_filters": {},
-        "limit": 5
-      }
-    }"""
+        try:
+            ref = self.api.get_signature_creation_instructions_stream()
+            return ref if self.api.enable_streaming else next(ref)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
 
 
 class AnalyzeCatalogQuestionTool:
@@ -1303,431 +862,718 @@ class AnalyzeCatalogQuestionTool:
 
     @track_tool_execution()
     def run(self, *, question: str):
-        return f"""CATALOG QUESTION ANALYSIS WORKFLOW
-    
-    ## PRIMARY TASK
-    Analyze this question and orchestrate the optimal search strategy:
-    
-    **Question:** "{question}"
-    
-    ## REQUIRED OUTPUT: ORCHESTRATION DECISION
-    You must produce a clear decision on:
-    1. Is the question actionable?
-    2. Which object types to search for?
-    3. Whether to use BULK or SEMANTIC search
-    4. Which tools to call and in what order
-    
-    ## MANDATORY ANALYSIS BEFORE ORCHESTRATION
-    
-    <orchestration_analysis>
-      <actionability_check>
-        Is question actionable? [YES/NO]
-        Reason: [one sentence]
-        → If NO: Stop and provide clarification message
-        → If YES: Continue to object detection
-      </actionability_check>
-    
-      <object_detection>
-        Keywords found in question: [list]
-        Object types detected: [list]
-        Reasoning: [how you mapped keywords to object types]
-      </object_detection>
-    
-      <custom_fields_check>
-        Does question mention governance/classification/custom concepts? [YES/NO]
-        Should call get_custom_fields_definitions()? [YES/NO]
-        Reasoning: [one sentence]
-      </custom_fields_check>
-    
-      <routing_decision>
-        Pattern detected: [BULK ENUMERATION / CONCEPT DISCOVERY]
-        Has semantic concepts to discover? [YES/NO]
-        Wants everything in a location? [YES/NO]
-        → Decision: [bulk_retrieval / alation_context]
-        Reasoning: [one sentence]
-      </routing_decision>
-    </orchestration_analysis>
-    
-    ## STEP-BY-STEP WORKFLOW
-    
-    ### STEP 1: ACTIONABILITY CHECK
-    
-    ❌ STOP & CLARIFY IF:
-    - Catalog-wide requests without constraints:
-      - "What tables are in catalog" / "Show all tables" / "List tables"
-      - "Get all [objects]" (without data source/schema/domain specified)
-      - Enumeration requests spanning entire catalog
-    - Off-topic: non-catalog questions (weather, news, etc.)
-    - Vague: "need data for project" (no specifics)
-    
-    ✅ PROCEED IF:
-    - Specific data objects mentioned
-    - Clear business context provided
-    - Catalog-related request
-    
-    ### STEP 2: GATHER METADATA (Always Required)
-    
-    A. ALWAYS call: get_signature_creation_instructions()
-       → Provides object types, fields, and standard filters
-    
-    B. CONDITIONALLY call: get_custom_fields_definitions()
-    
-       CALL IF question mentions:
-       - "custom field", "custom metadata"
-       - "governance", "classification"
-       - "PII", "department", "priority", "business owner"
-       - Any filtering by attributes NOT in standard filters
-    
-       DO NOT CALL IF question only uses:
-       - Standard filters: data source, schema, domain, table names
-       - Built-in object properties
-    
-    ### STEP 3: DETECT OBJECT TYPES (Before Analysis)
-    
-    <object_type_mapping>
-    Keyword in Question       → Object Type    → Context Check
-    ────────────────────────────────────────────────────────────
-    "query"/"queries" (noun)  → query          → "explain X query", "find queries"
-    "query" (verb)            → -              → "how to query data" (skip)
-    "table"/"tables"          → table          → Always include
-    "view"/"views"            → table          → Tables include views (filter by table_type to "VIEW")
-    "column"/"columns"        → column         → Always include
-    "attribute"/"field"       → column         → Always include
-    "schema"/"schemas"        → schema         → Always include
-    "database"/"datasource"   → schema         → Always include
-    "report"/"dashboard"      → bi_report      → Always include
-    "workbook"/"folder"       → bi_folder      → For BI contexts
-    "documentation"/"article" → documentation  → Always include
-    "guide"/"glossary"        → documentation  → Always include
-    </object_type_mapping>
-    
-    CRITICAL: Detect object types BEFORE reformulating the question.
-    
-    ### STEP 4: ROUTE TO SEARCH METHOD
-    
-    #### CRITICAL LIMITATION: BULK RETRIEVAL CANNOT SEARCH BY NAME
-    bulk_retrieval only supports filtering by:
-    - Data source ID (ds)
-    - Schema name (schema_name) or ID (schema)
-    - Table type (table_type)
-    - Flags, tags, domains, policies, custom fields
-    - Other metadata attributes
-    
-    bulk_retrieval does NOT support:
-    - Searching by object name
-    - Pattern matching on names
-    - Fuzzy name lookups
-    - "Find table named X"
-    
-    → ANY question requiring name-based discovery MUST use alation_context (SEMANTIC SEARCH)
+        try:
+            ref = self.api.analyze_catalog_question_stream(
+                question=question
+            )
+            return ref if self.api.enable_streaming else next(ref)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
 
-    IMPORTANT: Apply these checks IN ORDER (Priority 1 → Priority 2 → Priority 3)
-    
-    #### PRIORITY 1: CUSTOM FIELD ENUMERATION
-    If custom_fields_definitions() was called AND question matches:
-    - "Show [objects] that contain [custom_field_value]"
-    - "Get [objects] with [custom_field_value]"
-    - "Find [objects] classified as [value]"
-    - "List [objects] that are [custom_value]"
-    - "[objects] with [attribute] = [value]"
-    
-    
-    → USE BULK RETRIEVAL
-    Why: These are exact enumeration with custom field filters, not concept discovery
-    
-    #### PRIORITY 2: STRUCTURAL ENUMERATION
-    If question matches:
-    - "List ALL [objects] in [location]"
-    - "Show ALL [objects] in [container]"
-    - "What [objects] are in [place]"
-    - "Get [objects] from [specific location]"
-    
-    → USE BULK RETRIEVAL
-    Why: Wants complete list from known location
-    
-    #### PRIORITY 3: CONCEPT DISCOVERY
-    If question matches:
-    - "Find [CONCEPT] in [optional location]"
-    - "[business domain term] data"
-    - "Tables about [topic]"
-    - Documentation/explanation queries
-    - Fuzzy/exploratory search
-    
-    Examples:
-    - "Find SALES tables" → SEMANTIC (discover "sales")
-    - "Customer analysis data" → SEMANTIC (discover concept)
-    
-    → USE SEMANTIC SEARCH
-    Why: Needs to discover what matches the concept
-    
-    Examples:
-    | Question | Priority | Method | Why |
-    |----------|----------|--------|-----|
-    | "Show BI reports that contain PII" | P1 | BULK | Custom field enumeration |
-    | "Tables classified as Confidential" | P1 | BULK | Custom field enumeration |
-    | "List ALL tables in finance schema" | P2 | BULK | Structural enumeration |
-    | "Find SALES tables in finance" | P3 | SEMANTIC | Concept discovery |
-    
-    ### STEP 5: EXECUTE SEARCH (Maximum 2 Calls)
-    
-    EXECUTION RULES:
-    1. Make first search call with optimal signature
-    2. Evaluate results:
-       <result_evaluation>
-         Results sufficient to answer? [YES/NO]
-         If YES → Stop and generate answer
-         If NO → Make ONE refined search
-       </result_evaluation>
-    3. NEVER exceed 2 search calls total
-    4. If 2 searches fail → Explain what was tried and suggest refinement
-    
-    PATH A - BULK RETRIEVAL:
-    
-    1. Build structural signature with filters
-    2. Call: bulk_retrieval(signature)
-    3. Evaluate results
-    4. If insufficient: Try semantic approach OR ask for clarification
-    
-    
-    PATH B - SEMANTIC SEARCH:
-    
-    1. Build semantic signature with filters + concept fields
-    2. Call: alation_context(question, signature)
-    3. Evaluate results
-    4. If insufficient: Try more specific filters OR ask for clarification
-    
-    ## STEP 6: CONSTRUCT RESPONSE WITH EXPLANATIONS
-    
-    ### WHEN TO EXPLAIN THE PROCESS:
-    
-    Include process explanations when:
-    ✓ Multiple filters were applied (domain, custom fields, schema, etc.)
-    ✓ Custom field filtering was used
-    ✓ Complex queries with multiple object types
-    ✓ User might benefit from understanding the search scope
-    ✓ Results are filtered/limited in non-obvious ways
-    
-    Skip process explanations when:
-    ✗ Simple, single-filter queries ("tables in schema X")
-    ✗ Self-evident searches (user asked for exactly what was returned)
-    ✗ Follow-up questions in same context
-    
-    ### HOW TO EXPLAIN THE PROCESS:
-    
-    Format: Brief, natural language summary BEFORE presenting results
-    
-    Template Structure:
-    "I searched for [object types] [with these criteria]:
-    - [Filter 1]: [value/explanation]
-    - [Filter 2]: [value/explanation]
-    [Additional context if relevant]
-    
-    Here's what I found:"
-    
-    Examples:
-    
-    Example 1 - Custom Field Filter:
-    "I searched for tables in the Marketing domain (ID: 42) that are classified 
-    as 'PII' in the Data Classification custom field. Here's what I found:"
-    
-    Example 2 - Multiple Filters:
-    "I searched for published queries from the Sales data source (ID: 5) that 
-    are endorsed. Here's what I found:"
-    
-    Example 3 - Semantic Search:
-    "I searched for tables related to 'customer revenue' across the Finance 
-    domain, looking at table names, descriptions, and documentation. Here's 
-    what I found:"
-    
-    ## STEP 7: EXPLAIN RESULT COUNTS AND LIMITS
-    
-    ### WHEN TO EXPLAIN COUNTS/LIMITS:
-    
-    ALWAYS explain for:
-    ✓ List/enumeration queries ("list all", "show all", "what are the")
-    ✓ When limit was reached (returned count = signature limit)
-    ✓ Bulk retrieval operations
-    ✓ When results are clearly truncated
-    
-    SKIP count explanations for:
-    ✗ Single object queries ("tell me about X table")
-    ✗ Specific named object lookups
-    ✗ When returned results are less than signature limit (obviously complete)
-    ✗ Documentation/explanation queries
-    
-    ### HOW TO EXPLAIN COUNTS:
-    
-    <count_explanation_logic>
-    IF returned_count < limit:
-        → Optional: "Found [N] [objects]"
-        → No need to mention more might exist
-    
-    IF returned_count == limit:
-        → Required: "Found [N] [objects] (showing first [limit]). There may be 
-           additional [objects] matching your criteria."
+class BiReportSearchTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
 
-    </count_explanation_logic>
-    
-    Placement: Add count explanation AFTER process explanation, BEFORE results
-    
-    Examples:
-    
-    Example 1 - Limit Reached:
-    "I searched for tables in the Finance schema classified as 'Confidential'.
-    
-    Found 20 tables (showing first 20). There may be additional tables matching 
-    your criteria. Let me know if you'd like to see more results.
-    
-    Here are the tables:"
-    
-    Example 2 - Limit Not Reached:
-    "I searched for endorsed BI reports in the Sales dashboard folder.
-    
-    Found 7 reports:
-    [results...]"
-    
-    ## COMBINED EXAMPLE WITH BOTH EXPLANATIONS
-    
-    Question: "List all PII tables in the Marketing domain"
-    
-    Response:
-    "I searched for tables in the Marketing domain (ID: 42) that are classified 
-    as 'PII' or 'Sensitive PII' in the Data Classification custom field.
-    
-    Found 20 tables (showing first 20). There may be additional PII tables in 
-    this domain. Let me know if you'd like to see more results.
-    
-    Here are the tables:
-    
-    1. **customer_email_list**
-       - Description: Contains customer contact information including emails
-       - URL: [link]
-       - Classification: Sensitive PII
-    
-    2. **user_profiles**
-       - Description: User account data with personal information
-       - URL: [link]
-       - Classification: PII
+    @staticmethod
+    def _get_name() -> str:
+        return "bi_report_search"
 
-    ## SELF-CHECK BEFORE EXECUTING
-    
-    <self_validation>
-    □ Did I complete <orchestration_analysis> for this question?
-    □ Did I detect object types BEFORE analysis?
-    □ Did I determine if custom fields are needed?
-    □ Did I choose between BULK vs SEMANTIC with clear reasoning?
-    □ Do I have a plan that limits searches to maximum 2 calls?
-    □ If question is not actionable, did I prepare a clarification message?
-    □ Did I plan to explain the process for complex/filtered queries?
-    □ Did I plan to explain result counts for enumeration queries?
-    □ If limit == returned_count, did I plan to mention potential truncation?
-    </self_validation>
-    
-    If ANY box is unchecked → REVISE before proceeding.
-    
-    ## CLARIFICATION TEMPLATES
-    
-    TOO BROAD:
-    "There are many [objects] in the catalog. Please specify which data source or schema you're interested in, and which specific [objects] you need."
-    
-    OFF-TOPIC:
-    "I help find data assets in your Alation catalog. What data are you looking for?"
-    
-    VAGUE:
-    "Please provide more context. For example: 'Find customer transaction tables in the finance schema for churn analysis'"
-    
-    ## COMPLETE EXAMPLE WITH EXPLANATIONS
-    
-    Question: "List all sales tables in the marketing domain"
-    
-    <orchestration_analysis>
-      <actionability_check>
-        Is question actionable? YES
-        Reason: Specific object type (tables), domain (marketing), and concept (sales)
-        → Continue to object detection
-      </actionability_check>
-    
-      <object_detection>
-        Keywords found: "tables", "marketing domain", "sales"
-        Object types detected: table
-        Reasoning: "tables" maps directly to table object type
-      </object_detection>
-    
-      <custom_fields_check>
-        Does question mention governance/classification? NO
-        Should call get_custom_fields_definitions()? NO
-        Reasoning: Uses standard filters (domain_ids) only
-      </custom_fields_check>
-    
-      <routing_decision>
-        Pattern detected: CONCEPT DISCOVERY + ENUMERATION
-        Has semantic concepts? YES ("sales")
-        Wants everything in location? YES ("list all")
-        → Decision: alation_context (semantic needed for "sales" concept)
-        Reasoning: Need to discover which tables match "sales" concept within domain
-      </routing_decision>
-      
-      <explanation_planning>
-        Should explain process? YES
-        Reason: Domain filter applied + semantic search for "sales"
-        
-        Should explain counts? YES
-        Reason: Enumeration query ("list all")
-        
-        Check for truncation? YES
-        Reason: If limit reached, mention more may exist
-      </explanation_planning>
-    </orchestration_analysis>
-    
-    <self_validation>
-    ☑ Orchestration analysis complete
-    ☑ Object types detected (table)
-    ☑ Custom fields check done (not needed)
-    ☑ Routing decision made (SEMANTIC)
-    ☑ Plan limits to 2 searches
-    ☑ Question is actionable
-    ☑ Process explanation planned
-    ☑ Count explanation planned
-    ☑ Truncation check planned
-    </self_validation>
-    
-    EXECUTION PLAN:
-    1. Call: get_signature_creation_instructions()
-    2. Build signature for table object with domain filter, limit=20
-    3. Call: alation_context("sales tables", signature_with_marketing_domain)
-    4. Check: returned_count vs limit
-    5. Construct response with explanations
-    
-    EXAMPLE RESPONSE:
-    
-    "I searched for tables related to 'sales' in the Marketing domain (ID: 42), 
-    examining table names, descriptions, and associated documentation.
-    
-    Found 20 tables (showing first 20). There may be additional sales-related 
-    tables in this domain. Let me know if you'd like to see more results.
-    
-    Here are the sales tables:
-    
-    1. **sales_transactions**
-       - Description: Daily sales transaction records
-       - URL: [link]
-       - Columns: transaction_id, customer_id, amount, date
-    
-    2. **sales_forecasts**
-       - Description: Monthly sales forecast data
-       - URL: [link]
-       - Columns: period, product_id, forecast_amount
-    
-    [...]"
-    
-    ## CRITICAL REMINDERS
-    
-    - ALWAYS complete <orchestration_analysis> before acting
-    - ALWAYS detect object types from ORIGINAL question
-    - Maximum 2 search calls per questionß
-    - Stop after first search if results are sufficient
-    - Use BULK for enumeration, SEMANTIC for concept discovery
-    """
+    @staticmethod
+    def _get_description() -> str:
+        return """
+        Search over the Alation catalog to find BI report objects.
+
+        This tool allows you to find BI report objects, such as dashboards, reports,
+        and other business intelligence assets. You can filter results to narrow down results.
+
+        Parameters:
+        - search_term (required, str): Search term to filter BI reports by name
+        - limit (optional, int): Maximum number of results to return (default: 20, max: 100)
+
+        Returns:
+        A list of BI report objects that match the search query parameters, including
+        report names, descriptions, URLs, and other metadata.
+        """
+
+    @track_tool_execution()
+    def run(self, *, search_term: str, limit: int = 20):
+        kwargs = {
+            "search_term": search_term,
+            "limit": limit
+        }
+        try:
+            ref = self.api.search_bi_reports_stream(**kwargs)
+            return ref if self.api.enable_streaming else next(ref)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
+
+class BiReportAgentTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "bi_report_agent"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
+        BI Report Agent for searching and analyzing BI report objects.
+
+        This agent specializes in finding and providing information about business intelligence
+        reports, dashboards, and related assets in the Alation catalog.
+
+        Parameters:
+        - message (required, str): Natural language message describing what you're looking for
+
+        Returns:
+        Detailed information about BI reports matching your request, including metadata,
+        descriptions, and contextual information.
+        """
+
+    @track_tool_execution()
+    def run(self, *, message: str):
+        try:
+            ref = self.api.bi_report_agent_stream(
+                message=message
+            )
+            return ref if self.api.enable_streaming else next(ref)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
+
+class CatalogContextSearchAgentTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "catalog_context_search_agent"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
+        Catalog Context Search Agent for searching catalog objects with enhanced context.
+
+        This agent provides contextual search capabilities across the Alation catalog,
+        understanding relationships and providing enriched results.
+
+        Parameters:
+        - message (required, str): Natural language description of what you're searching for
+
+        Returns:
+        Contextually-aware search results with enhanced metadata and relationships.
+        """
+
+    @track_tool_execution()
+    def run(self, *, message: str):
+        try:
+            ref = self.api.catalog_context_search_agent_stream(
+                message=message,
+            )
+            return ref if self.api.enable_streaming else next(ref)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
+
+class CatalogSearchAgentTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "catalog_search_agent"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
+        Catalog Search Agent for general catalog search operations.
+
+        This agent handles general search queries across the Alation data catalog,
+        finding tables, columns, schemas, and other catalog objects.
+
+        Parameters:
+        - message (required, str): Natural language search query
+
+        Returns:
+        Search results from the data catalog matching your query.
+        """
+
+    @track_tool_execution()
+    def run(self, *, message: str):
+        try:
+            ref = self.api.catalog_search_agent_stream(
+                message=message,
+            )
+            return ref if self.api.enable_streaming else next(ref)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
+
+class ChartCreateAgentTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "chart_create_agent"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
+        Chart Create Agent for creating charts and visualizations.
+
+        This agent specializes in generating charts and visualizations from data,
+        helping create compelling visual representations of your data.
+
+        Parameters:
+        - message (required, str): Description of the chart or visualization you want to create
+
+        Returns:
+        Chart creation guidance, code, or visualization assets based on your requirements.
+        """
+
+    @track_tool_execution()
+    def run(self, *, message: str):
+        try:
+            ref = self.api.chart_create_agent_stream(
+                message=message,
+            )
+            return ref if self.api.enable_streaming else next(ref)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
+
+class DataProductQueryAgentTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "data_product_query_agent"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
+        Data Product Query Agent for querying data products.
+
+        This agent specializes in working with specific data products, helping generate
+        queries and analyze data within the context of a particular data product.
+
+        Parameters:
+        - message (required, str): Your query or request related to the data product
+        - data_product_id (required, str): The ID of the data product to work with
+        - auth_id (optional, str): Authentication ID for data access
+
+        Returns:
+        Query results, analysis, or guidance specific to the requested data product.
+        """
+
+    @track_tool_execution()
+    def run(self, *, message: str, data_product_id: str, auth_id: Optional[str] = None):
+        try:
+            ref = self.api.data_product_query_agent_stream(
+                message=message,
+                data_product_id=data_product_id,
+                auth_id=auth_id,
+            )
+            return ref if self.api.enable_streaming else next(ref)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
+
+class DeepResearchAgentTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "deep_research_agent"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
+        Deep Research Agent for comprehensive research tasks.
+
+        This agent conducts thorough research across the catalog, providing detailed
+        analysis and comprehensive insights on complex data topics.
+
+        Parameters:
+        - message (required, str): Research question or topic you want to investigate
+
+        Returns:
+        Comprehensive research results with detailed analysis and insights.
+        """
+
+    @track_tool_execution()
+    def run(self, *, message: str):
+        try:
+            ref = self.api.deep_research_agent_stream(
+                message=message,
+            )
+            return ref if self.api.enable_streaming else next(ref)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
+
+class QueryFlowAgentTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "query_flow_agent"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
+        Query Flow Agent for SQL query workflow management.
+
+        This agent manages complex SQL query workflows, helping with query optimization,
+        execution planning, and result analysis.
+
+        Parameters:
+        - message (required, str): Description of your query workflow needs
+
+        Returns:
+        Query workflow guidance, optimization suggestions, and execution plans.
+        """
+
+    @track_tool_execution()
+    def run(self, *, message: str):
+        try:
+            ref = self.api.query_flow_agent_stream(
+                message=message,
+            )
+            return ref if self.api.enable_streaming else next(ref)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
+
+class SqlQueryAgentTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "sql_query_agent"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
+        SQL Query Agent for SQL query generation and analysis.
+
+        This agent specializes in generating, analyzing, and optimizing SQL queries
+        based on natural language descriptions of data needs.
+
+        Parameters:
+        - message (required, str): Description of the data you need or SQL task
+
+        Returns:
+        SQL queries, query analysis, optimization suggestions, and execution guidance.
+        """
+
+    @track_tool_execution()
+    def run(self, *, message: str):
+        try:
+            ref = self.api.sql_query_agent_stream(
+                message=message,
+            )
+            return ref if self.api.enable_streaming else next(ref)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
+class SqlExecutionTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "sql_execution_tool"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
+        Execute SQL queries within a data product context.
+
+        This tool allows you to execute SQL queries against data products and get results.
+
+        Parameters:
+        - data_product_id (required, str): The ID of the data product to execute queries against
+        - sql (required, str): The SQL query to execute
+        - result_table_name (required, str): Name for the result table
+        - pre_exec_sql (optional, str): SQL to execute before the main query
+        - auth_id (optional, str): Authentication ID for data access
+
+        Returns:
+        Query execution results including data and metadata.
+        """
+
+    @track_tool_execution()
+    def run(self, *, data_product_id: str, sql: str, result_table_name: str,
+            pre_exec_sql: Optional[str] = None, auth_id: Optional[str] = None,
+    ):
+        try:
+            ref = self.api.sql_execution_tool_stream(
+                data_product_id=data_product_id,
+                sql=sql,
+                result_table_name=result_table_name,
+                pre_exec_sql=pre_exec_sql,
+                auth_id=auth_id,
+            )
+            return ref if self.api.enable_streaming else next(ref)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
+
+class GenerateChartFromSqlAndCodeTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "generate_chart_from_sql_and_code_tool"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
+        Generate charts from SQL queries and code snippets within a data product context.
+
+        This tool creates visualizations by combining SQL queries with chart generation code.
+
+        Parameters:
+        - data_product_id (required, str): The ID of the data product to work with
+        - sql (required, str): The SQL query to fetch data
+        - chart_code_snippet (required, str): Code snippet for generating the chart
+        - image_title (required, str): Title for the generated chart image
+        - pre_exec_sql (optional, str): SQL to execute before the main query
+        - auth_id (optional, str): Authentication ID for data access
+
+        Returns:
+        Generated chart data and visualization assets.
+        """
+
+    @track_tool_execution()
+    def run(self, *, data_product_id: str, sql: str, chart_code_snippet: str, image_title: str,
+            pre_exec_sql: Optional[str] = None, auth_id: Optional[str] = None,
+    ):
+        try:
+            ref = self.api.generate_chart_from_sql_and_code_tool_stream(
+                data_product_id=data_product_id,
+                sql=sql,
+                chart_code_snippet=chart_code_snippet,
+                image_title=image_title,
+                pre_exec_sql=pre_exec_sql,
+                auth_id=auth_id,
+            )
+            return ref if self.api.enable_streaming else next(ref)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
+
+class GetDataSchemaTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "get_data_schema_tool"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
+        Retrieve data schema information for a data product.
+
+        This tool provides schema details including tables, columns, and data types.
+
+        Parameters:
+        - data_product_id (required, str): The ID of the data product to get schema for
+        - pre_exec_sql (optional, str): SQL to execute before schema retrieval
+        - auth_id (optional, str): Authentication ID for data access
+
+        Returns:
+        Data schema information including table structures and metadata.
+        """
+
+    @track_tool_execution()
+    def run(self, *, data_product_id: str, pre_exec_sql: Optional[str] = None,
+            auth_id: Optional[str] = None):
+        try:
+            ref = self.api.get_data_schema_tool_stream(
+                data_product_id=data_product_id,
+                pre_exec_sql=pre_exec_sql,
+                auth_id=auth_id,
+            )
+            return ref if self.api.enable_streaming else next(ref)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
+
+class GetDataSourcesTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "get_data_sources_tool"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
+        Retrieve available data sources from the catalog.
+
+        This tool lists data sources that are available in the Alation catalog.
+
+        Parameters:
+        - limit (optional, int): Maximum number of data sources to return (default: 100)
+
+        Returns:
+        List of available data sources with their metadata and connection information.
+        """
+
+    @track_tool_execution()
+    def run(self, *, limit: int = 100):
+        try:
+            ref = self.api.get_data_sources_tool_stream(
+                limit=limit,
+            )
+            return ref if self.api.enable_streaming else next(ref)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
+
+class ListDataProductsTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "list_data_products_tool"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
+        List data products based on search criteria.
+
+        This tool searches for data products matching the specified search term.
+
+        Parameters:
+        - search_term (required, str): Search term to filter data products
+        - limit (optional, int): Maximum number of results to return (default: 5)
+        - marketplace_id (optional, str): ID of the marketplace to search in
+
+        Returns:
+        List of data products matching the search criteria.
+        """
+
+    @track_tool_execution()
+    def run(self, *, search_term: str, limit: int = 5, marketplace_id: Optional[str] = None,
+    ):
+        try:
+            ref = self.api.list_data_products_tool_stream(
+                search_term=search_term,
+                limit=limit,
+                marketplace_id=marketplace_id,
+            )
+            return ref if self.api.enable_streaming else next(ref)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
+
+class SearchCatalogTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "search_catalog_tool"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
+        Search the catalog for objects matching specified criteria.
+
+        This tool performs comprehensive searches across the Alation catalog.
+
+        Parameters:
+        - search_term (required, str): Search term to match against catalog objects
+        - object_types (optional, List[str]): List of object types to filter by
+        - filters (optional, Dict[str, Any]): Additional filters to apply to the search
+
+        Returns:
+        Search results matching the specified criteria with object metadata.
+        """
+
+    @track_tool_execution()
+    def run(self, *, search_term: str, object_types: Optional[List[str]] = None,
+            filters: Optional[Dict[str, Any]] = None):
+        try:
+            ref = self.api.search_catalog_tool_stream(
+                search_term=search_term,
+                object_types=object_types,
+                filters=filters,
+            )
+            return ref if self.api.enable_streaming else next(ref)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
+
+class GetSearchFilterFieldsTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "get_search_filter_fields_tool"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
+        Get available search filter fields for catalog search.
+
+        This tool retrieves the available filter fields that can be used in catalog searches.
+
+        Parameters:
+        - search_term (required, str): Search term to match against filter field names
+        - limit (optional, int): Maximum number of filter fields to return (default: 10)
+
+        Returns:
+        List of available search filter fields with their metadata and usage information.
+        """
+
+    @track_tool_execution()
+    def run(self, *, search_term: str, limit: int = 10):
+        try:
+            ref = self.api.get_search_filter_fields_tool_stream(
+                search_term=search_term,
+                limit=limit,
+            )
+            return ref if self.api.enable_streaming else next(ref)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
+
+class GetSearchFilterValuesTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "get_search_filter_values_tool"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
+        Get available values for a specific search filter field.
+
+        This tool retrieves the possible values for a given filter field.
+
+        Parameters:
+        - field_id (required, int): ID of the filter field to get values for
+        - search_term (required, str): Search term to match against filter values
+        - limit (optional, int): Maximum number of filter values to return (default: 10)
+
+        Returns:
+        List of available values for the specified filter field.
+        """
+
+    @track_tool_execution()
+    def run(self, *, field_id: int, search_term: str, limit: int = 10):
+        try:
+            ref = self.api.get_search_filter_values_tool_stream(
+                field_id=field_id,
+                search_term=search_term,
+                limit=limit,
+            )
+            return ref if self.api.enable_streaming else next(ref)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
+
+class CustomAgentTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "custom_agent"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """
+        Execute a custom agent configuration by its UUID.
+
+        This tool allows you to interact with custom agent configurations that have been
+        created in the system. Each agent has its own input schema and specialized capabilities.
+
+        Parameters:
+        - agent_config_id (required, str): The UUID of the agent configuration to use
+        - payload (required, Dict[str, Any]): The payload to send to the agent. Must conform
+          to the agent's specific input JSON schema. Common patterns include:
+          * {"message": "your question"} for most conversational agents
+          * More complex schemas depending on the agent's configuration
+
+        Returns:
+        Agent response based on the specific agent's capabilities and output schema.
+
+        Usage Examples:
+        - custom_agent(agent_config_id="550e8400-e29b-41d4-a716-446655440000",
+                      payload={"message": "Analyze this data"})
+        - custom_agent(agent_config_id="custom-uuid",
+                      payload={"query": "specific request", "context": {...}})
+
+        Note: The payload structure depends on the input schema defined for each specific
+        agent configuration. Consult the agent's documentation for required fields.
+        """
+
+    @track_tool_execution()
+    def run(self, *, agent_config_id: str, payload: Dict[str, Any]):
+        try:
+            ref = self.api.custom_agent_stream(
+                agent_config_id=agent_config_id,
+                payload=payload,
+            )
+            return ref if self.api.enable_streaming else next(ref)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
 
 def csv_str_to_tool_list(tool_env_var: Optional[str] = None) -> List[str]:
     if tool_env_var is None:

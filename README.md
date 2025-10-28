@@ -61,7 +61,7 @@ pip install alation-ai-agent-mcp
 
 ## Usage
 
-The library needs to be configured with your Alation instance credentials. Depending on your authentication mode, you can use either `UserAccountAuthParams` or `ServiceAccountAuthParams`.
+The library needs to be configured with your Alation instance credentials. You should use `ServiceAccountAuthParams`.
 
 
 ### Service Account Authentication (Recommended)

@@ -20,7 +20,7 @@ get_tool_metadata() utility function for consistent metadata retrieval.
 from typing import Any, Dict
 import logging
 
-from alation_ai_agent_sdk import AlationAIAgentSDK, AlationTools, BearerTokenAuthParams
+from alation_ai_agent_sdk import AgentSDKOptions, AlationAIAgentSDK, AlationTools, BearerTokenAuthParams
 from alation_ai_agent_sdk.utils import is_tool_enabled, get_tool_metadata
 from alation_ai_agent_sdk.tools import (
     AlationContextTool,
@@ -35,6 +35,24 @@ from alation_ai_agent_sdk.tools import (
     GetDataDictionaryInstructionsTool,
     SignatureCreationTool,
     AnalyzeCatalogQuestionTool,
+    BiReportSearchTool,
+    BiReportAgentTool,
+    CatalogContextSearchAgentTool,
+    CatalogSearchAgentTool,
+    ChartCreateAgentTool,
+    DataProductQueryAgentTool,
+    DeepResearchAgentTool,
+    QueryFlowAgentTool,
+    SqlQueryAgentTool,
+    SqlExecutionTool,
+    GenerateChartFromSqlAndCodeTool,
+    GetDataSchemaTool,
+    GetDataSourcesTool,
+    ListDataProductsTool,
+    SearchCatalogTool,
+    GetSearchFilterFieldsTool,
+    GetSearchFilterValuesTool,
+    CustomAgentTool,
 )
 from mcp.server.fastmcp import FastMCP
 from fastmcp.server.dependencies import get_access_token
@@ -48,6 +66,7 @@ def register_tools(
     mcp: FastMCP,
     alation_sdk: AlationAIAgentSDK | None = None,
     base_url: str | None = None,
+    enabled_tools: set[str] | None = None,
     disabled_tools: set[str] | None = None,
     enabled_beta_tools: set[str] | None = None,
 ) -> None:
@@ -63,6 +82,7 @@ def register_tools(
     """
 
     # Pre-calculate tool configuration for use in tool registrations
+    config_enabled = enabled_tools or set()
     config_disabled = disabled_tools or set()
     config_enabled_beta = enabled_beta_tools or set()
 
@@ -91,6 +111,7 @@ def register_tools(
                 auth_method="bearer_token",
                 auth_params=auth_params,
                 dist_version=f"mcp-{MCP_SERVER_VERSION}",
+                sdk_options=AgentSDKOptions(enable_streaming=True),
             )
         except ValueError as e:
             logger.error(f"Authentication error in HTTP mode: {e}")
@@ -99,8 +120,32 @@ def register_tools(
             logger.error(f"Failed to create HTTP SDK: {e}")
             raise RuntimeError(f"SDK initialization failed: {e}") from e
 
+    """
+      Previously we could get away with simply exporting everything that wasn't disabled.
+      That is no longer the case as we're clocking in at 28 tools (including agents as tools).
+    """
+    if len(config_enabled) == 0:
+        # TODO: evaluate this set of tools and agents together
+        config_enabled = set([
+            # Tools
+            AlationTools.AGGREGATED_CONTEXT,
+            AlationTools.ANALYZE_CATALOG_QUESTION,
+            AlationTools.BULK_RETRIEVAL,
+            AlationTools.GENERATE_DATA_PRODUCT,
+            AlationTools.GET_CUSTOM_FIELDS_DEFINITIONS,
+            AlationTools.GET_DATA_DICTIONARY_INSTRUCTIONS,
+            AlationTools.GET_DATA_PRODUCT,
+            AlationTools.SIGNATURE_CREATION,
+            # Agents as Tools
+            AlationTools.CUSTOM_AGENT,
+            AlationTools.CATALOG_CONTEXT_SEARCH_AGENT,
+            AlationTools.QUERY_FLOW_AGENT,
+            AlationTools.CHART_CREATE_AGENT,
+            AlationTools.SQL_QUERY_AGENT,
+        ])
+
     if is_tool_enabled(
-        AlationTools.AGGREGATED_CONTEXT, config_disabled, config_enabled_beta
+        AlationTools.AGGREGATED_CONTEXT, config_enabled, config_disabled, config_enabled_beta
     ):
         metadata = get_tool_metadata(AlationContextTool)
 
@@ -111,7 +156,7 @@ def register_tools(
             return result
 
     if is_tool_enabled(
-        AlationTools.BULK_RETRIEVAL, config_disabled, config_enabled_beta
+        AlationTools.BULK_RETRIEVAL, config_enabled, config_disabled, config_enabled_beta
     ):
         metadata = get_tool_metadata(AlationBulkRetrievalTool)
 
@@ -121,7 +166,7 @@ def register_tools(
             result = alation_sdk.get_bulk_objects(signature)
             return result
 
-    if is_tool_enabled(AlationTools.DATA_PRODUCT, config_disabled, config_enabled_beta):
+    if is_tool_enabled(AlationTools.GET_DATA_PRODUCT, config_enabled, config_disabled, config_enabled_beta):
         metadata = get_tool_metadata(AlationGetDataProductTool)
 
         @mcp.tool(name=metadata["name"], description=metadata["description"])
@@ -131,7 +176,7 @@ def register_tools(
             return result
 
     if is_tool_enabled(
-        AlationTools.UPDATE_METADATA, config_disabled, config_enabled_beta
+        AlationTools.UPDATE_METADATA, config_enabled, config_disabled, config_enabled_beta
     ):
         metadata = get_tool_metadata(UpdateCatalogAssetMetadataTool)
 
@@ -142,7 +187,7 @@ def register_tools(
             return result
 
     if is_tool_enabled(
-        AlationTools.CHECK_JOB_STATUS, config_disabled, config_enabled_beta
+        AlationTools.CHECK_JOB_STATUS, config_enabled, config_disabled, config_enabled_beta
     ):
         metadata = get_tool_metadata(CheckJobStatusTool)
 
@@ -152,7 +197,7 @@ def register_tools(
             result = alation_sdk.check_job_status(job_id)
             return result
 
-    if is_tool_enabled(AlationTools.LINEAGE, config_disabled, config_enabled_beta):
+    if is_tool_enabled(AlationTools.LINEAGE, config_enabled, config_disabled, config_enabled_beta):
         from alation_ai_agent_sdk.lineage import (
             LineageRootNode,
             LineageDirectionType,
@@ -201,7 +246,7 @@ def register_tools(
             )
             return result
 
-    if is_tool_enabled(AlationTools.DATA_QUALITY, config_disabled, config_enabled_beta):
+    if is_tool_enabled(AlationTools.DATA_QUALITY, config_enabled, config_disabled, config_enabled_beta):
         metadata = get_tool_metadata(CheckDataQualityTool)
 
         @mcp.tool(name=metadata["name"], description=metadata["description"])
@@ -229,7 +274,7 @@ def register_tools(
             return result
 
     if is_tool_enabled(
-        AlationTools.GENERATE_DATA_PRODUCT, config_disabled, config_enabled_beta
+        AlationTools.GENERATE_DATA_PRODUCT, config_enabled, config_disabled, config_enabled_beta
     ):
         metadata = get_tool_metadata(GenerateDataProductTool)
 
@@ -240,7 +285,7 @@ def register_tools(
             return result
 
     if is_tool_enabled(
-        AlationTools.GET_CUSTOM_FIELDS_DEFINITIONS, config_disabled, config_enabled_beta
+        AlationTools.GET_CUSTOM_FIELDS_DEFINITIONS, config_enabled, config_disabled, config_enabled_beta
     ):
         metadata = get_tool_metadata(GetCustomFieldsDefinitionsTool)
 
@@ -252,6 +297,7 @@ def register_tools(
 
     if is_tool_enabled(
         AlationTools.GET_DATA_DICTIONARY_INSTRUCTIONS,
+        config_enabled,
         config_disabled,
         config_enabled_beta,
     ):
@@ -264,7 +310,7 @@ def register_tools(
             return result
 
     if is_tool_enabled(
-            AlationTools.SIGNATURE_CREATION, config_disabled, config_enabled_beta
+            AlationTools.SIGNATURE_CREATION, config_enabled, config_disabled, config_enabled_beta
     ):
         metadata = get_tool_metadata(SignatureCreationTool)
 
@@ -275,7 +321,7 @@ def register_tools(
             return result
 
     if is_tool_enabled(
-            AlationTools.ANALYZE_CATALOG_QUESTION, config_disabled, config_enabled_beta
+            AlationTools.ANALYZE_CATALOG_QUESTION, config_enabled, config_disabled, config_enabled_beta
     ):
         metadata = get_tool_metadata(AnalyzeCatalogQuestionTool)
 
@@ -283,4 +329,236 @@ def register_tools(
         def analyze_catalog_question(question: str):
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.analyze_catalog_question(question)
+            return result
+
+    # BI Report Tools
+    if is_tool_enabled(
+            AlationTools.BI_REPORT_SEARCH, config_enabled, config_disabled, config_enabled_beta
+    ):
+        metadata = get_tool_metadata(BiReportSearchTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def bi_report_search(search_term: str, limit: int = 20):
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.search_bi_reports(search_term=search_term, limit=limit)
+            return result
+
+    if is_tool_enabled(
+            AlationTools.BI_REPORT_AGENT, config_enabled, config_disabled, config_enabled_beta
+    ):
+        metadata = get_tool_metadata(BiReportAgentTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def bi_report_agent(message: str):
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.bi_report_agent(message=message)
+            return result
+
+    # Catalog Search Tools
+    if is_tool_enabled(
+            AlationTools.CATALOG_CONTEXT_SEARCH_AGENT, config_enabled, config_disabled, config_enabled_beta
+    ):
+        metadata = get_tool_metadata(CatalogContextSearchAgentTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def catalog_context_search_agent(message: str):
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.catalog_context_search_agent(message=message)
+            return result
+
+    if is_tool_enabled(
+            AlationTools.CATALOG_SEARCH_AGENT, config_enabled, config_disabled, config_enabled_beta
+    ):
+        metadata = get_tool_metadata(CatalogSearchAgentTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def catalog_search_agent(message: str):
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.catalog_search_agent(message=message)
+            return result
+
+    if is_tool_enabled(
+            AlationTools.CATALOG_SEARCH, config_enabled, config_disabled, config_enabled_beta
+    ):
+        metadata = get_tool_metadata(SearchCatalogTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def search_catalog_tool(search_term: str, object_types: list | None = None, filters: dict | None = None):
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.search_catalog_tool(search_term=search_term, object_types=object_types, filters=filters)
+            return result
+
+    # Chart and Visualization Tools
+    if is_tool_enabled(
+            AlationTools.CHART_CREATE_AGENT, config_enabled, config_disabled, config_enabled_beta
+    ):
+        metadata = get_tool_metadata(ChartCreateAgentTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def chart_create_agent(message: str):
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.chart_create_agent(message=message)
+            return result
+
+    if is_tool_enabled(
+            AlationTools.GENERATE_CHART_FROM_SQL_AND_CODE, config_enabled, config_disabled, config_enabled_beta
+    ):
+        metadata = get_tool_metadata(GenerateChartFromSqlAndCodeTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def generate_chart_from_sql_and_code_tool(
+            data_product_id: str,
+            sql: str,
+            chart_code_snippet: str,
+            image_title: str,
+            pre_exec_sql: str | None = None,
+            auth_id: str | None = None
+        ):
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.generate_chart_from_sql_and_code_tool(
+                data_product_id=data_product_id,
+                sql=sql,
+                chart_code_snippet=chart_code_snippet,
+                image_title=image_title,
+                pre_exec_sql=pre_exec_sql,
+                auth_id=auth_id
+            )
+            return result
+
+    # Data Product Tools
+    if is_tool_enabled(
+            AlationTools.DATA_PRODUCT_QUERY_AGENT, config_enabled, config_disabled, config_enabled_beta
+    ):
+        metadata = get_tool_metadata(DataProductQueryAgentTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def data_product_query_agent(message: str, data_product_id: str, auth_id: str | None = None):
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.data_product_query_agent(message=message, data_product_id=data_product_id, auth_id=auth_id)
+            return result
+
+    if is_tool_enabled(
+            AlationTools.LIST_DATA_PRODUCTS, config_enabled, config_disabled, config_enabled_beta
+    ):
+        metadata = get_tool_metadata(ListDataProductsTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def list_data_products_tool(search_term: str, limit: int = 5, marketplace_id: str | None = None):
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.list_data_products_tool(search_term=search_term, limit=limit, marketplace_id=marketplace_id)
+            return result
+
+    if is_tool_enabled(
+            AlationTools.GET_DATA_SCHEMA, config_enabled, config_disabled, config_enabled_beta
+    ):
+        metadata = get_tool_metadata(GetDataSchemaTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def get_data_schema_tool(data_product_id: str, pre_exec_sql: str | None = None, auth_id: str | None = None):
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.get_data_schema_tool(data_product_id=data_product_id, pre_exec_sql=pre_exec_sql, auth_id=auth_id)
+            return result
+
+    if is_tool_enabled(
+            AlationTools.GET_DATA_SOURCES, config_enabled, config_disabled, config_enabled_beta
+    ):
+        metadata = get_tool_metadata(GetDataSourcesTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def get_data_sources_tool(limit: int = 100):
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.get_data_sources_tool(limit=limit)
+            return result
+
+    # SQL and Query Tools
+    if is_tool_enabled(
+            AlationTools.SQL_QUERY_AGENT, config_enabled, config_disabled, config_enabled_beta
+    ):
+        metadata = get_tool_metadata(SqlQueryAgentTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def sql_query_agent(message: str):
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.sql_query_agent(message=message)
+            return result
+
+    if is_tool_enabled(
+            AlationTools.SQL_EXECUTION, config_enabled, config_disabled, config_enabled_beta
+    ):
+        metadata = get_tool_metadata(SqlExecutionTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def sql_execution_tool(
+            data_product_id: str,
+            sql: str,
+            result_table_name: str,
+            pre_exec_sql: str | None = None,
+            auth_id: str | None = None
+        ):
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.sql_execution_tool(
+                data_product_id=data_product_id,
+                sql=sql,
+                result_table_name=result_table_name,
+                pre_exec_sql=pre_exec_sql,
+                auth_id=auth_id
+            )
+            return result
+
+    if is_tool_enabled(
+            AlationTools.QUERY_FLOW_AGENT, config_enabled, config_disabled, config_enabled_beta
+    ):
+        metadata = get_tool_metadata(QueryFlowAgentTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def query_flow_agent(message: str):
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.query_flow_agent(message=message)
+            return result
+
+    # Research and Analysis Tools
+    if is_tool_enabled(
+            AlationTools.DEEP_RESEARCH_AGENT, config_enabled, config_disabled, config_enabled_beta
+    ):
+        metadata = get_tool_metadata(DeepResearchAgentTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def deep_research_agent(message: str):
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.deep_research_agent(message=message)
+            return result
+
+    # Search Filter Tools
+    if is_tool_enabled(
+            AlationTools.GET_SEARCH_FILTER_FIELDS, config_enabled, config_disabled, config_enabled_beta
+    ):
+        metadata = get_tool_metadata(GetSearchFilterFieldsTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def get_search_filter_fields_tool(search_term: str, limit: int = 10):
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.get_search_filter_fields_tool(search_term=search_term, limit=limit)
+            return result
+
+    if is_tool_enabled(
+            AlationTools.GET_SEARCH_FILTER_VALUES, config_enabled, config_disabled, config_enabled_beta
+    ):
+        metadata = get_tool_metadata(GetSearchFilterValuesTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def get_search_filter_values_tool(field_id: int, search_term: str, limit: int = 10):
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.get_search_filter_values_tool(field_id=field_id, search_term=search_term, limit=limit)
+            return result
+
+    # Custom Agent Tool
+    if is_tool_enabled(
+            AlationTools.CUSTOM_AGENT, config_enabled, config_disabled, config_enabled_beta
+    ):
+        metadata = get_tool_metadata(CustomAgentTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def custom_agent(agent_config_id: str, payload: dict):
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.custom_agent(agent_config_id=agent_config_id, payload=payload)
             return result

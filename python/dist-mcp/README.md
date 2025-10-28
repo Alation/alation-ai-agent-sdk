@@ -83,11 +83,8 @@ Set up your environment variables based on the transport mode you plan to use:
 export ALATION_BASE_URL="https://your-alation-instance.com"
 
 # Required for STDIO mode only (HTTP mode uses OAuth per-request)
-export ALATION_AUTH_METHOD="user_account"
-export ALATION_USER_ID="12345"
-export ALATION_REFRESH_TOKEN="your-refresh-token"
 
-# Alternatively, for service account authentication (STDIO mode only)
+# Service account authentication (STDIO mode only)
 export ALATION_AUTH_METHOD="service_account"
 export ALATION_CLIENT_ID="your-client-id"
 export ALATION_CLIENT_SECRET="your-client-secret"
@@ -277,9 +274,9 @@ docker run --env-file .env ghcr.io/alation/alation-ai-agent-sdk/alation-mcp-serv
 # With explicit environment variables
 docker run \
   -e ALATION_BASE_URL=https://your-instance.alationcloud.com \
-  -e ALATION_AUTH_METHOD=user_account \
-  -e ALATION_USER_ID=123 \
-  -e ALATION_REFRESH_TOKEN=your_token \
+  -e ALATION_AUTH_METHOD=service_account \
+  -e ALATION_CLIENT_ID=your_client_id \
+  -e ALATION_CLIENT_SECRET=your_client_secret \
   ghcr.io/alation/alation-ai-agent-sdk/alation-mcp-server:latest
 
 # With tool configuration
@@ -318,12 +315,7 @@ ALATION_BASE_URL=https://your-instance.alationcloud.com
 
 **Required for STDIO mode only:**
 ```bash
-# User account authentication
-ALATION_AUTH_METHOD=user_account
-ALATION_USER_ID=12345
-ALATION_REFRESH_TOKEN=your_refresh_token
-
-# OR service account authentication
+# Service account authentication
 ALATION_AUTH_METHOD=service_account
 ALATION_CLIENT_ID=your_client_id
 ALATION_CLIENT_SECRET=your_client_secret

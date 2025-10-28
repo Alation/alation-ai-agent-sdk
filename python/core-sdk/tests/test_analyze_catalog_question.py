@@ -25,11 +25,34 @@ def test_analyze_catalog_question_tool_initialization(
 
 
 def test_analyze_catalog_question_tool_run_success(
-        analyze_catalog_question_tool,
+        analyze_catalog_question_tool, mock_api
 ):
     """Test successful workflow generation."""
     question = "Find sales tables in marketing domain"
+
+    # Mock the expected response
+    mock_response = f"""CATALOG QUESTION ANALYSIS WORKFLOW
+
+Question: {question}
+
+This is a comprehensive workflow for analyzing catalog questions.
+Provides step-by-step guidance on handling complex data catalog queries.
+"""
+
+    # Mock the streaming method to return a generator
+    def mock_generator():
+        yield mock_response
+
+    mock_api.analyze_catalog_question_stream.return_value = mock_generator()
+
+    mock_api.enable_streaming = False
+
     result = analyze_catalog_question_tool.run(question=question)
+
+    # Verify API was called correctly
+    mock_api.analyze_catalog_question_stream.assert_called_once_with(
+        question=question
+    )
 
     # Verify result is a string
     assert isinstance(result, str)

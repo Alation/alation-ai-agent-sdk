@@ -6,7 +6,6 @@ from alation_ai_agent_mcp import server
 from alation_ai_agent_mcp.utils import MCP_SERVER_VERSION
 from alation_ai_agent_sdk import (
     AlationTools,
-    UserAccountAuthParams,
     ServiceAccountAuthParams,
 )
 
@@ -51,15 +50,13 @@ def manage_environment_variables(monkeypatch):
     original_vars = {
         "ALATION_BASE_URL": os.environ.get("ALATION_BASE_URL"),
         "ALATION_AUTH_METHOD": os.environ.get("ALATION_AUTH_METHOD"),
-        "ALATION_USER_ID": os.environ.get("ALATION_USER_ID"),
-        "ALATION_REFRESH_TOKEN": os.environ.get("ALATION_REFRESH_TOKEN"),
         "ALATION_CLIENT_ID": os.environ.get("ALATION_CLIENT_ID"),
         "ALATION_CLIENT_SECRET": os.environ.get("ALATION_CLIENT_SECRET"),
     }
     monkeypatch.setenv("ALATION_BASE_URL", "https://mock-alation.com")
-    monkeypatch.setenv("ALATION_AUTH_METHOD", "user_account")
-    monkeypatch.setenv("ALATION_USER_ID", "12345")
-    monkeypatch.setenv("ALATION_REFRESH_TOKEN", "mock-token")
+    monkeypatch.setenv("ALATION_AUTH_METHOD", "service_account")
+    monkeypatch.setenv("ALATION_CLIENT_ID", "mock-client-id")
+    monkeypatch.setenv("ALATION_CLIENT_SECRET", "mock-client-secret")
     yield
     for key, value in original_vars.items():
         if value is None:
@@ -132,17 +129,6 @@ def test_create_server_missing_env_var(manage_environment_variables, monkeypatch
         server.create_server("stdio")
 
 
-def test_create_server_invalid_user_id_env_var(
-    manage_environment_variables, monkeypatch
-):
-    """
-    Test that create_server raises ValueError if ALATION_USER_ID is not an integer.
-    """
-    monkeypatch.setenv("ALATION_USER_ID", "not-an-int")
-    with pytest.raises(ValueError):
-        server.create_server("stdio")
-
-
 def test_create_server_success(
     manage_environment_variables, mock_alation_sdk, mock_fastmcp
 ):
@@ -157,8 +143,8 @@ def test_create_server_success(
     mock_mcp_class.assert_called_once_with(name="Alation MCP Server")
     mock_sdk_class.assert_called_once_with(
         "https://mock-alation.com",
-        "user_account",
-        UserAccountAuthParams(12345, "mock-token"),
+        "service_account",
+        ServiceAccountAuthParams("mock-client-id", "mock-client-secret"),
         dist_version=f"mcp-{MCP_SERVER_VERSION}",
     )
     assert mcp_result is mock_mcp_instance
@@ -180,7 +166,7 @@ def test_create_server_disabled_tool_and_enabled_beta_tool(
     mock_mcp_class.assert_called_once_with(name="Alation MCP Server")
     assert mcp_result is mock_mcp_instance
 
-    assert mock_mcp_instance.tool.call_count == 11
+    assert mock_mcp_instance.tool.call_count == 13
 
     # NOTE: each distribution may refer to the tools differently. These should be standardized so we can
     # reuse a set of constants across all projects.
@@ -188,8 +174,6 @@ def test_create_server_disabled_tool_and_enabled_beta_tool(
 
     assert "bulk_retrieval" in mock_mcp_instance.tools
     assert "get_data_products" in mock_mcp_instance.tools
-    assert "update_catalog_asset_metadata" in mock_mcp_instance.tools
-    assert "check_job_status" in mock_mcp_instance.tools
     assert "get_lineage" in mock_mcp_instance.tools
     assert "generate_data_product" in mock_mcp_instance.tools
     assert "analyze_catalog_question" in mock_mcp_instance.tools
@@ -211,7 +195,7 @@ def test_create_server_disabled_tool_and_enabled_beta_tool_via_environment(
     mock_mcp_class.assert_called_once_with(name="Alation MCP Server")
     assert mcp_result is mock_mcp_instance
 
-    assert mock_mcp_instance.tool.call_count == 11
+    assert mock_mcp_instance.tool.call_count == 13
 
     # NOTE: each distribution may refer to the tools differently. These should be standardized so we can
     # reuse a set of constants across all projects.
@@ -219,8 +203,6 @@ def test_create_server_disabled_tool_and_enabled_beta_tool_via_environment(
 
     assert "bulk_retrieval" in mock_mcp_instance.tools
     assert "get_data_products" in mock_mcp_instance.tools
-    assert "update_catalog_asset_metadata" in mock_mcp_instance.tools
-    assert "check_job_status" in mock_mcp_instance.tools
     assert "get_lineage" in mock_mcp_instance.tools
     assert "generate_data_product" in mock_mcp_instance.tools
     assert "analyze_catalog_question" in mock_mcp_instance.tools
@@ -334,13 +316,13 @@ def test_create_server_service_account(
 @patch("alation_ai_agent_mcp.server.create_server")
 def test_run_server_cli_no_arguments(mock_create_server):
     with patch("alation_ai_agent_mcp.server.parse_arguments") as mock_parse_args:
-        mock_parse_args.return_value = ("stdio", None, None, None, None, None, None)
+        mock_parse_args.return_value = ("stdio", None, None, None, None, None, None, None)
 
         server.run_server()
 
         mock_create_server.assert_called_once()
         mock_create_server.assert_called_with(
-            "stdio", None, None, None, None, None, None
+            "stdio", None, None, None, None, None, None, None
         )
 
 
@@ -349,6 +331,7 @@ def test_run_server_cli_with_arguments(mock_create_server):
     with patch("alation_ai_agent_mcp.server.parse_arguments") as mock_parse_args:
         mock_parse_args.return_value = (
             "stdio",
+            None,
             None,
             "tool1,tool2",
             "tool3",
@@ -361,5 +344,5 @@ def test_run_server_cli_with_arguments(mock_create_server):
 
         mock_create_server.assert_called_once()
         mock_create_server.assert_called_with(
-            "stdio", None, "tool1,tool2", "tool3", None, None, None
+            "stdio", None, None, "tool1,tool2", "tool3", None, None, None
         )

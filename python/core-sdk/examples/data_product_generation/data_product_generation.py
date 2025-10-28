@@ -19,8 +19,6 @@ Usage:
 
 Environment variables:
     ALATION_BASE_URL: URL of your Alation instance
-    ALATION_USER_ID: Your Alation user ID (for user_account auth)
-    ALATION_REFRESH_TOKEN: Your Alation refresh token (for user_account auth)
     ALATION_CLIENT_ID: Your Alation client ID (for service_account auth)
     ALATION_CLIENT_SECRET: Your Alation client secret (for service_account auth)
     OPENAI_API_KEY: Your OpenAI API key
@@ -33,7 +31,6 @@ from typing import Dict, Any, List
 import openai
 from alation_ai_agent_sdk import (
     AlationAIAgentSDK,
-    UserAccountAuthParams,
     ServiceAccountAuthParams,
 )
 from alation_ai_agent_sdk.api import AlationAPIError
@@ -253,27 +250,7 @@ def initialize_sdk(auth_method: str) -> AlationAIAgentSDK:
     if not base_url:
         raise ValueError("ALATION_BASE_URL environment variable is required")
 
-    if auth_method == "user_account":
-        user_id_str = os.getenv("ALATION_USER_ID")
-        refresh_token = os.getenv("ALATION_REFRESH_TOKEN")
-
-        if not all([user_id_str, refresh_token]):
-            raise ValueError(
-                "ALATION_USER_ID and ALATION_REFRESH_TOKEN required for user_account auth"
-            )
-
-        try:
-            user_id = int(user_id_str)
-        except ValueError:
-            raise ValueError("ALATION_USER_ID must be an integer")
-
-        return AlationAIAgentSDK(
-            base_url=base_url,
-            auth_method=auth_method,
-            auth_params=UserAccountAuthParams(user_id, refresh_token),
-        )
-
-    elif auth_method == "service_account":
+    if auth_method == "service_account":
         client_id = os.getenv("ALATION_CLIENT_ID")
         client_secret = os.getenv("ALATION_CLIENT_SECRET")
 
@@ -308,8 +285,8 @@ def main():
     )
     parser.add_argument(
         "--auth_method",
-        default="user_account",
-        choices=["user_account", "service_account"],
+        default="service_account",
+        choices=["service_account"],
         help="Authentication method",
     )
 

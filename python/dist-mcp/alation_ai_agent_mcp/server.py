@@ -87,6 +87,7 @@ def create_fastmcp_server(
 def create_server(
     transport: str,
     base_url: Optional[str] = None,
+    enabled_tools_str: Optional[str] = None,
     disabled_tools_str: Optional[str] = None,
     enabled_beta_tools_str: Optional[str] = None,
     host: str = "localhost",
@@ -109,8 +110,8 @@ def create_server(
         Configured FastMCP server instance
     """
     # Prepare common configuration
-    base_url, tools_disabled, beta_tools_enabled = prepare_server_config(
-        base_url, disabled_tools_str, enabled_beta_tools_str
+    base_url, tools_enabled, tools_disabled, beta_tools_enabled = prepare_server_config(
+        base_url, enabled_tools_str, disabled_tools_str, enabled_beta_tools_str
     )
 
     # Create FastMCP server based on transport mode
@@ -135,6 +136,7 @@ def create_server(
         register_tools(
             mcp,
             alation_sdk=alation_sdk,
+            enabled_tools=set(tools_enabled),
             disabled_tools=set(tools_disabled),
             enabled_beta_tools=set(beta_tools_enabled),
         )
@@ -146,6 +148,7 @@ def create_server(
         register_tools(
             mcp,
             base_url=base_url,
+            enabled_tools=set(tools_enabled),
             disabled_tools=set(tools_disabled),
             enabled_beta_tools=set(beta_tools_enabled),
         )
@@ -163,6 +166,7 @@ def run_server() -> None:
     (
         transport,
         base_url,
+        enabled_tools_str,
         disabled_tools_str,
         enabled_beta_tools_str,
         host,
@@ -173,6 +177,7 @@ def run_server() -> None:
     mcp = create_server(
         transport,
         base_url,
+        enabled_tools_str,
         disabled_tools_str,
         enabled_beta_tools_str,
         host,

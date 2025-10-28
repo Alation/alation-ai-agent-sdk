@@ -61,20 +61,12 @@ The MCP server requires the following environment variables:
 
 ### For STDIO Mode (Traditional MCP Clients)
 
-#### Recommended: Service Account Authentication
+#### Service Account Authentication
 ```bash
 export ALATION_BASE_URL="https://your-alation-instance.com"
 export ALATION_AUTH_METHOD="service_account"
 export ALATION_CLIENT_ID="your-client-id"
 export ALATION_CLIENT_SECRET="your-client-secret"
-```
-
-#### Alternative: User Account Authentication
-```bash
-export ALATION_BASE_URL="https://your-alation-instance.com"
-export ALATION_AUTH_METHOD="user_account"
-export ALATION_USER_ID="12345"
-export ALATION_REFRESH_TOKEN="your-refresh-token"
 ```
 
 ### For HTTP Mode (Web API)
