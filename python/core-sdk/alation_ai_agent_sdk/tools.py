@@ -661,7 +661,7 @@ class GetCustomFieldsDefinitionsTool:
         - Use the 'allowed_otypes' field to understand which object types each field supports
         - Field types include: TEXT, RICH_TEXT, PICKER, MULTI_PICKER, OBJECT_SET, DATE, etc.
         - If users asks for updating custom fields, please do the below step by step
-            1. Pleast format the objects to show the changes in a csv format with object id, name and changed custom field value. 
+            1. Please format the objects to show the changes in a csv format with object id, name and changed custom field value.
             2. Once you showed the csv file, say the user can call generate_data_dictionary_instructions tool to create a data dictionary which could be uploaded to alation UI for bulk updates.
 
         Parameters:
@@ -920,8 +920,20 @@ class BiReportSearchTool:
         """
 
     @track_tool_execution()
-    def run(self, *, search_term: str, limit: int = 20, filters: Optional[List[Filter]] = None, chat_id: Optional[str] = None):
-        kwargs = {"search_term": search_term, "limit": limit, "filters": filters, "chat_id": chat_id}
+    def run(
+        self,
+        *,
+        search_term: str,
+        limit: int = 20,
+        filters: Optional[List[Filter]] = None,
+        chat_id: Optional[str] = None,
+    ):
+        kwargs = {
+            "search_term": search_term,
+            "limit": limit,
+            "filters": filters,
+            "chat_id": chat_id,
+        }
         try:
             ref = self.api.search_bi_reports_stream(**kwargs)
             return ref if self.api.enable_streaming else next(ref)
@@ -1064,6 +1076,7 @@ class ChartCreateAgentTool:
 
         Parameters:
         - message (required, str): Description of the chart or visualization you want to create
+        - data_product_id (required, str): The ID of the data product to work with
         - chat_id (optional, str): Chat session identifier
 
         Returns:
@@ -1071,10 +1084,11 @@ class ChartCreateAgentTool:
         """
 
     @track_tool_execution()
-    def run(self, *, message: str, chat_id: Optional[str] = None):
+    def run(self, *, message: str, data_product_id: str, chat_id: Optional[str] = None):
         try:
             ref = self.api.chart_create_agent_stream(
                 message=message,
+                data_product_id=data_product_id,
                 chat_id=chat_id,
             )
             return ref if self.api.enable_streaming else next(ref)
@@ -1151,6 +1165,7 @@ class DeepResearchAgentTool:
 
         Parameters:
         - message (required, str): Research question or topic you want to investigate
+        - pre_exec_sql (optional, str): SQL to execute before the main query (e.g., for setting session parameters)
         - chat_id (optional, str): Chat session identifier
 
         Returns:
@@ -1158,10 +1173,11 @@ class DeepResearchAgentTool:
         """
 
     @track_tool_execution()
-    def run(self, *, message: str, chat_id: Optional[str] = None):
+    def run(self, *, message: str, pre_exec_sql: Optional[str] = None, chat_id: Optional[str] = None):
         try:
             ref = self.api.deep_research_agent_stream(
                 message=message,
+                pre_exec_sql=pre_exec_sql,
                 chat_id=chat_id,
             )
             return ref if self.api.enable_streaming else next(ref)
@@ -1189,6 +1205,7 @@ class QueryFlowAgentTool:
 
         Parameters:
         - message (required, str): Description of your query workflow needs
+        - marketplace_id (required, str): The ID of the marketplace to work with
         - chat_id (optional, str): Chat session identifier
 
         Returns:
@@ -1196,10 +1213,11 @@ class QueryFlowAgentTool:
         """
 
     @track_tool_execution()
-    def run(self, *, message: str, chat_id: Optional[str] = None):
+    def run(self, *, message: str, marketplace_id: str, chat_id: Optional[str] = None):
         try:
             ref = self.api.query_flow_agent_stream(
                 message=message,
+                marketplace_id=marketplace_id,
                 chat_id=chat_id,
             )
             return ref if self.api.enable_streaming else next(ref)
@@ -1227,6 +1245,7 @@ class SqlQueryAgentTool:
 
         Parameters:
         - message (required, str): Description of the data you need or SQL task
+        - data_product_id (required, str): The ID of the data product to work with
         - chat_id (optional, str): Chat session identifier
 
         Returns:
@@ -1234,10 +1253,11 @@ class SqlQueryAgentTool:
         """
 
     @track_tool_execution()
-    def run(self, *, message: str, chat_id: Optional[str] = None):
+    def run(self, *, message: str, data_product_id: str, chat_id: Optional[str] = None):
         try:
             ref = self.api.sql_query_agent_stream(
                 message=message,
+                data_product_id=data_product_id,
                 chat_id=chat_id,
             )
             return ref if self.api.enable_streaming else next(ref)

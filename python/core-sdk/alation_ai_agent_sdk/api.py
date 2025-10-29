@@ -1430,6 +1430,7 @@ class AlationAPI:
     def chart_create_agent_stream(
         self,
         message: str,
+        data_product_id: str,
         chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any], None, None]:
         """
@@ -1441,7 +1442,7 @@ class AlationAPI:
         yield from self._safe_sse_post_request(
             tool_name="chart_create_agent",
             url=url,
-            payload={"message": message},
+            payload={"message": message, "data_product_id": data_product_id},
             timeouts=None,
         )
 
@@ -1490,6 +1491,7 @@ class AlationAPI:
     def query_flow_agent_stream(
         self,
         message: str,
+        marketplace_id: str,
         chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any], None, None]:
         """
@@ -1501,13 +1503,14 @@ class AlationAPI:
         yield from self._safe_sse_post_request(
             tool_name="query_flow_agent",
             url=url,
-            payload={"message": message},
+            payload={"message": message, "marketplace_id": marketplace_id},
             timeouts=None,
         )
 
     def sql_query_agent_stream(
         self,
         message: str,
+        data_product_id: str,
         chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any], None, None]:
         """
@@ -1519,7 +1522,7 @@ class AlationAPI:
         yield from self._safe_sse_post_request(
             tool_name="sql_query_agent",
             url=url,
-            payload={"message": message},
+            payload={"message": message, "data_product_id": data_product_id},
             timeouts=None,
         )
 

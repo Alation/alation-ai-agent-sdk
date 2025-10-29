@@ -391,7 +391,10 @@ def register_tools(
 
         @mcp.tool(name=metadata["name"], description=metadata["description"])
         def bi_report_search(
-            search_term: str, limit: int = 20, filters: list[Filter] | None = None, chat_id: Optional[str] = None
+            search_term: str,
+            limit: int = 20,
+            filters: list[Filter] | None = None,
+            chat_id: Optional[str] = None,
         ):
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.search_bi_reports(
@@ -478,9 +481,13 @@ def register_tools(
         metadata = get_tool_metadata(ChartCreateAgentTool)
 
         @mcp.tool(name=metadata["name"], description=metadata["description"])
-        def chart_create_agent(message: str, chat_id: Optional[str] = None):
+        def chart_create_agent(
+            message: str, data_product_id: str, chat_id: Optional[str] = None
+        ):
             alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.chart_create_agent(message=message, chat_id=chat_id)
+            result = alation_sdk.chart_create_agent(
+                message=message, data_product_id=data_product_id, chat_id=chat_id
+            )
             return result
 
     if is_tool_enabled(
@@ -610,9 +617,13 @@ def register_tools(
         metadata = get_tool_metadata(SqlQueryAgentTool)
 
         @mcp.tool(name=metadata["name"], description=metadata["description"])
-        def sql_query_agent(message: str, chat_id: Optional[str] = None):
+        def sql_query_agent(
+            message: str, data_product_id: str, chat_id: Optional[str] = None
+        ):
             alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.sql_query_agent(message=message, chat_id=chat_id)
+            result = alation_sdk.sql_query_agent(
+                message=message, data_product_id=data_product_id, chat_id=chat_id
+            )
             return result
 
     if is_tool_enabled(
@@ -649,9 +660,13 @@ def register_tools(
         metadata = get_tool_metadata(QueryFlowAgentTool)
 
         @mcp.tool(name=metadata["name"], description=metadata["description"])
-        def query_flow_agent(message: str, chat_id: Optional[str] = None):
+        def query_flow_agent(
+            message: str, marketplace_id: str, chat_id: Optional[str] = None
+        ):
             alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.query_flow_agent(message=message, chat_id=chat_id)
+            result = alation_sdk.query_flow_agent(
+                message=message, marketplace_id=marketplace_id, chat_id=chat_id
+            )
             return result
 
     # Research and Analysis Tools
@@ -664,9 +679,9 @@ def register_tools(
         metadata = get_tool_metadata(DeepResearchAgentTool)
 
         @mcp.tool(name=metadata["name"], description=metadata["description"])
-        def deep_research_agent(message: str, chat_id: Optional[str] = None):
+        def deep_research_agent(message: str, pre_exec_sql: Optional[str] = None, chat_id: Optional[str] = None):
             alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.deep_research_agent(message=message, chat_id=chat_id)
+            result = alation_sdk.deep_research_agent(message=message, pre_exec_sql=pre_exec_sql, chat_id=chat_id)
             return result
 
     # Search Filter Tools

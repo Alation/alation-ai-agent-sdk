@@ -282,7 +282,12 @@ def get_analyze_catalog_question_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
 def get_bi_report_search_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     bi_report_search_tool = sdk.bi_report_search_tool
 
-    def run_with_args(search_term: str, limit: int = 20, filters: Optional[list[Filter]] = None, chat_id: Optional[str] = None):
+    def run_with_args(
+        search_term: str,
+        limit: int = 20,
+        filters: Optional[list[Filter]] = None,
+        chat_id: Optional[str] = None,
+    ):
         return bi_report_search_tool.run(
             search_term=search_term, limit=limit, filters=filters, chat_id=chat_id
         )
@@ -340,8 +345,12 @@ def get_catalog_search_agent_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
 def get_chart_create_agent_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     chart_create_agent_tool = sdk.chart_create_agent_tool
 
-    def run_with_message(message: str, chat_id: Optional[str] = None):
-        return chart_create_agent_tool.run(message=message, chat_id=chat_id)
+    def run_with_message(
+        message: str, data_product_id: str, chat_id: Optional[str] = None
+    ):
+        return chart_create_agent_tool.run(
+            message=message, data_product_id=data_product_id, chat_id=chat_id
+        )
 
     return StructuredTool.from_function(
         name=chart_create_agent_tool.name,
@@ -396,8 +405,8 @@ def get_data_product_query_agent_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
 def get_deep_research_agent_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     deep_research_agent_tool = sdk.deep_research_agent_tool
 
-    def run_with_message(message: str, chat_id: Optional[str] = None):
-        return deep_research_agent_tool.run(message=message, chat_id=chat_id)
+    def run_with_message(message: str, pre_exec_sql: Optional[str] = None, chat_id: Optional[str] = None):
+        return deep_research_agent_tool.run(message=message, pre_exec_sql=pre_exec_sql, chat_id=chat_id)
 
     return StructuredTool.from_function(
         name=deep_research_agent_tool.name,
@@ -602,8 +611,12 @@ def get_sql_execution_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
 def get_sql_query_agent_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     sql_query_agent_tool = sdk.sql_query_agent_tool
 
-    def run_with_message(message: str, chat_id: Optional[str] = None):
-        return sql_query_agent_tool.run(message=message, chat_id=chat_id)
+    def run_with_message(
+        message: str, data_product_id: str, chat_id: Optional[str] = None
+    ):
+        return sql_query_agent_tool.run(
+            message=message, data_product_id=data_product_id, chat_id=chat_id
+        )
 
     return StructuredTool.from_function(
         name=sql_query_agent_tool.name,

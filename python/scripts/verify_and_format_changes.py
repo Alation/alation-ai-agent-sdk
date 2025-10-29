@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import re
 import subprocess
 import sys
 
@@ -132,7 +133,17 @@ def group_changes_by_project(is_relative: bool = False, grep_filter: str | None 
 
 
 def split_semantic_version(semantic_version_str: str) -> list[int]:
-    return list(map(int, semantic_version_str.split(".")))
+    semantic_version_str_pieces = semantic_version_str.split(".")
+    last_piece = semantic_version_str_pieces[-1]
+    try:
+        int(last_piece)
+    except ValueError:
+        # filter it down to just the numeric portion
+        # WARN: We may be falsely reporting the need to bump. Double check.
+        last_piece_number_str = re.sub("[^0-9]", "", last_piece)
+        semantic_version_str_pieces[-1] = last_piece_number_str
+
+    return list(map(int, semantic_version_str_pieces))
 
 
 def get_versions_from_diff_result(
@@ -271,8 +282,9 @@ def process_pyprojects_for_dependency_mismatch(
         )
         if len(packages_needing_update) != 0:
             print(
-                f"\nFAIL: Please update these dependencies and test the following changes: {pyproject_file}\n{'\n'.join(packages_needing_update)}"
+                f"\nFAIL: Please update these dependencies and test the following changes: {pyproject_file}"
             )
+            print("\n".join(packages_needing_update))
             is_fatal = True
     return is_fatal
 
@@ -351,10 +363,12 @@ def process_requirements_files_for_project(
             changed_projects_and_project_versions=changed_projects_and_project_versions,
             requirement_file=requirement_file,
         )
+
         if len(packages_needing_update) != 0:
             print(
-                f"\nFAIL: Please update and test the following changes: {requirement_file}\n{'\n'.join(packages_needing_update)}"
+                f"\nFAIL: Please update and test the following changes: {requirement_file}"
             )
+            print("\n".join(packages_needing_update))
             is_fatal = True
     return is_fatal
 

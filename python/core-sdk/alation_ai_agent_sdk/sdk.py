@@ -58,6 +58,7 @@ from .lineage import (
     LineageBatchSizeType,
 )
 
+
 class AlationTools:
     # Tools
     AGGREGATED_CONTEXT = "aggregated_context"
@@ -504,17 +505,20 @@ class AlationAIAgentSDK:
         """
         return self.catalog_search_agent_tool.run(message=message)
 
-    def chart_create_agent(self, message: str) -> Dict[str, Any]:
+    def chart_create_agent(self, message: str, data_product_id: str) -> Dict[str, Any]:
         """
         Chart Create Agent for creating charts and visualizations.
 
         Args:
             message (str): Description of the chart or visualization you want to create
+            data_product_id (str): The ID of the data product to work with
 
         Returns:
             Dict[str, Any]: Chart creation guidance, code, or visualization assets
         """
-        return self.chart_create_agent_tool.run(message=message)
+        return self.chart_create_agent_tool.run(
+            message=message, data_product_id=data_product_id
+        )
 
     def data_product_query_agent(
         self, message: str, data_product_id: str, auth_id: Optional[str] = None
@@ -534,7 +538,7 @@ class AlationAIAgentSDK:
             message=message, data_product_id=data_product_id, auth_id=auth_id
         )
 
-    def deep_research_agent(self, message: str) -> Dict[str, Any]:
+    def deep_research_agent(self, message: str, pre_exec_sql: Optional[str] = None) -> Dict[str, Any]:
         """
         Deep Research Agent for comprehensive research tasks.
 
@@ -544,31 +548,37 @@ class AlationAIAgentSDK:
         Returns:
             Dict[str, Any]: Comprehensive research results with detailed analysis and insights
         """
-        return self.deep_research_agent_tool.run(message=message)
+        return self.deep_research_agent_tool.run(message=message, pre_exec_sql=pre_exec_sql)
 
-    def query_flow_agent(self, message: str) -> Dict[str, Any]:
+    def query_flow_agent(self, message: str, marketplace_id: str) -> Dict[str, Any]:
         """
         Query Flow Agent for SQL query workflow management.
 
         Args:
             message (str): Description of your query workflow needs
+            marketplace_id (str): The ID of the marketplace to work with
 
         Returns:
             Dict[str, Any]: Query workflow guidance, optimization suggestions, and execution plans
         """
-        return self.query_flow_agent_tool.run(message=message)
+        return self.query_flow_agent_tool.run(
+            message=message, marketplace_id=marketplace_id
+        )
 
-    def sql_query_agent(self, message: str) -> Dict[str, Any]:
+    def sql_query_agent(self, message: str, data_product_id: str) -> Dict[str, Any]:
         """
         SQL Query Agent for SQL query generation and analysis.
 
         Args:
             message (str): Description of the data you need or SQL task
+            data_product_id (str): The ID of the data product to work with
 
         Returns:
             Dict[str, Any]: SQL queries, query analysis, optimization suggestions, and execution guidance
         """
-        return self.sql_query_agent_tool.run(message=message)
+        return self.sql_query_agent_tool.run(
+            message=message, data_product_id=data_product_id
+        )
 
     def execute_sql(
         self,
