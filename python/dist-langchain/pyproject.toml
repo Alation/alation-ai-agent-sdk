@@ -5,7 +5,8 @@ description = "Alation Agent SDK for Langchain"
 dependencies = [
   "alation-ai-agent-sdk>=1.0.0rc1",
   "requests~=2.32.0",
-  "langchain>=0.1.0",
+  "langchain>=1.0.3",
+  "langchain-core>=1.0.2",
 ]
 authors = [
   { name="Jagannath (Jags) Saragadam", email="jags.saragadam@alation.com"},

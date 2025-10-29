@@ -12,7 +12,7 @@ from alation_ai_agent_sdk.lineage import (
     LineageRootNode,
     LineageTimestampType,
 )
-from langchain.tools import StructuredTool
+from langchain_core.tools import StructuredTool
 
 
 def get_alation_context_tool(sdk: AlationAIAgentSDK) -> StructuredTool:

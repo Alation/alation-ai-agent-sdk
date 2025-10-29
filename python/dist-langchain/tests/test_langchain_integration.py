@@ -1,9 +1,9 @@
+import pytest
+
 from alation_ai_agent_sdk.sdk import AlationTools
 from alation_ai_agent_sdk.utils import is_tool_enabled
-import pytest
 from unittest.mock import Mock, MagicMock
-
-from langchain.tools import StructuredTool
+from langchain_core.tools import StructuredTool
 from alation_ai_agent_langchain import get_langchain_tools
 from alation_ai_agent_sdk import (
     AgentSDKOptions,
