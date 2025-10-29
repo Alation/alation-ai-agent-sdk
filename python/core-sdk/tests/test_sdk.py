@@ -172,6 +172,7 @@ def mock_requests_get(monkeypatch):
 
 # --- SDK Initialization Tests ---
 
+
 def test_sdk_valid_initialization_service_account(
     mock_requests_post, mock_requests_get
 ):

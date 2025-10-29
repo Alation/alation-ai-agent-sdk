@@ -5,7 +5,11 @@ from unittest.mock import Mock, MagicMock
 
 from langchain.tools import StructuredTool
 from alation_ai_agent_langchain import get_langchain_tools
-from alation_ai_agent_sdk import AgentSDKOptions, AlationAIAgentSDK, ServiceAccountAuthParams
+from alation_ai_agent_sdk import (
+    AgentSDKOptions,
+    AlationAIAgentSDK,
+    ServiceAccountAuthParams,
+)
 
 
 def get_sdk_mock():
@@ -100,11 +104,15 @@ def get_sdk_mock():
 
     mock_sdk.signature_creation_tool = MagicMock()
     mock_sdk.signature_creation_tool.name = "get_signature_creation_instructions"
-    mock_sdk.signature_creation_tool.description = "Gets signature creation instructions"
+    mock_sdk.signature_creation_tool.description = (
+        "Gets signature creation instructions"
+    )
 
     mock_sdk.analyze_catalog_question_tool = MagicMock()
     mock_sdk.analyze_catalog_question_tool.name = "analyze_catalog_question"
-    mock_sdk.analyze_catalog_question_tool.description = "Analyze catalog question and orchestrate"
+    mock_sdk.analyze_catalog_question_tool.description = (
+        "Analyze catalog question and orchestrate"
+    )
 
     # Add all the missing tools that are now required by the toolkit
     mock_sdk.bi_report_search_tool = MagicMock()
@@ -117,7 +125,9 @@ def get_sdk_mock():
 
     mock_sdk.catalog_context_search_agent_tool = MagicMock()
     mock_sdk.catalog_context_search_agent_tool.name = "catalog_context_search_agent"
-    mock_sdk.catalog_context_search_agent_tool.description = "Catalog Context Search Agent"
+    mock_sdk.catalog_context_search_agent_tool.description = (
+        "Catalog Context Search Agent"
+    )
 
     mock_sdk.catalog_search_agent_tool = MagicMock()
     mock_sdk.catalog_search_agent_tool.name = "catalog_search_agent"
@@ -140,8 +150,12 @@ def get_sdk_mock():
     mock_sdk.deep_research_agent_tool.description = "Deep Research Agent"
 
     mock_sdk.generate_chart_from_sql_and_code_tool = MagicMock()
-    mock_sdk.generate_chart_from_sql_and_code_tool.name = "generate_chart_from_sql_and_code"
-    mock_sdk.generate_chart_from_sql_and_code_tool.description = "Generate Chart from SQL and Code"
+    mock_sdk.generate_chart_from_sql_and_code_tool.name = (
+        "generate_chart_from_sql_and_code"
+    )
+    mock_sdk.generate_chart_from_sql_and_code_tool.description = (
+        "Generate Chart from SQL and Code"
+    )
 
     mock_sdk.get_data_schema_tool = MagicMock()
     mock_sdk.get_data_schema_tool.name = "get_data_schema"
@@ -239,11 +253,13 @@ def test_get_langchain_tools_skips_beta_tools_by_default():
     assert len(sdk.enabled_beta_tools) == 0
     assert (
         is_tool_enabled(
-            AlationTools.LINEAGE, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
+            AlationTools.LINEAGE,
+            sdk.enabled_tools,
+            sdk.disabled_tools,
+            sdk.enabled_beta_tools,
         )
         is False
     )
-
 
     tools_list = get_langchain_tools(sdk)
     assert all(t.name != AlationTools.LINEAGE for t in tools_list), (
@@ -260,12 +276,17 @@ def test_get_langchain_tools_skips_disabled_tools():
             client_secret="mock-client-secret",
         ),
         disabled_tools=set([AlationTools.AGGREGATED_CONTEXT]),
-        sdk_options=AgentSDKOptions(skip_instance_info=True),  # No need to fetch for this test
+        sdk_options=AgentSDKOptions(
+            skip_instance_info=True
+        ),  # No need to fetch for this test
     )
     assert len(sdk.disabled_tools) == 1
     assert (
         is_tool_enabled(
-            AlationTools.AGGREGATED_CONTEXT, sdk.enabled_tools, sdk.disabled_tools, sdk.enabled_beta_tools
+            AlationTools.AGGREGATED_CONTEXT,
+            sdk.enabled_tools,
+            sdk.disabled_tools,
+            sdk.enabled_beta_tools,
         )
         is False
     )
@@ -399,8 +420,10 @@ def test_all_tools_are_properly_wrapped(mock_sdk_with_context_tool):
 
     # Verify all tools are StructuredTool instances
     for tool in tools_list:
-        assert isinstance(tool, StructuredTool), f"Tool {tool.name} should be a StructuredTool"
-        assert tool.name, f"Tool should have a name"
+        assert isinstance(tool, StructuredTool), (
+            f"Tool {tool.name} should be a StructuredTool"
+        )
+        assert tool.name, "Tool should have a name"
         assert tool.description, f"Tool {tool.name} should have a description"
         assert callable(tool.func), f"Tool {tool.name} should have a callable func"
 
@@ -410,7 +433,9 @@ def test_bi_report_agent_tool_wrapper():
     Test that the BI Report Agent tool wrapper works correctly.
     """
     mock_sdk = get_sdk_mock()
-    mock_sdk.bi_report_agent_tool.run.return_value = {"result": "test bi report agent response"}
+    mock_sdk.bi_report_agent_tool.run.return_value = {
+        "result": "test bi report agent response"
+    }
 
     tools_list = get_langchain_tools(mock_sdk)
     bi_tool = next((t for t in tools_list if t.name == "bi_report_agent"), None)
@@ -421,7 +446,9 @@ def test_bi_report_agent_tool_wrapper():
 
     # Test the tool function
     result = bi_tool.func(message="test message")
-    mock_sdk.bi_report_agent_tool.run.assert_called_once_with(message="test message", chat_id=None)
+    mock_sdk.bi_report_agent_tool.run.assert_called_once_with(
+        message="test message", chat_id=None
+    )
     assert result == {"result": "test bi report agent response"}
 
 
@@ -430,18 +457,26 @@ def test_catalog_search_agent_tool_wrapper():
     Test that the Catalog Search Agent tool wrapper works correctly.
     """
     mock_sdk = get_sdk_mock()
-    mock_sdk.catalog_search_agent_tool.run.return_value = {"results": ["catalog item 1", "catalog item 2"]}
+    mock_sdk.catalog_search_agent_tool.run.return_value = {
+        "results": ["catalog item 1", "catalog item 2"]
+    }
 
     tools_list = get_langchain_tools(mock_sdk)
-    catalog_tool = next((t for t in tools_list if t.name == "catalog_search_agent"), None)
+    catalog_tool = next(
+        (t for t in tools_list if t.name == "catalog_search_agent"), None
+    )
 
-    assert catalog_tool is not None, "Catalog Search Agent tool should be in the tools list"
+    assert catalog_tool is not None, (
+        "Catalog Search Agent tool should be in the tools list"
+    )
     assert catalog_tool.name == "catalog_search_agent"
     assert catalog_tool.description == "Catalog Search Agent"
 
     # Test the tool function
     result = catalog_tool.func(message="search query")
-    mock_sdk.catalog_search_agent_tool.run.assert_called_once_with(message="search query", chat_id=None)
+    mock_sdk.catalog_search_agent_tool.run.assert_called_once_with(
+        message="search query", chat_id=None
+    )
     assert result == {"results": ["catalog item 1", "catalog item 2"]}
 
 
@@ -463,7 +498,7 @@ def test_sql_execution_tool_wrapper():
     result = sql_tool.func(
         data_product_id="test-dp-123",
         sql="SELECT * FROM test_table",
-        result_table_name="results"
+        result_table_name="results",
     )
     mock_sdk.sql_execution_tool.run.assert_called_once_with(
         data_product_id="test-dp-123",
@@ -481,12 +516,18 @@ def test_data_product_query_agent_tool_wrapper():
     Test that the Data Product Query Agent tool wrapper works correctly.
     """
     mock_sdk = get_sdk_mock()
-    mock_sdk.data_product_query_agent_tool.run.return_value = {"query_result": "data product response"}
+    mock_sdk.data_product_query_agent_tool.run.return_value = {
+        "query_result": "data product response"
+    }
 
     tools_list = get_langchain_tools(mock_sdk)
-    dp_tool = next((t for t in tools_list if t.name == "data_product_query_agent"), None)
+    dp_tool = next(
+        (t for t in tools_list if t.name == "data_product_query_agent"), None
+    )
 
-    assert dp_tool is not None, "Data Product Query Agent tool should be in the tools list"
+    assert dp_tool is not None, (
+        "Data Product Query Agent tool should be in the tools list"
+    )
     assert dp_tool.name == "data_product_query_agent"
     assert dp_tool.description == "Data Product Query Agent"
 
@@ -516,7 +557,9 @@ def test_search_catalog_tool_wrapper():
     assert search_tool.description == "Search Catalog"
 
     # Test the tool function
-    result = search_tool.func(search_term="customer", object_types=["table"], filters={"steward": "john"})
+    result = search_tool.func(
+        search_term="customer", object_types=["table"], filters={"steward": "john"}
+    )
     mock_sdk.search_catalog_tool.run.assert_called_once_with(
         search_term="customer",
         object_types=["table"],

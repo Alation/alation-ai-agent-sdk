@@ -229,7 +229,7 @@ def prepare_server_config(
 
     # Get tool configuration
     tools_enabled, tools_disabled, beta_tools_enabled = get_tool_configuration(
-       enabled_tools_str, disabled_tools_str, enabled_beta_tools_str
+        enabled_tools_str, disabled_tools_str, enabled_beta_tools_str
     )
 
     return base_url, tools_enabled, tools_disabled, beta_tools_enabled

@@ -45,8 +45,8 @@ def test_get_custom_field_definitions_tool_run_success(
         ],
         "usage_guide": {
             "title": "Custom Fields Usage Guide",
-            "description": "Guide for using custom fields in data dictionary operations"
-        }
+            "description": "Guide for using custom fields in data dictionary operations",
+        },
     }
 
     # Mock the streaming method to return a generator
@@ -78,15 +78,42 @@ def test_get_custom_field_definitions_tool_run_403_returns_builtin_fields(
     # Mock 403 response with built-in fields (this is how the streaming API handles 403)
     mock_response = {
         "custom_fields": [
-            {"id": 3, "name_singular": "Title", "field_type": "TEXT", "allowed_otypes": None, "options": None, "tooltip_text": None, "allow_multiple": False, "name_plural": ""},
-            {"id": 4, "name_singular": "Description", "field_type": "RICH_TEXT", "allowed_otypes": None, "options": None, "tooltip_text": None, "allow_multiple": False, "name_plural": ""},
-            {"id": 8, "name_singular": "Steward", "field_type": "OBJECT_SET", "allowed_otypes": ["user", "groupprofile"], "options": None, "tooltip_text": None, "allow_multiple": True, "name_plural": "Stewards"}
+            {
+                "id": 3,
+                "name_singular": "Title",
+                "field_type": "TEXT",
+                "allowed_otypes": None,
+                "options": None,
+                "tooltip_text": None,
+                "allow_multiple": False,
+                "name_plural": "",
+            },
+            {
+                "id": 4,
+                "name_singular": "Description",
+                "field_type": "RICH_TEXT",
+                "allowed_otypes": None,
+                "options": None,
+                "tooltip_text": None,
+                "allow_multiple": False,
+                "name_plural": "",
+            },
+            {
+                "id": 8,
+                "name_singular": "Steward",
+                "field_type": "OBJECT_SET",
+                "allowed_otypes": ["user", "groupprofile"],
+                "options": None,
+                "tooltip_text": None,
+                "allow_multiple": True,
+                "name_plural": "Stewards",
+            },
         ],
         "message": "Admin permissions required for custom fields. Showing built-in fields only.",
         "usage_guide": {
             "title": "Built-in Fields Usage Guide",
-            "description": "Guide for using built-in fields in data dictionary operations"
-        }
+            "description": "Guide for using built-in fields in data dictionary operations",
+        },
     }
 
     # Mock the streaming method to return a generator
@@ -147,8 +174,8 @@ def test_get_custom_field_definitions_tool_run_empty_response(
         "custom_fields": [],
         "usage_guide": {
             "title": "Custom Fields Usage Guide",
-            "description": "Guide for using custom fields in data dictionary operations"
-        }
+            "description": "Guide for using custom fields in data dictionary operations",
+        },
     }
 
     # Mock the streaming method to return a generator

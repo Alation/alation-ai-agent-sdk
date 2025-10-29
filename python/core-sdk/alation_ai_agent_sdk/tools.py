@@ -149,7 +149,13 @@ class AlationContextTool:
 
     @min_alation_version("2025.1.2")
     @track_tool_execution()
-    def run(self, *, question: str, signature: Optional[Dict[str, Any]] = None, chat_id: Optional[str] = None):
+    def run(
+        self,
+        *,
+        question: str,
+        signature: Optional[Dict[str, Any]] = None,
+        chat_id: Optional[str] = None,
+    ):
         try:
             ref = self.api.alation_context_stream(
                 question=question,
@@ -260,7 +266,12 @@ class AlationBulkRetrievalTool:
     """
 
     @track_tool_execution()
-    def run(self, *, signature: Optional[Dict[str, Any]] = None, chat_id: Optional[str] = None):
+    def run(
+        self,
+        *,
+        signature: Optional[Dict[str, Any]] = None,
+        chat_id: Optional[str] = None,
+    ):
         if not signature:
             return {
                 "error": {
@@ -278,10 +289,7 @@ class AlationBulkRetrievalTool:
             }
 
         try:
-            ref = self.api.bulk_retrieval_stream(
-                signature=signature,
-                chat_id=chat_id
-            )
+            ref = self.api.bulk_retrieval_stream(signature=signature, chat_id=chat_id)
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
             return {"error": e.to_dict()}
@@ -825,7 +833,6 @@ class SignatureCreationTool:
         - Best practices and validation rules
         """
 
-
     @track_tool_execution()
     def run(self, chat_id: Optional[str] = None):
         try:
@@ -869,7 +876,6 @@ class AnalyzeCatalogQuestionTool:
         - Best practices for search orchestration
         """
 
-
     @track_tool_execution()
     def run(self, *, question: str, chat_id: Optional[str] = None):
         try:
@@ -880,6 +886,7 @@ class AnalyzeCatalogQuestionTool:
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
             return {"error": e.to_dict()}
+
 
 class BiReportSearchTool:
     def __init__(self, api: AlationAPI):
@@ -911,11 +918,7 @@ class BiReportSearchTool:
 
     @track_tool_execution()
     def run(self, *, search_term: str, limit: int = 20, chat_id: Optional[str] = None):
-        kwargs = {
-            "search_term": search_term,
-            "limit": limit,
-            "chat_id": chat_id
-        }
+        kwargs = {"search_term": search_term, "limit": limit, "chat_id": chat_id}
         try:
             ref = self.api.search_bi_reports_stream(**kwargs)
             return ref if self.api.enable_streaming else next(ref)
@@ -1105,7 +1108,14 @@ class DataProductQueryAgentTool:
         """
 
     @track_tool_execution()
-    def run(self, *, message: str, data_product_id: str, auth_id: Optional[str] = None, chat_id: Optional[str] = None):
+    def run(
+        self,
+        *,
+        message: str,
+        data_product_id: str,
+        auth_id: Optional[str] = None,
+        chat_id: Optional[str] = None,
+    ):
         try:
             ref = self.api.data_product_query_agent_stream(
                 message=message,
@@ -1231,6 +1241,7 @@ class SqlQueryAgentTool:
         except AlationAPIError as e:
             return {"error": e.to_dict()}
 
+
 class SqlExecutionTool:
     def __init__(self, api: AlationAPI):
         self.api = api
@@ -1261,9 +1272,15 @@ class SqlExecutionTool:
         """
 
     @track_tool_execution()
-    def run(self, *, data_product_id: str, sql: str, result_table_name: str,
-            pre_exec_sql: Optional[str] = None, auth_id: Optional[str] = None,
-            chat_id: Optional[str] = None
+    def run(
+        self,
+        *,
+        data_product_id: str,
+        sql: str,
+        result_table_name: str,
+        pre_exec_sql: Optional[str] = None,
+        auth_id: Optional[str] = None,
+        chat_id: Optional[str] = None,
     ):
         try:
             ref = self.api.sql_execution_tool_stream(
@@ -1310,9 +1327,16 @@ class GenerateChartFromSqlAndCodeTool:
         """
 
     @track_tool_execution()
-    def run(self, *, data_product_id: str, sql: str, chart_code_snippet: str, image_title: str,
-            pre_exec_sql: Optional[str] = None, auth_id: Optional[str] = None,
-            chat_id: Optional[str] = None
+    def run(
+        self,
+        *,
+        data_product_id: str,
+        sql: str,
+        chart_code_snippet: str,
+        image_title: str,
+        pre_exec_sql: Optional[str] = None,
+        auth_id: Optional[str] = None,
+        chat_id: Optional[str] = None,
     ):
         try:
             ref = self.api.generate_chart_from_sql_and_code_tool_stream(
@@ -1357,8 +1381,14 @@ class GetDataSchemaTool:
         """
 
     @track_tool_execution()
-    def run(self, *, data_product_id: str, pre_exec_sql: Optional[str] = None,
-            auth_id: Optional[str] = None, chat_id: Optional[str] = None):
+    def run(
+        self,
+        *,
+        data_product_id: str,
+        pre_exec_sql: Optional[str] = None,
+        auth_id: Optional[str] = None,
+        chat_id: Optional[str] = None,
+    ):
         try:
             ref = self.api.get_data_schema_tool_stream(
                 data_product_id=data_product_id,
@@ -1399,10 +1429,7 @@ class GetDataSourcesTool:
     @track_tool_execution()
     def run(self, *, limit: int = 100, chat_id: Optional[str] = None):
         try:
-            ref = self.api.get_data_sources_tool_stream(
-                limit=limit,
-                chat_id=chat_id
-            )
+            ref = self.api.get_data_sources_tool_stream(limit=limit, chat_id=chat_id)
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
             return {"error": e.to_dict()}
@@ -1436,8 +1463,13 @@ class ListDataProductsTool:
         """
 
     @track_tool_execution()
-    def run(self, *, search_term: str, limit: int = 5, marketplace_id: Optional[str] = None,
-            chat_id: Optional[str] = None
+    def run(
+        self,
+        *,
+        search_term: str,
+        limit: int = 5,
+        marketplace_id: Optional[str] = None,
+        chat_id: Optional[str] = None,
     ):
         try:
             ref = self.api.list_data_products_tool_stream(
@@ -1479,8 +1511,14 @@ class SearchCatalogTool:
         """
 
     @track_tool_execution()
-    def run(self, *, search_term: str, object_types: Optional[List[str]] = None,
-            filters: Optional[Dict[str, Any]] = None, chat_id: Optional[str] = None):
+    def run(
+        self,
+        *,
+        search_term: str,
+        object_types: Optional[List[str]] = None,
+        filters: Optional[Dict[str, Any]] = None,
+        chat_id: Optional[str] = None,
+    ):
         try:
             ref = self.api.search_catalog_tool_stream(
                 search_term=search_term,
@@ -1560,7 +1598,14 @@ class GetSearchFilterValuesTool:
         """
 
     @track_tool_execution()
-    def run(self, *, field_id: int, search_term: str, limit: int = 10, chat_id: Optional[str] = None):
+    def run(
+        self,
+        *,
+        field_id: int,
+        search_term: str,
+        limit: int = 10,
+        chat_id: Optional[str] = None,
+    ):
         try:
             ref = self.api.get_search_filter_values_tool_stream(
                 field_id=field_id,
@@ -1613,12 +1658,16 @@ class CustomAgentTool:
         """
 
     @track_tool_execution()
-    def run(self, *, agent_config_id: str, payload: Dict[str, Any], chat_id: Optional[str] = None):
+    def run(
+        self,
+        *,
+        agent_config_id: str,
+        payload: Dict[str, Any],
+        chat_id: Optional[str] = None,
+    ):
         try:
             ref = self.api.custom_agent_stream(
-                agent_config_id=agent_config_id,
-                payload=payload,
-                chat_id=chat_id
+                agent_config_id=agent_config_id, payload=payload, chat_id=chat_id
             )
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:

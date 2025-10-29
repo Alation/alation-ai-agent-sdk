@@ -1,8 +1,6 @@
 import pytest
 import requests
-import json
-from unittest.mock import MagicMock, patch, mock_open
-from io import StringIO
+from unittest.mock import MagicMock, patch
 
 from alation_ai_agent_sdk.api import (
     AlationAPI,
@@ -32,7 +30,7 @@ MOCK_SESSION_COOKIE = "sessionid=test_session_cookie_value"
 @pytest.fixture
 def api_instance():
     """Create a mock AlationAPI instance with service account auth."""
-    with patch.object(AlationAPI, '_fetch_and_cache_instance_info'):
+    with patch.object(AlationAPI, "_fetch_and_cache_instance_info"):
         api = AlationAPI(
             base_url=MOCK_BASE_URL,
             auth_method=AUTH_METHOD_SERVICE_ACCOUNT,
@@ -46,7 +44,7 @@ def api_instance():
 @pytest.fixture
 def bearer_token_api_instance():
     """Create a mock AlationAPI instance with bearer token auth."""
-    with patch.object(AlationAPI, '_fetch_and_cache_instance_info'):
+    with patch.object(AlationAPI, "_fetch_and_cache_instance_info"):
         api = AlationAPI(
             base_url=MOCK_BASE_URL,
             auth_method=AUTH_METHOD_BEARER_TOKEN,
@@ -59,7 +57,7 @@ def bearer_token_api_instance():
 @pytest.fixture
 def session_api_instance():
     """Create a mock AlationAPI instance with session auth."""
-    with patch.object(AlationAPI, '_fetch_and_cache_instance_info'):
+    with patch.object(AlationAPI, "_fetch_and_cache_instance_info"):
         api = AlationAPI(
             base_url=MOCK_BASE_URL,
             auth_method=AUTH_METHOD_SESSION,
@@ -71,18 +69,25 @@ def session_api_instance():
 
 # --- Tests for _fetch_and_cache_instance_info ---
 
-@patch('alation_ai_agent_sdk.api.requests.get')
+
+@patch("alation_ai_agent_sdk.api.requests.get")
 def test_fetch_and_cache_instance_info_success(mock_get, api_instance):
     """Test successful fetching and caching of instance info."""
     # Mock successful license response
     license_response = MagicMock()
     license_response.raise_for_status.return_value = None
-    license_response.json.return_value = {"is_cloud": True, "license_type": "enterprise"}
+    license_response.json.return_value = {
+        "is_cloud": True,
+        "license_type": "enterprise",
+    }
 
     # Mock successful version response
     version_response = MagicMock()
     version_response.raise_for_status.return_value = None
-    version_response.json.return_value = {"ALATION_RELEASE_NAME": "2025.1.2", "version": "1.0"}
+    version_response.json.return_value = {
+        "ALATION_RELEASE_NAME": "2025.1.2",
+        "version": "1.0",
+    }
 
     # Configure mock_get to return different responses based on URL
     def side_effect(url, **kwargs):
@@ -94,18 +99,25 @@ def test_fetch_and_cache_instance_info_success(mock_get, api_instance):
 
     mock_get.side_effect = side_effect
 
-    with patch.object(api_instance, '_with_valid_auth'), \
-         patch.object(api_instance, '_get_request_headers', return_value={}):
-
+    with (
+        patch.object(api_instance, "_with_valid_auth"),
+        patch.object(api_instance, "_get_request_headers", return_value={}),
+    ):
         api_instance._fetch_and_cache_instance_info()
 
         assert api_instance.is_cloud is True
         assert api_instance.alation_release_name == "2025.1.2"
-        assert api_instance.alation_license_info == {"is_cloud": True, "license_type": "enterprise"}
-        assert api_instance.alation_version_info == {"ALATION_RELEASE_NAME": "2025.1.2", "version": "1.0"}
+        assert api_instance.alation_license_info == {
+            "is_cloud": True,
+            "license_type": "enterprise",
+        }
+        assert api_instance.alation_version_info == {
+            "ALATION_RELEASE_NAME": "2025.1.2",
+            "version": "1.0",
+        }
 
 
-@patch('alation_ai_agent_sdk.api.requests.get')
+@patch("alation_ai_agent_sdk.api.requests.get")
 def test_fetch_and_cache_instance_info_license_failure(mock_get, api_instance):
     """Test handling of license fetch failure."""
     # Mock license failure
@@ -126,9 +138,10 @@ def test_fetch_and_cache_instance_info_license_failure(mock_get, api_instance):
 
     mock_get.side_effect = side_effect
 
-    with patch.object(api_instance, '_with_valid_auth'), \
-         patch.object(api_instance, '_get_request_headers', return_value={}):
-
+    with (
+        patch.object(api_instance, "_with_valid_auth"),
+        patch.object(api_instance, "_get_request_headers", return_value={}),
+    ):
         api_instance._fetch_and_cache_instance_info()
 
         assert api_instance.is_cloud is None
@@ -136,7 +149,7 @@ def test_fetch_and_cache_instance_info_license_failure(mock_get, api_instance):
         assert api_instance.alation_release_name == "2025.1.2"
 
 
-@patch('alation_ai_agent_sdk.api.requests.get')
+@patch("alation_ai_agent_sdk.api.requests.get")
 def test_fetch_and_cache_instance_info_version_failure(mock_get, api_instance):
     """Test handling of version fetch failure."""
     # Mock successful license response
@@ -157,9 +170,10 @@ def test_fetch_and_cache_instance_info_version_failure(mock_get, api_instance):
 
     mock_get.side_effect = side_effect
 
-    with patch.object(api_instance, '_with_valid_auth'), \
-         patch.object(api_instance, '_get_request_headers', return_value={}):
-
+    with (
+        patch.object(api_instance, "_with_valid_auth"),
+        patch.object(api_instance, "_get_request_headers", return_value={}),
+    ):
         api_instance._fetch_and_cache_instance_info()
 
         assert api_instance.is_cloud is False
@@ -169,6 +183,7 @@ def test_fetch_and_cache_instance_info_version_failure(mock_get, api_instance):
 
 # --- Tests for _get_response_meta ---
 
+
 def test_get_response_meta_with_entitlement_warning(api_instance):
     """Test extracting meta information when entitlement warning is present."""
     mock_response = MagicMock()
@@ -176,7 +191,7 @@ def test_get_response_meta_with_entitlement_warning(api_instance):
         "X-Entitlement-Warning": "Approaching limit",
         "X-Entitlement-Limit": "1000",
         "X-Entitlement-Usage": "950",
-        "Other-Header": "value"
+        "Other-Header": "value",
     }
 
     result = api_instance._get_response_meta(mock_response)
@@ -195,7 +210,7 @@ def test_get_response_meta_without_entitlement_warning(api_instance):
     mock_response.headers = {
         "X-Entitlement-Limit": "1000",
         "X-Entitlement-Usage": "950",
-        "Other-Header": "value"
+        "Other-Header": "value",
     }
 
     result = api_instance._get_response_meta(mock_response)
@@ -225,6 +240,7 @@ def test_get_response_meta_none_headers(api_instance):
 
 # --- Tests for _format_successful_response ---
 
+
 def test_format_successful_response_dict_with_meta(api_instance):
     """Test formatting successful response as dict with meta information."""
     mock_response = MagicMock()
@@ -237,14 +253,10 @@ def test_format_successful_response_dict_with_meta(api_instance):
         "X-Entitlement-Warning": "Approaching limit",
     }
 
-    with patch.object(api_instance, '_get_response_meta', return_value=meta_info):
+    with patch.object(api_instance, "_get_response_meta", return_value=meta_info):
         result = api_instance._format_successful_response(mock_response)
 
-    expected = {
-        "data": "test",
-        "key": "value",
-        "_meta": {"headers": meta_info}
-    }
+    expected = {"data": "test", "key": "value", "_meta": {"headers": meta_info}}
     assert result == expected
 
 
@@ -260,12 +272,12 @@ def test_format_successful_response_list_with_meta(api_instance):
         "X-Entitlement-Warning": "Approaching limit",
     }
 
-    with patch.object(api_instance, '_get_response_meta', return_value=meta_info):
+    with patch.object(api_instance, "_get_response_meta", return_value=meta_info):
         result = api_instance._format_successful_response(mock_response)
 
     expected = {
         "results": [{"item1": "data1"}, {"item2": "data2"}],
-        "_meta": {"headers": meta_info}
+        "_meta": {"headers": meta_info},
     }
     assert result == expected
 
@@ -276,7 +288,7 @@ def test_format_successful_response_without_meta(api_instance):
     mock_response.status_code = 200
     mock_response.json.return_value = {"data": "test"}
 
-    with patch.object(api_instance, '_get_response_meta', return_value=None):
+    with patch.object(api_instance, "_get_response_meta", return_value=None):
         result = api_instance._format_successful_response(mock_response)
 
     assert result == {"data": "test"}
@@ -288,13 +300,14 @@ def test_format_successful_response_non_success_status_code(api_instance):
     mock_response.status_code = 400
     mock_response.json.return_value = {"error": "Bad request"}
 
-    with patch.object(api_instance, '_get_response_meta', return_value=None):
+    with patch.object(api_instance, "_get_response_meta", return_value=None):
         result = api_instance._format_successful_response(mock_response)
 
     assert result == {"error": "Bad request"}
 
 
 # --- Tests for _get_request_headers ---
+
 
 def test_get_request_headers_service_account_auth(api_instance):
     """Test request headers for service account authentication."""
@@ -305,7 +318,7 @@ def test_get_request_headers_service_account_auth(api_instance):
     expected = {
         "Accept": "application/json",
         "User-Agent": f"test-dist-1.0/sdk-{SDK_VERSION}",
-        "Token": MOCK_ACCESS_TOKEN
+        "Token": MOCK_ACCESS_TOKEN,
     }
     assert result == expected
 
@@ -316,10 +329,7 @@ def test_get_request_headers_session_auth(session_api_instance):
 
     result = session_api_instance._get_request_headers()
 
-    expected_headers = {
-        "Accept": "application/json",
-        "Cookie": MOCK_SESSION_COOKIE
-    }
+    expected_headers = {"Accept": "application/json", "Cookie": MOCK_SESSION_COOKIE}
     if SDK_VERSION:
         expected_headers["User-Agent"] = f"sdk-{SDK_VERSION}"
 
@@ -335,7 +345,7 @@ def test_get_request_headers_bearer_token_auth(bearer_token_api_instance):
     expected = {
         "Accept": "application/json",
         "User-Agent": f"mcp-2.0/sdk-{SDK_VERSION}",
-        "Token": MOCK_ACCESS_TOKEN
+        "Token": MOCK_ACCESS_TOKEN,
     }
     assert result == expected
 
@@ -343,10 +353,7 @@ def test_get_request_headers_bearer_token_auth(bearer_token_api_instance):
 def test_get_request_headers_with_overrides(api_instance):
     """Test request headers with header overrides."""
     api_instance.dist_version = None
-    overrides = {
-        "Content-Type": "application/json",
-        "Custom-Header": "custom-value"
-    }
+    overrides = {"Content-Type": "application/json", "Custom-Header": "custom-value"}
 
     result = api_instance._get_request_headers(header_overrides=overrides)
 
@@ -354,7 +361,7 @@ def test_get_request_headers_with_overrides(api_instance):
         "Accept": "application/json",
         "Token": MOCK_ACCESS_TOKEN,
         "Content-Type": "application/json",
-        "Custom-Header": "custom-value"
+        "Custom-Header": "custom-value",
     }
     if SDK_VERSION:
         expected["User-Agent"] = f"sdk-{SDK_VERSION}"
@@ -369,9 +376,7 @@ def test_get_request_headers_no_access_token(api_instance):
 
     result = api_instance._get_request_headers()
 
-    expected = {
-        "Accept": "application/json"
-    }
+    expected = {"Accept": "application/json"}
     if SDK_VERSION:
         expected["User-Agent"] = f"sdk-{SDK_VERSION}"
 
@@ -379,6 +384,7 @@ def test_get_request_headers_no_access_token(api_instance):
 
 
 # --- Tests for _get_streaming_request_headers ---
+
 
 def test_get_streaming_request_headers_service_account(api_instance):
     """Test streaming request headers for service account authentication."""
@@ -391,7 +397,7 @@ def test_get_streaming_request_headers_service_account(api_instance):
         "Content-Type": "application/json",
         "Authorization": f"Bearer {MOCK_ACCESS_TOKEN}",
         "User-Agent": f"test-dist-1.0/sdk-{SDK_VERSION}",
-        "Token": MOCK_ACCESS_TOKEN
+        "Token": MOCK_ACCESS_TOKEN,
     }
     assert result == expected
 
@@ -404,7 +410,7 @@ def test_get_streaming_request_headers_bearer_token(bearer_token_api_instance):
         "Accept": "text/event-stream",
         "Content-Type": "application/json",
         "Authorization": f"Bearer {MOCK_ACCESS_TOKEN}",
-        "Token": MOCK_ACCESS_TOKEN
+        "Token": MOCK_ACCESS_TOKEN,
     }
     if SDK_VERSION:
         expected_base["User-Agent"] = f"sdk-{SDK_VERSION}"
@@ -419,7 +425,7 @@ def test_get_streaming_request_headers_session_auth(session_api_instance):
     expected_base = {
         "Accept": "text/event-stream",
         "Content-Type": "application/json",
-        "Cookie": MOCK_SESSION_COOKIE
+        "Cookie": MOCK_SESSION_COOKIE,
     }
     if SDK_VERSION:
         expected_base["User-Agent"] = f"sdk-{SDK_VERSION}"
@@ -428,6 +434,7 @@ def test_get_streaming_request_headers_session_auth(session_api_instance):
 
 
 # --- Tests for _get_streaming_timeouts ---
+
 
 def test_get_streaming_timeouts_defaults(api_instance):
     """Test streaming timeouts with default values."""
@@ -463,16 +470,17 @@ def test_get_streaming_timeouts_only_read_timeout(api_instance):
 
 # --- Tests for _iter_sse_response ---
 
+
 def test_iter_sse_response_success(api_instance):
     """Test successful iteration over SSE response."""
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
     mock_response.iter_lines.return_value = [
         b'data: {"event": "start", "data": "test1"}',
-        b'',
+        b"",
         b'data: {"event": "end", "data": "test2"}',
-        b'event: heartbeat',
-        b'data: {"event": "final", "data": "test3"}'
+        b"event: heartbeat",
+        b'data: {"event": "final", "data": "test3"}',
     ]
 
     result = list(api_instance._iter_sse_response(mock_response))
@@ -480,7 +488,7 @@ def test_iter_sse_response_success(api_instance):
     expected = [
         {"event": "start", "data": "test1"},
         {"event": "end", "data": "test2"},
-        {"event": "final", "data": "test3"}
+        {"event": "final", "data": "test3"},
     ]
     assert result == expected
 
@@ -491,16 +499,13 @@ def test_iter_sse_response_invalid_json(api_instance):
     mock_response.raise_for_status.return_value = None
     mock_response.iter_lines.return_value = [
         b'data: {"valid": "json"}',
-        b'data: invalid json string',
-        b'data: {"another": "valid"}'
+        b"data: invalid json string",
+        b'data: {"another": "valid"}',
     ]
 
     result = list(api_instance._iter_sse_response(mock_response))
 
-    expected = [
-        {"valid": "json"},
-        {"another": "valid"}
-    ]
+    expected = [{"valid": "json"}, {"another": "valid"}]
     assert result == expected
 
 
@@ -509,32 +514,32 @@ def test_iter_sse_response_empty_lines(api_instance):
     mock_response = MagicMock()
     mock_response.raise_for_status.return_value = None
     mock_response.iter_lines.return_value = [
-        b'',
+        b"",
         b'data: {"test": "data"}',
-        b'',
-        b'',
-        b'data: {"more": "data"}'
+        b"",
+        b"",
+        b'data: {"more": "data"}',
     ]
 
     result = list(api_instance._iter_sse_response(mock_response))
 
-    expected = [
-        {"test": "data"},
-        {"more": "data"}
-    ]
+    expected = [{"test": "data"}, {"more": "data"}]
     assert result == expected
 
 
 def test_iter_sse_response_http_error(api_instance):
     """Test handling of HTTP error in SSE response."""
     mock_response = MagicMock()
-    mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("500 Server Error")
+    mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
+        "500 Server Error"
+    )
 
     with pytest.raises(requests.exceptions.HTTPError):
         list(api_instance._iter_sse_response(mock_response))
 
 
 # --- Tests for _sse_stream_or_last_event ---
+
 
 def test_sse_stream_or_last_event_streaming_mode(api_instance):
     """Test SSE streaming in streaming mode."""
@@ -546,10 +551,12 @@ def test_sse_stream_or_last_event_streaming_mode(api_instance):
     test_events = [
         {"event": "start", "data": "test1"},
         {"event": "middle", "data": "test2"},
-        {"event": "end", "data": "test3"}
+        {"event": "end", "data": "test3"},
     ]
 
-    with patch.object(api_instance, '_iter_sse_response', return_value=iter(test_events)):
+    with patch.object(
+        api_instance, "_iter_sse_response", return_value=iter(test_events)
+    ):
         result = list(api_instance._sse_stream_or_last_event(mock_response))
 
     assert result == test_events
@@ -562,10 +569,12 @@ def test_sse_stream_or_last_event_non_streaming_mode(api_instance):
     test_events = [
         {"event": "start", "data": "test1"},
         {"event": "middle", "data": "test2"},
-        {"event": "end", "data": "test3"}
+        {"event": "end", "data": "test3"},
     ]
 
-    with patch.object(api_instance, '_iter_sse_response', return_value=iter(test_events)):
+    with patch.object(
+        api_instance, "_iter_sse_response", return_value=iter(test_events)
+    ):
         result = list(api_instance._sse_stream_or_last_event(mock_response))
 
     assert result == [{"event": "end", "data": "test3"}]
@@ -575,7 +584,7 @@ def test_sse_stream_or_last_event_empty_response(api_instance):
     """Test SSE streaming with empty response."""
     mock_response = MagicMock()
 
-    with patch.object(api_instance, '_iter_sse_response', return_value=iter([])):
+    with patch.object(api_instance, "_iter_sse_response", return_value=iter([])):
         result = list(api_instance._sse_stream_or_last_event(mock_response))
 
     assert result == [None]
@@ -583,7 +592,8 @@ def test_sse_stream_or_last_event_empty_response(api_instance):
 
 # --- Tests for _fetch_marketplace_id ---
 
-@patch('alation_ai_agent_sdk.api.requests.get')
+
+@patch("alation_ai_agent_sdk.api.requests.get")
 def test_fetch_marketplace_id_success(mock_get, api_instance):
     """Test successful marketplace ID fetch."""
     mock_response = MagicMock()
@@ -596,13 +606,11 @@ def test_fetch_marketplace_id_success(mock_get, api_instance):
 
     assert result == "marketplace-123"
     mock_get.assert_called_once_with(
-        f"{MOCK_BASE_URL}/api/v1/setting/marketplace/",
-        headers=headers,
-        timeout=30
+        f"{MOCK_BASE_URL}/api/v1/setting/marketplace/", headers=headers, timeout=30
     )
 
 
-@patch('alation_ai_agent_sdk.api.requests.get')
+@patch("alation_ai_agent_sdk.api.requests.get")
 def test_fetch_marketplace_id_missing_id(mock_get, api_instance):
     """Test handling when marketplace ID is missing from response."""
     mock_response = MagicMock()
@@ -619,7 +627,7 @@ def test_fetch_marketplace_id_missing_id(mock_get, api_instance):
     assert exc_info.value.reason == "Missing Marketplace ID"
 
 
-@patch('alation_ai_agent_sdk.api.requests.get')
+@patch("alation_ai_agent_sdk.api.requests.get")
 def test_fetch_marketplace_id_empty_id(mock_get, api_instance):
     """Test handling when marketplace ID is empty."""
     mock_response = MagicMock()
@@ -635,12 +643,12 @@ def test_fetch_marketplace_id_empty_id(mock_get, api_instance):
     assert "Marketplace ID not found in response" in str(exc_info.value)
 
 
-@patch('alation_ai_agent_sdk.api.requests.get')
+@patch("alation_ai_agent_sdk.api.requests.get")
 def test_fetch_marketplace_id_request_exception(mock_get, api_instance):
     """Test handling of request exception during marketplace ID fetch."""
     mock_get.side_effect = requests.exceptions.HTTPError("404 Not Found")
 
-    with patch.object(api_instance, '_handle_request_error') as mock_handle_error:
+    with patch.object(api_instance, "_handle_request_error") as mock_handle_error:
         mock_handle_error.side_effect = AlationAPIError("Handled error")
 
         headers = {"Authorization": "Bearer token"}
@@ -653,7 +661,8 @@ def test_fetch_marketplace_id_request_exception(mock_get, api_instance):
 
 # --- Tests for _safe_sse_post_request ---
 
-@patch('alation_ai_agent_sdk.api.requests.post')
+
+@patch("alation_ai_agent_sdk.api.requests.post")
 def test_safe_sse_post_request_success(mock_post, api_instance):
     """Test successful SSE POST request."""
     # Mock response
@@ -666,23 +675,32 @@ def test_safe_sse_post_request_success(mock_post, api_instance):
 
     test_events = [{"event": "test", "data": "response"}]
 
-    with patch.object(api_instance, '_with_valid_auth'), \
-         patch.object(api_instance, '_get_streaming_request_headers', return_value={"Auth": "token"}), \
-         patch.object(api_instance, '_get_streaming_timeouts', return_value=(60, 300)), \
-         patch.object(api_instance, '_get_response_meta', return_value=None), \
-         patch.object(api_instance, '_sse_stream_or_last_event', return_value=iter(test_events)):
-
-        result = list(api_instance._safe_sse_post_request(
-            tool_name="test_tool",
-            url="https://test.com/api",
-            payload={"query": "test"},
-        ))
+    with (
+        patch.object(api_instance, "_with_valid_auth"),
+        patch.object(
+            api_instance,
+            "_get_streaming_request_headers",
+            return_value={"Auth": "token"},
+        ),
+        patch.object(api_instance, "_get_streaming_timeouts", return_value=(60, 300)),
+        patch.object(api_instance, "_get_response_meta", return_value=None),
+        patch.object(
+            api_instance, "_sse_stream_or_last_event", return_value=iter(test_events)
+        ),
+    ):
+        result = list(
+            api_instance._safe_sse_post_request(
+                tool_name="test_tool",
+                url="https://test.com/api",
+                payload={"query": "test"},
+            )
+        )
 
     assert result == test_events
     mock_post.assert_called_once()
 
 
-@patch('alation_ai_agent_sdk.api.requests.post')
+@patch("alation_ai_agent_sdk.api.requests.post")
 def test_safe_sse_post_request_with_response_meta(mock_post, api_instance):
     """Test SSE POST request with response meta information."""
     # Mock response
@@ -695,98 +713,130 @@ def test_safe_sse_post_request_with_response_meta(mock_post, api_instance):
     test_events = [{"event": "test", "data": "response"}]
     meta_info = {"X-Entitlement-Warning": "Approaching limit"}
 
-    with patch.object(api_instance, '_with_valid_auth'), \
-         patch.object(api_instance, '_get_streaming_request_headers', return_value={"Auth": "token"}), \
-         patch.object(api_instance, '_get_streaming_timeouts', return_value=(60, 300)), \
-         patch.object(api_instance, '_get_response_meta', return_value=meta_info), \
-         patch.object(api_instance, '_sse_stream_or_last_event', return_value=iter(test_events)):
-
-        result = list(api_instance._safe_sse_post_request(
-            tool_name="test_tool",
-            url="https://test.com/api",
-            payload={"query": "test"},
-        ))
+    with (
+        patch.object(api_instance, "_with_valid_auth"),
+        patch.object(
+            api_instance,
+            "_get_streaming_request_headers",
+            return_value={"Auth": "token"},
+        ),
+        patch.object(api_instance, "_get_streaming_timeouts", return_value=(60, 300)),
+        patch.object(api_instance, "_get_response_meta", return_value=meta_info),
+        patch.object(
+            api_instance, "_sse_stream_or_last_event", return_value=iter(test_events)
+        ),
+    ):
+        result = list(
+            api_instance._safe_sse_post_request(
+                tool_name="test_tool",
+                url="https://test.com/api",
+                payload={"query": "test"},
+            )
+        )
 
     assert result == test_events
 
 
-@patch('alation_ai_agent_sdk.api.requests.post')
+@patch("alation_ai_agent_sdk.api.requests.post")
 def test_safe_sse_post_request_read_timeout(mock_post, api_instance):
     """Test handling of read timeout in SSE POST request."""
     mock_post.side_effect = requests.exceptions.ReadTimeout("Read timeout")
 
-    with patch.object(api_instance, '_with_valid_auth'), \
-         patch.object(api_instance, '_get_streaming_request_headers', return_value={"Auth": "token"}), \
-         patch.object(api_instance, '_get_streaming_timeouts', return_value=(60, 300)), \
-         patch.object(api_instance, '_handle_request_error') as mock_handle_error:
-
+    with (
+        patch.object(api_instance, "_with_valid_auth"),
+        patch.object(
+            api_instance,
+            "_get_streaming_request_headers",
+            return_value={"Auth": "token"},
+        ),
+        patch.object(api_instance, "_get_streaming_timeouts", return_value=(60, 300)),
+        patch.object(api_instance, "_handle_request_error") as mock_handle_error,
+    ):
         mock_handle_error.side_effect = AlationAPIError("Read timeout handled")
 
         with pytest.raises(AlationAPIError):
-            list(api_instance._safe_sse_post_request(
-                tool_name="test_tool",
-                url="https://test.com/api",
-                payload={"query": "test"}
-            ))
+            list(
+                api_instance._safe_sse_post_request(
+                    tool_name="test_tool",
+                    url="https://test.com/api",
+                    payload={"query": "test"},
+                )
+            )
 
         mock_handle_error.assert_called_once()
 
 
-@patch('alation_ai_agent_sdk.api.requests.post')
+@patch("alation_ai_agent_sdk.api.requests.post")
 def test_safe_sse_post_request_connect_timeout(mock_post, api_instance):
     """Test handling of connection timeout in SSE POST request."""
     mock_post.side_effect = requests.exceptions.ConnectTimeout("Connection timeout")
 
-    with patch.object(api_instance, '_with_valid_auth'), \
-         patch.object(api_instance, '_get_streaming_request_headers', return_value={"Auth": "token"}), \
-         patch.object(api_instance, '_get_streaming_timeouts', return_value=(60, 300)), \
-         patch.object(api_instance, '_handle_request_error') as mock_handle_error:
-
+    with (
+        patch.object(api_instance, "_with_valid_auth"),
+        patch.object(
+            api_instance,
+            "_get_streaming_request_headers",
+            return_value={"Auth": "token"},
+        ),
+        patch.object(api_instance, "_get_streaming_timeouts", return_value=(60, 300)),
+        patch.object(api_instance, "_handle_request_error") as mock_handle_error,
+    ):
         mock_handle_error.side_effect = AlationAPIError("Connection timeout handled")
 
         with pytest.raises(AlationAPIError):
-            list(api_instance._safe_sse_post_request(
-                tool_name="test_tool",
-                url="https://test.com/api",
-                payload={"query": "test"}
-            ))
+            list(
+                api_instance._safe_sse_post_request(
+                    tool_name="test_tool",
+                    url="https://test.com/api",
+                    payload={"query": "test"},
+                )
+            )
 
         mock_handle_error.assert_called_once()
 
 
-@patch('alation_ai_agent_sdk.api.requests.post')
+@patch("alation_ai_agent_sdk.api.requests.post")
 def test_safe_sse_post_request_general_request_exception(mock_post, api_instance):
     """Test handling of general request exception in SSE POST request."""
     mock_post.side_effect = requests.exceptions.RequestException("General error")
 
-    with patch.object(api_instance, '_with_valid_auth'), \
-         patch.object(api_instance, '_get_streaming_request_headers', return_value={"Auth": "token"}), \
-         patch.object(api_instance, '_get_streaming_timeouts', return_value=(60, 300)), \
-         patch.object(api_instance, '_handle_request_error') as mock_handle_error:
-
+    with (
+        patch.object(api_instance, "_with_valid_auth"),
+        patch.object(
+            api_instance,
+            "_get_streaming_request_headers",
+            return_value={"Auth": "token"},
+        ),
+        patch.object(api_instance, "_get_streaming_timeouts", return_value=(60, 300)),
+        patch.object(api_instance, "_handle_request_error") as mock_handle_error,
+    ):
         mock_handle_error.side_effect = AlationAPIError("General error handled")
 
         with pytest.raises(AlationAPIError):
-            list(api_instance._safe_sse_post_request(
-                tool_name="test_tool",
-                url="https://test.com/api",
-                payload={"query": "test"}
-            ))
+            list(
+                api_instance._safe_sse_post_request(
+                    tool_name="test_tool",
+                    url="https://test.com/api",
+                    payload={"query": "test"},
+                )
+            )
 
         mock_handle_error.assert_called_once()
 
 
 def test_safe_sse_post_request_disallowed_auth_method(api_instance):
     """Test that disallowed auth methods are properly checked."""
-    with patch.object(api_instance, '_with_valid_auth') as mock_auth:
+    with patch.object(api_instance, "_with_valid_auth") as mock_auth:
         mock_auth.side_effect = AlationAPIError("Auth method not allowed")
 
         with pytest.raises(AlationAPIError):
-            list(api_instance._safe_sse_post_request(
-                tool_name="test_tool",
-                url="https://test.com/api",
-                payload={"query": "test"}
-            ))
+            list(
+                api_instance._safe_sse_post_request(
+                    tool_name="test_tool",
+                    url="https://test.com/api",
+                    payload={"query": "test"},
+                )
+            )
 
         # Verify that _with_valid_auth was called with the disallowed methods
         mock_auth.assert_called_once_with(
@@ -796,31 +846,32 @@ def test_safe_sse_post_request_disallowed_auth_method(api_instance):
 
 # --- Tests for _is_likely_json_value ---
 
+
 def test_is_likely_json_value_object_true(api_instance):
     """Test that strings that look like JSON objects return True."""
     assert api_instance._is_likely_json_value('{"key": "value"}') is True
-    assert api_instance._is_likely_json_value('{}') is True
+    assert api_instance._is_likely_json_value("{}") is True
     assert api_instance._is_likely_json_value('{"nested": {"key": "value"}}') is True
 
 
 def test_is_likely_json_value_array_true(api_instance):
     """Test that strings that look like JSON arrays return True."""
-    assert api_instance._is_likely_json_value('[]') is True
-    assert api_instance._is_likely_json_value('[1, 2, 3]') is True
+    assert api_instance._is_likely_json_value("[]") is True
+    assert api_instance._is_likely_json_value("[1, 2, 3]") is True
     assert api_instance._is_likely_json_value('[{"key": "value"}]') is True
 
 
 def test_is_likely_json_value_false_cases(api_instance):
     """Test that non-JSON-like strings return False."""
-    assert api_instance._is_likely_json_value('not json') is False
-    assert api_instance._is_likely_json_value('123') is False
-    assert api_instance._is_likely_json_value('true') is False
-    assert api_instance._is_likely_json_value('null') is False
+    assert api_instance._is_likely_json_value("not json") is False
+    assert api_instance._is_likely_json_value("123") is False
+    assert api_instance._is_likely_json_value("true") is False
+    assert api_instance._is_likely_json_value("null") is False
     assert api_instance._is_likely_json_value('"string"') is False
-    assert api_instance._is_likely_json_value('{not closed') is False
-    assert api_instance._is_likely_json_value('not closed}') is False
-    assert api_instance._is_likely_json_value('[not closed') is False
-    assert api_instance._is_likely_json_value('not closed]') is False
+    assert api_instance._is_likely_json_value("{not closed") is False
+    assert api_instance._is_likely_json_value("not closed}") is False
+    assert api_instance._is_likely_json_value("[not closed") is False
+    assert api_instance._is_likely_json_value("not closed]") is False
 
 
 def test_is_likely_json_value_non_string(api_instance):
@@ -833,6 +884,7 @@ def test_is_likely_json_value_non_string(api_instance):
 
 
 # --- Tests for _decode_json_string ---
+
 
 def test_decode_json_string_valid_object(api_instance):
     """Test decoding valid JSON object strings."""
@@ -874,19 +926,20 @@ def test_decode_json_string_non_string_input(api_instance):
 
 def test_decode_json_string_empty_object_array(api_instance):
     """Test decoding empty JSON objects and arrays."""
-    assert api_instance._decode_json_string('{}') == {}
-    assert api_instance._decode_json_string('[]') == []
+    assert api_instance._decode_json_string("{}") == {}
+    assert api_instance._decode_json_string("[]") == []
 
 
 # --- Tests for _shallow_decode_collection ---
+
 
 def test_shallow_decode_collection_dict_with_json_strings(api_instance):
     """Test shallow decoding of dictionary with JSON string values."""
     input_dict = {
         "regular_key": "regular_value",
         "json_key": '{"nested": "value"}',
-        "array_key": '[1, 2, 3]',
-        "number_key": 42
+        "array_key": "[1, 2, 3]",
+        "number_key": 42,
     }
 
     result = api_instance._shallow_decode_collection(input_dict)
@@ -895,30 +948,18 @@ def test_shallow_decode_collection_dict_with_json_strings(api_instance):
         "regular_key": "regular_value",
         "json_key": {"nested": "value"},
         "array_key": [1, 2, 3],
-        "number_key": 42
+        "number_key": 42,
     }
     assert result == expected
 
 
 def test_shallow_decode_collection_list_with_json_strings(api_instance):
     """Test shallow decoding of list with JSON string values."""
-    input_list = [
-        "regular_string",
-        '{"object": "value"}',
-        '[1, 2, 3]',
-        42,
-        None
-    ]
+    input_list = ["regular_string", '{"object": "value"}', "[1, 2, 3]", 42, None]
 
     result = api_instance._shallow_decode_collection(input_list)
 
-    expected = [
-        "regular_string",
-        {"object": "value"},
-        [1, 2, 3],
-        42,
-        None
-    ]
+    expected = ["regular_string", {"object": "value"}, [1, 2, 3], 42, None]
     assert result == expected
 
 
@@ -940,19 +981,17 @@ def test_shallow_decode_collection_invalid_json_strings(api_instance):
     """Test that invalid JSON strings in collections remain unchanged."""
     input_dict = {
         "invalid_json": '{"invalid": json}',
-        "valid_json": '{"valid": "json"}'
+        "valid_json": '{"valid": "json"}',
     }
 
     result = api_instance._shallow_decode_collection(input_dict)
 
-    expected = {
-        "invalid_json": '{"invalid": json}',
-        "valid_json": {"valid": "json"}
-    }
+    expected = {"invalid_json": '{"invalid": json}', "valid_json": {"valid": "json"}}
     assert result == expected
 
 
 # --- Tests for _decode_nested_json ---
+
 
 def test_decode_nested_json_valid_text_part(api_instance):
     """Test decoding nested JSON with valid text part."""
@@ -961,7 +1000,7 @@ def test_decode_nested_json_valid_text_part(api_instance):
             "parts": [
                 {
                     "part_kind": "text",
-                    "content": '{"data": "test", "nested": {"key": "value"}}'
+                    "content": '{"data": "test", "nested": {"key": "value"}}',
                 }
             ]
         }
@@ -969,9 +1008,7 @@ def test_decode_nested_json_valid_text_part(api_instance):
 
     result = api_instance._decode_nested_json(input_data)
 
-    expected_parts = [
-        {"data": "test", "nested": {"key": "value"}}
-    ]
+    expected_parts = [{"data": "test", "nested": {"key": "value"}}]
     assert result["model_message"]["parts"] == expected_parts
 
 
@@ -982,7 +1019,7 @@ def test_decode_nested_json_with_shallow_decode(api_instance):
             "parts": [
                 {
                     "part_kind": "text",
-                    "content": '{"json_string": "{\\"nested\\": \\"value\\"}", "regular": "data"}'
+                    "content": '{"json_string": "{\\"nested\\": \\"value\\"}", "regular": "data"}',
                 }
             ]
         }
@@ -990,9 +1027,7 @@ def test_decode_nested_json_with_shallow_decode(api_instance):
 
     result = api_instance._decode_nested_json(input_data)
 
-    expected_parts = [
-        {"json_string": {"nested": "value"}, "regular": "data"}
-    ]
+    expected_parts = [{"json_string": {"nested": "value"}, "regular": "data"}]
     assert result["model_message"]["parts"] == expected_parts
 
 
@@ -1001,27 +1036,15 @@ def test_decode_nested_json_non_text_part(api_instance):
     input_data = {
         "model_message": {
             "parts": [
-                {
-                    "part_kind": "image",
-                    "content": "image_data"
-                },
-                {
-                    "part_kind": "text",
-                    "content": '{"test": "data"}'
-                }
+                {"part_kind": "image", "content": "image_data"},
+                {"part_kind": "text", "content": '{"test": "data"}'},
             ]
         }
     }
 
     result = api_instance._decode_nested_json(input_data)
 
-    expected_parts = [
-        {
-            "part_kind": "image",
-            "content": "image_data"
-        },
-        {"test": "data"}
-    ]
+    expected_parts = [{"part_kind": "image", "content": "image_data"}, {"test": "data"}]
     assert result["model_message"]["parts"] == expected_parts
 
 
@@ -1029,24 +1052,14 @@ def test_decode_nested_json_invalid_json_content(api_instance):
     """Test that invalid JSON content leaves the part unchanged."""
     input_data = {
         "model_message": {
-            "parts": [
-                {
-                    "part_kind": "text",
-                    "content": '{"invalid": json}'
-                }
-            ]
+            "parts": [{"part_kind": "text", "content": '{"invalid": json}'}]
         }
     }
 
     result = api_instance._decode_nested_json(input_data)
 
     # Should remain unchanged since JSON is invalid
-    expected_parts = [
-        {
-            "part_kind": "text",
-            "content": '{"invalid": json}'
-        }
-    ]
+    expected_parts = [{"part_kind": "text", "content": '{"invalid": json}'}]
     assert result["model_message"]["parts"] == expected_parts
 
 
@@ -1054,24 +1067,14 @@ def test_decode_nested_json_non_json_content(api_instance):
     """Test that non-JSON content leaves the part unchanged."""
     input_data = {
         "model_message": {
-            "parts": [
-                {
-                    "part_kind": "text",
-                    "content": "regular text content"
-                }
-            ]
+            "parts": [{"part_kind": "text", "content": "regular text content"}]
         }
     }
 
     result = api_instance._decode_nested_json(input_data)
 
     # Should remain unchanged since content is not JSON-like
-    expected_parts = [
-        {
-            "part_kind": "text",
-            "content": "regular text content"
-        }
-    ]
+    expected_parts = [{"part_kind": "text", "content": "regular text content"}]
     assert result["model_message"]["parts"] == expected_parts
 
 
@@ -1084,11 +1087,7 @@ def test_decode_nested_json_no_model_message(api_instance):
 
 def test_decode_nested_json_no_parts(api_instance):
     """Test that model_message without parts is returned unchanged."""
-    input_data = {
-        "model_message": {
-            "other_field": "value"
-        }
-    }
+    input_data = {"model_message": {"other_field": "value"}}
     result = api_instance._decode_nested_json(input_data)
     assert result == input_data
 
@@ -1099,11 +1098,8 @@ def test_decode_nested_json_non_dict_parts(api_instance):
         "model_message": {
             "parts": [
                 "not_a_dict",
-                {
-                    "part_kind": "text",
-                    "content": '{"test": "data"}'
-                },
-                None
+                {"part_kind": "text", "content": '{"test": "data"}'},
+                None,
             ]
         }
     }
@@ -1111,9 +1107,7 @@ def test_decode_nested_json_non_dict_parts(api_instance):
     result = api_instance._decode_nested_json(input_data)
 
     # Non-dict entries should be skipped, only the valid text part should be processed
-    expected_parts = [
-        {"test": "data"}
-    ]
+    expected_parts = [{"test": "data"}]
     assert result["model_message"]["parts"] == expected_parts
 
 
@@ -1124,7 +1118,7 @@ def test_decode_nested_json_non_string_content(api_instance):
             "parts": [
                 {
                     "part_kind": "text",
-                    "content": 123  # Non-string content
+                    "content": 123,  # Non-string content
                 }
             ]
         }
@@ -1132,12 +1126,7 @@ def test_decode_nested_json_non_string_content(api_instance):
 
     result = api_instance._decode_nested_json(input_data)
 
-    expected_parts = [
-        {
-            "part_kind": "text",
-            "content": 123
-        }
-    ]
+    expected_parts = [{"part_kind": "text", "content": 123}]
     assert result["model_message"]["parts"] == expected_parts
 
 
@@ -1148,7 +1137,7 @@ def test_decode_nested_json_array_content(api_instance):
             "parts": [
                 {
                     "part_kind": "text",
-                    "content": '[{"item": "value1"}, {"item": "value2"}]'
+                    "content": '[{"item": "value1"}, {"item": "value2"}]',
                 }
             ]
         }
@@ -1156,7 +1145,5 @@ def test_decode_nested_json_array_content(api_instance):
 
     result = api_instance._decode_nested_json(input_data)
 
-    expected_parts = [
-        [{"item": "value1"}, {"item": "value2"}]
-    ]
+    expected_parts = [[{"item": "value1"}, {"item": "value2"}]]
     assert result["model_message"]["parts"] == expected_parts

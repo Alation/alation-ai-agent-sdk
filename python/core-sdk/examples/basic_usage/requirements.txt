@@ -1,2 +1,2 @@
-alation-ai-agent-sdk>=0.12.0
+alation-ai-agent-sdk>=1.0.0
 requests~=2.32.0

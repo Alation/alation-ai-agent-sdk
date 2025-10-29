@@ -104,9 +104,7 @@ class AlationTokenVerifier(TokenVerifier):
                 return None
 
 
-def get_stdio_auth_params() -> tuple[
-    str, ServiceAccountAuthParams
-]:
+def get_stdio_auth_params() -> tuple[str, ServiceAccountAuthParams]:
     """
     Load authentication parameters from environment variables.
 

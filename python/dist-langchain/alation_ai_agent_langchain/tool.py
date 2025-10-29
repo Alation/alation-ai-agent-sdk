@@ -17,8 +17,14 @@ from langchain.tools import StructuredTool
 def get_alation_context_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     alation_context_tool = sdk.context_tool
 
-    def run_with_signature(question: str, signature: dict[str, Any] | None = None, chat_id: Optional[str] = None):
-        return alation_context_tool.run(question=question, signature=signature, chat_id=chat_id)
+    def run_with_signature(
+        question: str,
+        signature: dict[str, Any] | None = None,
+        chat_id: Optional[str] = None,
+    ):
+        return alation_context_tool.run(
+            question=question, signature=signature, chat_id=chat_id
+        )
 
     return StructuredTool.from_function(
         name=alation_context_tool.name,
@@ -77,8 +83,14 @@ def get_alation_bulk_retrieval_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
 def get_alation_data_products_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     data_products_tool = sdk.data_product_tool
 
-    def run_with_args(product_id: Optional[str] = None, query: Optional[str] = None, chat_id: Optional[str] = None):
-        return data_products_tool.run(product_id=product_id, query=query, chat_id=chat_id)
+    def run_with_args(
+        product_id: Optional[str] = None,
+        query: Optional[str] = None,
+        chat_id: Optional[str] = None,
+    ):
+        return data_products_tool.run(
+            product_id=product_id, query=query, chat_id=chat_id
+        )
 
     return StructuredTool.from_function(
         name=data_products_tool.name,
@@ -237,6 +249,7 @@ def get_data_dictionary_instructions_tool(sdk: AlationAIAgentSDK) -> StructuredT
         args_schema=None,
     )
 
+
 def get_signature_creation_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     signature_creation_tool = sdk.signature_creation_tool
 
@@ -269,7 +282,9 @@ def get_bi_report_search_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     bi_report_search_tool = sdk.bi_report_search_tool
 
     def run_with_args(search_term: str, limit: int = 20, chat_id: Optional[str] = None):
-        return bi_report_search_tool.run(search_term=search_term, limit=limit, chat_id=chat_id)
+        return bi_report_search_tool.run(
+            search_term=search_term, limit=limit, chat_id=chat_id
+        )
 
     return StructuredTool.from_function(
         name=bi_report_search_tool.name,
@@ -338,8 +353,12 @@ def get_chart_create_agent_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
 def get_custom_agent_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     custom_agent_tool = sdk.custom_agent_tool
 
-    def run_with_args(agent_config_id: str, payload: dict[str, Any], chat_id: Optional[str] = None):
-        return custom_agent_tool.run(agent_config_id=agent_config_id, payload=payload, chat_id=chat_id)
+    def run_with_args(
+        agent_config_id: str, payload: dict[str, Any], chat_id: Optional[str] = None
+    ):
+        return custom_agent_tool.run(
+            agent_config_id=agent_config_id, payload=payload, chat_id=chat_id
+        )
 
     return StructuredTool.from_function(
         name=custom_agent_tool.name,
@@ -352,8 +371,18 @@ def get_custom_agent_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
 def get_data_product_query_agent_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     data_product_query_agent_tool = sdk.data_product_query_agent_tool
 
-    def run_with_args(message: str, data_product_id: str, auth_id: Optional[str] = None, chat_id: Optional[str] = None):
-        return data_product_query_agent_tool.run(message=message, data_product_id=data_product_id, auth_id=auth_id, chat_id=chat_id)
+    def run_with_args(
+        message: str,
+        data_product_id: str,
+        auth_id: Optional[str] = None,
+        chat_id: Optional[str] = None,
+    ):
+        return data_product_query_agent_tool.run(
+            message=message,
+            data_product_id=data_product_id,
+            auth_id=auth_id,
+            chat_id=chat_id,
+        )
 
     return StructuredTool.from_function(
         name=data_product_query_agent_tool.name,
@@ -410,8 +439,18 @@ def get_generate_chart_from_sql_and_code_tool(sdk: AlationAIAgentSDK) -> Structu
 def get_data_schema_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     data_schema_tool = sdk.get_data_schema_tool
 
-    def run_with_args(data_product_id: str, pre_exec_sql: Optional[str] = None, auth_id: Optional[str] = None, chat_id: Optional[str] = None):
-        return data_schema_tool.run(data_product_id=data_product_id, pre_exec_sql=pre_exec_sql, auth_id=auth_id, chat_id=chat_id)
+    def run_with_args(
+        data_product_id: str,
+        pre_exec_sql: Optional[str] = None,
+        auth_id: Optional[str] = None,
+        chat_id: Optional[str] = None,
+    ):
+        return data_schema_tool.run(
+            data_product_id=data_product_id,
+            pre_exec_sql=pre_exec_sql,
+            auth_id=auth_id,
+            chat_id=chat_id,
+        )
 
     return StructuredTool.from_function(
         name=data_schema_tool.name,
@@ -438,8 +477,18 @@ def get_data_sources_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
 def get_list_data_products_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     list_data_products_tool = sdk.list_data_products_tool
 
-    def run_with_args(search_term: str, limit: int = 5, marketplace_id: Optional[str] = None, chat_id: Optional[str] = None):
-        return list_data_products_tool.run(search_term=search_term, limit=limit, marketplace_id=marketplace_id, chat_id=chat_id)
+    def run_with_args(
+        search_term: str,
+        limit: int = 5,
+        marketplace_id: Optional[str] = None,
+        chat_id: Optional[str] = None,
+    ):
+        return list_data_products_tool.run(
+            search_term=search_term,
+            limit=limit,
+            marketplace_id=marketplace_id,
+            chat_id=chat_id,
+        )
 
     return StructuredTool.from_function(
         name=list_data_products_tool.name,
@@ -466,8 +515,18 @@ def get_query_flow_agent_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
 def get_search_catalog_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     search_catalog_tool = sdk.search_catalog_tool
 
-    def run_with_args(search_term: str, object_types: Optional[list[str]] = None, filters: Optional[dict[str, Any]] = None, chat_id: Optional[str] = None):
-        return search_catalog_tool.run(search_term=search_term, object_types=object_types, filters=filters, chat_id=chat_id)
+    def run_with_args(
+        search_term: str,
+        object_types: Optional[list[str]] = None,
+        filters: Optional[dict[str, Any]] = None,
+        chat_id: Optional[str] = None,
+    ):
+        return search_catalog_tool.run(
+            search_term=search_term,
+            object_types=object_types,
+            filters=filters,
+            chat_id=chat_id,
+        )
 
     return StructuredTool.from_function(
         name=search_catalog_tool.name,
@@ -481,7 +540,9 @@ def get_search_filter_fields_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     search_filter_fields_tool = sdk.get_search_filter_fields_tool
 
     def run_with_args(search_term: str, limit: int = 10, chat_id: Optional[str] = None):
-        return search_filter_fields_tool.run(search_term=search_term, limit=limit, chat_id=chat_id)
+        return search_filter_fields_tool.run(
+            search_term=search_term, limit=limit, chat_id=chat_id
+        )
 
     return StructuredTool.from_function(
         name=search_filter_fields_tool.name,
@@ -494,8 +555,12 @@ def get_search_filter_fields_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
 def get_search_filter_values_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     search_filter_values_tool = sdk.get_search_filter_values_tool
 
-    def run_with_args(field_id: int, search_term: str, limit: int = 10, chat_id: Optional[str] = None):
-        return search_filter_values_tool.run(field_id=field_id, search_term=search_term, limit=limit, chat_id=chat_id)
+    def run_with_args(
+        field_id: int, search_term: str, limit: int = 10, chat_id: Optional[str] = None
+    ):
+        return search_filter_values_tool.run(
+            field_id=field_id, search_term=search_term, limit=limit, chat_id=chat_id
+        )
 
     return StructuredTool.from_function(
         name=search_filter_values_tool.name,

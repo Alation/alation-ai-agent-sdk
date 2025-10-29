@@ -16,7 +16,7 @@ def analyze_catalog_question_tool(mock_api):
 
 
 def test_analyze_catalog_question_tool_initialization(
-        analyze_catalog_question_tool, mock_api
+    analyze_catalog_question_tool, mock_api
 ):
     """Test that the AnalyzeCatalogQuestionTool initializes correctly."""
     assert analyze_catalog_question_tool.name == "analyze_catalog_question"
@@ -25,7 +25,7 @@ def test_analyze_catalog_question_tool_initialization(
 
 
 def test_analyze_catalog_question_tool_run_success(
-        analyze_catalog_question_tool, mock_api
+    analyze_catalog_question_tool, mock_api
 ):
     """Test successful workflow generation."""
     question = "Find sales tables in marketing domain"
@@ -51,8 +51,7 @@ Provides step-by-step guidance on handling complex data catalog queries.
 
     # Verify API was called correctly
     mock_api.analyze_catalog_question_stream.assert_called_once_with(
-        question=question,
-        chat_id=None
+        question=question, chat_id=None
     )
 
     # Verify result is a string

@@ -17,18 +17,14 @@ def signature_creation_tool(mock_api):
     return SignatureCreationTool(mock_api)
 
 
-def test_signature_creation_tool_initialization(
-        signature_creation_tool, mock_api
-):
+def test_signature_creation_tool_initialization(signature_creation_tool, mock_api):
     """Test that the SignatureCreationTool initializes correctly."""
     assert signature_creation_tool.name == "get_signature_creation_instructions"
     assert "signature" in signature_creation_tool.description.lower()
     assert signature_creation_tool.api == mock_api
 
 
-def test_signature_creation_tool_run_success(
-        signature_creation_tool, mock_api
-):
+def test_signature_creation_tool_run_success(signature_creation_tool, mock_api):
     """Test successful instruction generation."""
 
     # Mock the expected response (comprehensive guide with detailed content)
@@ -127,8 +123,3 @@ def test_signature_creation_tool_run_success(
     assert "supported_filters_by_object_type" in instructions
     assert "available_fields" in instructions
     assert "filter_usage_guide" in instructions
-
-
-
-
-

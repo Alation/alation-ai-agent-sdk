@@ -87,6 +87,7 @@ def test_bulk_retrieval_tool_run_success(bulk_retrieval_tool, mock_api):
             }
         ]
     }
+
     # Mock the streaming method to return a generator
     def mock_generator():
         yield mock_response
@@ -96,7 +97,6 @@ def test_bulk_retrieval_tool_run_success(bulk_retrieval_tool, mock_api):
     signature = {
         "table": {"fields_required": ["name", "description", "url"], "limit": 1}
     }
-
 
     result = bulk_retrieval_tool.run(signature=signature)
 
@@ -192,11 +192,12 @@ def test_bulk_retrieval_tool_run_usage_quota_warning(
 
     # Mock SSE response
     import json
+
     sse_data = f"data: {json.dumps(mock_response_data)}\n"
     mock_response = Mock()
     mock_response.status_code = 200
     mock_response.headers = entitlement_headers
-    mock_response.iter_lines.return_value = [sse_data.encode('utf-8')]
+    mock_response.iter_lines.return_value = [sse_data.encode("utf-8")]
     mock_response.raise_for_status.return_value = None
 
     # Mock the context manager behavior for requests.post
@@ -212,8 +213,11 @@ def test_bulk_retrieval_tool_run_usage_quota_warning(
     assert mock_requests_post.call_count >= 1
 
     # Verify the main API call was made correctly
-    api_calls = [call for call in mock_requests_post.call_args_list
-                 if 'bulk_retrieval_tool/stream' in str(call)]
+    api_calls = [
+        call
+        for call in mock_requests_post.call_args_list
+        if "bulk_retrieval_tool/stream" in str(call)
+    ]
     assert len(api_calls) == 1
 
     # Verify the response data
@@ -246,11 +250,12 @@ def test_bulk_retrieval_tool_run_no_entitlement_warning(
 
     # Mock SSE response
     import json
+
     sse_data = f"data: {json.dumps(mock_response_data)}\n"
     mock_response = Mock()
     mock_response.status_code = 200
     mock_response.headers = entitlement_headers
-    mock_response.iter_lines.return_value = [sse_data.encode('utf-8')]
+    mock_response.iter_lines.return_value = [sse_data.encode("utf-8")]
     mock_response.raise_for_status.return_value = None
 
     # Mock the context manager behavior for requests.post
@@ -266,8 +271,11 @@ def test_bulk_retrieval_tool_run_no_entitlement_warning(
     assert mock_requests_post.call_count >= 1
 
     # Verify the main API call was made correctly
-    api_calls = [call for call in mock_requests_post.call_args_list
-                 if 'bulk_retrieval_tool/stream' in str(call)]
+    api_calls = [
+        call
+        for call in mock_requests_post.call_args_list
+        if "bulk_retrieval_tool/stream" in str(call)
+    ]
     assert len(api_calls) == 1
 
     # Verify the response data
@@ -289,6 +297,7 @@ def test_bulk_retrieval_tool_with_429_quota_reached(
 
     # Create mock response with 429 status that raises HTTPError
     import requests
+
     mock_response = Mock()
     mock_response.status_code = 429
     mock_response.json.return_value = mock_response_data
@@ -313,8 +322,11 @@ def test_bulk_retrieval_tool_with_429_quota_reached(
     assert mock_requests_post.call_count >= 1
 
     # Verify the main API call was made correctly
-    api_calls = [call for call in mock_requests_post.call_args_list
-                 if 'bulk_retrieval_tool/stream' in str(call)]
+    api_calls = [
+        call
+        for call in mock_requests_post.call_args_list
+        if "bulk_retrieval_tool/stream" in str(call)
+    ]
     assert len(api_calls) == 1
 
     # Verify that the error was handled by _handle_request_error and returned as an error dict

@@ -767,9 +767,7 @@ class AlationAPI:
         payload: Dict[str, Any],
         timeouts: Optional[Tuple[Union[float, int], Union[float, int]]] = None,
     ) -> Generator[Dict[str, Any]]:
-        self._with_valid_auth(
-            disallowed_methods=["user_account", AUTH_METHOD_SESSION]
-        )
+        self._with_valid_auth(disallowed_methods=["user_account", AUTH_METHOD_SESSION])
 
         headers = self._get_streaming_request_headers()
         if timeouts is None:
@@ -789,9 +787,7 @@ class AlationAPI:
                     logger.warning(
                         f"At or nearing usage limits: {json.dumps(response_meta)}"
                     )
-                yield from self._sse_stream_or_last_event(
-                    response
-                )
+                yield from self._sse_stream_or_last_event(response)
         except requests.exceptions.ReadTimeout as e:
             logger.error(f"Read timed out while using {tool_name}: {e}")
             self._handle_request_error(
@@ -1289,12 +1285,17 @@ class AlationAPI:
             )
 
     def search_bi_reports_stream(
-        self, search_term: str, limit: int = 20, chat_id: Optional[str] = None,
+        self,
+        search_term: str,
+        limit: int = 20,
+        chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any]]:
         """
         Search for BI report objects in the Alation catalog.
         """
-        url = f"{self.base_url}/ai/api/v1/chats/tool/default/bi_report_search_tool/stream"
+        url = (
+            f"{self.base_url}/ai/api/v1/chats/tool/default/bi_report_search_tool/stream"
+        )
         if chat_id is not None:
             url += f"?chat_id={chat_id}"
 
@@ -1309,7 +1310,10 @@ class AlationAPI:
         )
 
     def alation_context_stream(
-        self, question: str, signature: Optional[Dict[str, Any]] = None, chat_id: Optional[str] = None,
+        self,
+        question: str,
+        signature: Optional[Dict[str, Any]] = None,
+        chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any]]:
         """
         Retrieve contextual information from the Alation catalog using alation_context_tool.
@@ -1317,7 +1321,9 @@ class AlationAPI:
         payload = {"question": question}
         if signature is not None:
             payload["signature"] = signature
-        url = f"{self.base_url}/ai/api/v1/chats/tool/default/alation_context_tool/stream"
+        url = (
+            f"{self.base_url}/ai/api/v1/chats/tool/default/alation_context_tool/stream"
+        )
         if chat_id is not None:
             url += f"?chat_id={chat_id}"
 
@@ -1329,7 +1335,9 @@ class AlationAPI:
         )
 
     def analyze_catalog_question_stream(
-        self, question: str, chat_id: Optional[str] = None,
+        self,
+        question: str,
+        chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any]]:
         """
         Analyze catalog questions and return workflow guidance.
@@ -1345,7 +1353,9 @@ class AlationAPI:
         )
 
     def bulk_retrieval_stream(
-        self, signature: Dict[str, Any], chat_id: Optional[str] = None,
+        self,
+        signature: Dict[str, Any],
+        chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any]]:
         """
         Retrieve bulk objects from the Alation catalog using bulk_retrieval_tool.
@@ -1361,7 +1371,8 @@ class AlationAPI:
         )
 
     def get_custom_field_definitions_stream(
-        self, chat_id: Optional[str] = None,
+        self,
+        chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any]]:
         """
         Retrieve all custom field definitions from the Alation instance.
@@ -1376,7 +1387,9 @@ class AlationAPI:
             timeouts=None,
         )
 
-    def get_signature_creation_instructions_stream(self, chat_id: Optional[str] = None) -> Generator[Dict[str, Any]]:
+    def get_signature_creation_instructions_stream(
+        self, chat_id: Optional[str] = None
+    ) -> Generator[Dict[str, Any]]:
         """
         Returns comprehensive instructions for creating the signature parameter.
         """
@@ -1391,7 +1404,9 @@ class AlationAPI:
         )
 
     def bi_report_agent_stream(
-        self, message: str, chat_id: Optional[str] = None,
+        self,
+        message: str,
+        chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any]]:
         """
         BI Report Agent for searching and analyzing BI report objects.
@@ -1407,7 +1422,9 @@ class AlationAPI:
         )
 
     def catalog_context_search_agent_stream(
-        self, message: str, chat_id: Optional[str] = None,
+        self,
+        message: str,
+        chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any]]:
         """
         Catalog Context Search Agent for searching catalog objects with context.
@@ -1423,12 +1440,16 @@ class AlationAPI:
         )
 
     def catalog_search_agent_stream(
-        self, message: str, chat_id: Optional[str] = None,
+        self,
+        message: str,
+        chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any]]:
         """
         Catalog Search Agent for general catalog search operations.
         """
-        url = f"{self.base_url}/ai/api/v1/chats/agent/default/catalog_search_agent/stream"
+        url = (
+            f"{self.base_url}/ai/api/v1/chats/agent/default/catalog_search_agent/stream"
+        )
         if chat_id is not None:
             url += f"?chat_id={chat_id}"
         yield from self._safe_sse_post_request(
@@ -1439,7 +1460,9 @@ class AlationAPI:
         )
 
     def chart_create_agent_stream(
-        self, message: str, chat_id: Optional[str] = None,
+        self,
+        message: str,
+        chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any]]:
         """
         Chart Create Agent for creating charts and visualizations.
@@ -1455,7 +1478,11 @@ class AlationAPI:
         )
 
     def data_product_query_agent_stream(
-        self, message: str, data_product_id: str, auth_id: Optional[str] = None, chat_id: Optional[str] = None,
+        self,
+        message: str,
+        data_product_id: str,
+        auth_id: Optional[str] = None,
+        chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any]]:
         """
         Data Product Query Agent for querying data products.
@@ -1480,7 +1507,9 @@ class AlationAPI:
         """
         Deep Research Agent for comprehensive research tasks.
         """
-        url = f"{self.base_url}/ai/api/v1/chats/agent/default/deep_research_agent/stream"
+        url = (
+            f"{self.base_url}/ai/api/v1/chats/agent/default/deep_research_agent/stream"
+        )
         if chat_id is not None:
             url += f"?chat_id={chat_id}"
         yield from self._safe_sse_post_request(
@@ -1491,7 +1520,9 @@ class AlationAPI:
         )
 
     def query_flow_agent_stream(
-        self, message: str, chat_id: Optional[str] = None,
+        self,
+        message: str,
+        chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any]]:
         """
         Query Flow Agent for SQL query workflow management.
@@ -1507,7 +1538,9 @@ class AlationAPI:
         )
 
     def sql_query_agent_stream(
-        self, message: str, chat_id: Optional[str] = None,
+        self,
+        message: str,
+        chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any]]:
         """
         SQL Query Agent for SQL query generation and analysis.
@@ -1523,9 +1556,13 @@ class AlationAPI:
         )
 
     def sql_execution_tool_stream(
-        self, data_product_id: str, sql: str, result_table_name: str,
-        pre_exec_sql: Optional[str] = None, auth_id: Optional[str] = None,
-        chat_id: Optional[str] = None
+        self,
+        data_product_id: str,
+        sql: str,
+        result_table_name: str,
+        pre_exec_sql: Optional[str] = None,
+        auth_id: Optional[str] = None,
+        chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any]]:
         """
         Execute SQL queries within a data product context.
@@ -1551,9 +1588,14 @@ class AlationAPI:
         )
 
     def generate_chart_from_sql_and_code_tool_stream(
-        self, data_product_id: str, sql: str, chart_code_snippet: str, image_title: str,
-        pre_exec_sql: Optional[str] = None, auth_id: Optional[str] = None,
-        chat_id: Optional[str] = None
+        self,
+        data_product_id: str,
+        sql: str,
+        chart_code_snippet: str,
+        image_title: str,
+        pre_exec_sql: Optional[str] = None,
+        auth_id: Optional[str] = None,
+        chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any]]:
         """
         Generate charts from SQL and code snippets within a data product context.
@@ -1580,8 +1622,11 @@ class AlationAPI:
         )
 
     def get_data_schema_tool_stream(
-        self, data_product_id: str, pre_exec_sql: Optional[str] = None,
-        auth_id: Optional[str] = None, chat_id: Optional[str] = None,
+        self,
+        data_product_id: str,
+        pre_exec_sql: Optional[str] = None,
+        auth_id: Optional[str] = None,
+        chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any]]:
         """
         Retrieve data schema information for a data product.
@@ -1592,7 +1637,9 @@ class AlationAPI:
         if auth_id is not None:
             payload["auth_id"] = auth_id
 
-        url = f"{self.base_url}/ai/api/v1/chats/tool/default/get_data_schema_tool/stream"
+        url = (
+            f"{self.base_url}/ai/api/v1/chats/tool/default/get_data_schema_tool/stream"
+        )
         if chat_id is not None:
             url += f"?chat_id={chat_id}"
         yield from self._safe_sse_post_request(
@@ -1603,14 +1650,18 @@ class AlationAPI:
         )
 
     def get_data_sources_tool_stream(
-        self, limit: int = 100, chat_id: Optional[str] = None,
+        self,
+        limit: int = 100,
+        chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any]]:
         """
         Retrieve available data sources from the catalog.
         """
         payload = {"limit": limit}
 
-        url = f"{self.base_url}/ai/api/v1/chats/tool/default/get_data_sources_tool/stream"
+        url = (
+            f"{self.base_url}/ai/api/v1/chats/tool/default/get_data_sources_tool/stream"
+        )
         if chat_id is not None:
             url += f"?chat_id={chat_id}"
         yield from self._safe_sse_post_request(
@@ -1621,7 +1672,11 @@ class AlationAPI:
         )
 
     def list_data_products_tool_stream(
-        self, search_term: str, limit: int = 5, marketplace_id: Optional[str] = None, chat_id: Optional[str] = None,
+        self,
+        search_term: str,
+        limit: int = 5,
+        marketplace_id: Optional[str] = None,
+        chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any]]:
         """
         List data products based on search criteria.
@@ -1640,8 +1695,11 @@ class AlationAPI:
         )
 
     def search_catalog_tool_stream(
-        self, search_term: str, object_types: Optional[List[str]] = None,
-        filters: Optional[Dict[str, Any]] = None, chat_id: Optional[str] = None,
+        self,
+        search_term: str,
+        object_types: Optional[List[str]] = None,
+        filters: Optional[Dict[str, Any]] = None,
+        chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any]]:
         """
         Search the catalog for objects matching the specified criteria.
@@ -1662,7 +1720,10 @@ class AlationAPI:
         )
 
     def get_search_filter_fields_tool_stream(
-        self, search_term: str, limit: int = 10, chat_id: Optional[str] = None,
+        self,
+        search_term: str,
+        limit: int = 10,
+        chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any]]:
         """
         Get available search filter fields for catalog search.
@@ -1679,7 +1740,11 @@ class AlationAPI:
         )
 
     def get_search_filter_values_tool_stream(
-        self, field_id: int, search_term: str, limit: int = 10, chat_id: Optional[str] = None,
+        self,
+        field_id: int,
+        search_term: str,
+        limit: int = 10,
+        chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any]]:
         """
         Get available values for a specific search filter field.
@@ -1696,7 +1761,10 @@ class AlationAPI:
         )
 
     def custom_agent_stream(
-            self, agent_config_id: str, payload: Dict[str, Any], chat_id: Optional[str] = None,
+        self,
+        agent_config_id: str,
+        payload: Dict[str, Any],
+        chat_id: Optional[str] = None,
     ) -> Generator[Dict[str, Any]]:
         """
         Stream responses from a custom agent.

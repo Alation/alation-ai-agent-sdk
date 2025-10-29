@@ -255,7 +255,9 @@ def test_alation_context_tool_logic(
 
     result = tool_func(question=question_input)
 
-    mock_sdk_instance.get_context.assert_called_once_with(question_input, None, chat_id=None)
+    mock_sdk_instance.get_context.assert_called_once_with(
+        question_input, None, chat_id=None
+    )
     assert result == expected_sdk_result
 
     mock_sdk_instance.get_context.reset_mock()
@@ -316,7 +318,16 @@ def test_create_server_service_account(
 @patch("alation_ai_agent_mcp.server.create_server")
 def test_run_server_cli_no_arguments(mock_create_server):
     with patch("alation_ai_agent_mcp.server.parse_arguments") as mock_parse_args:
-        mock_parse_args.return_value = ("stdio", None, None, None, None, None, None, None)
+        mock_parse_args.return_value = (
+            "stdio",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
 
         server.run_server()
 

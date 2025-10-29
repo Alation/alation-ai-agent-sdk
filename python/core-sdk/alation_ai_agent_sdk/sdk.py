@@ -58,6 +58,7 @@ from .lineage import (
     LineageBatchSizeType,
 )
 
+
 class AlationTools:
     # Tools
     AGGREGATED_CONTEXT = "aggregated_context"
@@ -72,7 +73,7 @@ class AlationTools:
     GENERATE_DATA_PRODUCT = "generate_data_product"
     GET_CUSTOM_FIELDS_DEFINITIONS = "get_custom_fields_definitions"
     GET_DATA_DICTIONARY_INSTRUCTIONS = "get_data_dictionary_instructions"
-    GET_DATA_PRODUCT = "data_product" # TODO: jags thinks this may be broken
+    GET_DATA_PRODUCT = "data_product"  # TODO: jags thinks this may be broken
     GET_DATA_SCHEMA = "get_data_schema"
     GET_DATA_SOURCES = "get_data_sources"
     GET_SEARCH_FILTER_FIELDS = "get_search_filter_fields"
@@ -91,6 +92,8 @@ class AlationTools:
     DEEP_RESEARCH_AGENT = "deep_research_agent"
     QUERY_FLOW_AGENT = "query_flow_agent"
     SQL_QUERY_AGENT = "sql_query_agent"
+
+
 class AgentSDKOptions:
     def __init__(
         self,
@@ -104,6 +107,7 @@ class AgentSDKOptions:
         self.decode_nested_json = decode_nested_json
         # TBD: decide on stripping extra metadata from streamed response for non-streaming cases?
         # TBD: another parameter for whether to allow tools that output html
+
 
 class AlationAIAgentSDK:
     """
@@ -175,7 +179,9 @@ class AlationAIAgentSDK:
         self.query_flow_agent_tool = QueryFlowAgentTool(self.api)
         self.sql_query_agent_tool = SqlQueryAgentTool(self.api)
         self.sql_execution_tool = SqlExecutionTool(self.api)
-        self.generate_chart_from_sql_and_code_tool = GenerateChartFromSqlAndCodeTool(self.api)
+        self.generate_chart_from_sql_and_code_tool = GenerateChartFromSqlAndCodeTool(
+            self.api
+        )
         self.get_data_schema_tool = GetDataSchemaTool(self.api)
         self.get_data_sources_tool = GetDataSourcesTool(self.api)
         self.list_data_products_tool = ListDataProductsTool(self.api)
@@ -183,7 +189,6 @@ class AlationAIAgentSDK:
         self.get_search_filter_fields_tool = GetSearchFilterFieldsTool(self.api)
         self.get_search_filter_values_tool = GetSearchFilterValuesTool(self.api)
         self.custom_agent_tool = CustomAgentTool(self.api)
-
 
     BETA_TOOLS = {AlationTools.LINEAGE}
 
@@ -512,7 +517,9 @@ class AlationAIAgentSDK:
         """
         return self.chart_create_agent_tool.run(message=message)
 
-    def data_product_query_agent(self, message: str, data_product_id: str, auth_id: Optional[str] = None) -> Dict[str, Any]:
+    def data_product_query_agent(
+        self, message: str, data_product_id: str, auth_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Data Product Query Agent for querying data products.
 
@@ -524,7 +531,9 @@ class AlationAIAgentSDK:
         Returns:
             Dict[str, Any]: Query results, analysis, or guidance specific to the requested data product
         """
-        return self.data_product_query_agent_tool.run(message=message, data_product_id=data_product_id, auth_id=auth_id)
+        return self.data_product_query_agent_tool.run(
+            message=message, data_product_id=data_product_id, auth_id=auth_id
+        )
 
     def deep_research_agent(self, message: str) -> Dict[str, Any]:
         """
@@ -562,8 +571,14 @@ class AlationAIAgentSDK:
         """
         return self.sql_query_agent_tool.run(message=message)
 
-    def execute_sql(self, data_product_id: str, sql: str, result_table_name: str,
-                   pre_exec_sql: Optional[str] = None, auth_id: Optional[str] = None) -> Dict[str, Any]:
+    def execute_sql(
+        self,
+        data_product_id: str,
+        sql: str,
+        result_table_name: str,
+        pre_exec_sql: Optional[str] = None,
+        auth_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """
         Execute SQL queries within a data product context.
 
@@ -582,12 +597,18 @@ class AlationAIAgentSDK:
             sql=sql,
             result_table_name=result_table_name,
             pre_exec_sql=pre_exec_sql,
-            auth_id=auth_id
+            auth_id=auth_id,
         )
 
-    def generate_chart_from_sql_and_code(self, data_product_id: str, sql: str, chart_code_snippet: str,
-                                       image_title: str, pre_exec_sql: Optional[str] = None,
-                                       auth_id: Optional[str] = None) -> Dict[str, Any]:
+    def generate_chart_from_sql_and_code(
+        self,
+        data_product_id: str,
+        sql: str,
+        chart_code_snippet: str,
+        image_title: str,
+        pre_exec_sql: Optional[str] = None,
+        auth_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """
         Generate charts from SQL queries and code snippets within a data product context.
 
@@ -608,11 +629,15 @@ class AlationAIAgentSDK:
             chart_code_snippet=chart_code_snippet,
             image_title=image_title,
             pre_exec_sql=pre_exec_sql,
-            auth_id=auth_id
+            auth_id=auth_id,
         )
 
-    def get_data_schema(self, data_product_id: str, pre_exec_sql: Optional[str] = None,
-                       auth_id: Optional[str] = None) -> Dict[str, Any]:
+    def get_data_schema(
+        self,
+        data_product_id: str,
+        pre_exec_sql: Optional[str] = None,
+        auth_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """
         Retrieve data schema information for a data product.
 
@@ -625,9 +650,7 @@ class AlationAIAgentSDK:
             Dict[str, Any]: Data schema information including table structures and metadata
         """
         return self.get_data_schema_tool.run(
-            data_product_id=data_product_id,
-            pre_exec_sql=pre_exec_sql,
-            auth_id=auth_id
+            data_product_id=data_product_id, pre_exec_sql=pre_exec_sql, auth_id=auth_id
         )
 
     def get_data_sources(self, limit: int = 100) -> Dict[str, Any]:
@@ -642,8 +665,9 @@ class AlationAIAgentSDK:
         """
         return self.get_data_sources_tool.run(limit=limit)
 
-    def list_data_products(self, search_term: str, limit: int = 5,
-                          marketplace_id: Optional[str] = None) -> Dict[str, Any]:
+    def list_data_products(
+        self, search_term: str, limit: int = 5, marketplace_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         List data products based on search criteria.
 
@@ -656,13 +680,15 @@ class AlationAIAgentSDK:
             Dict[str, Any]: List of data products matching the search criteria
         """
         return self.list_data_products_tool.run(
-            search_term=search_term,
-            limit=limit,
-            marketplace_id=marketplace_id
+            search_term=search_term, limit=limit, marketplace_id=marketplace_id
         )
 
-    def search_catalog(self, search_term: str, object_types: Optional[List[str]] = None,
-                      filters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def search_catalog(
+        self,
+        search_term: str,
+        object_types: Optional[List[str]] = None,
+        filters: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """
         Search the catalog for objects matching specified criteria.
 
@@ -675,12 +701,12 @@ class AlationAIAgentSDK:
             Dict[str, Any]: Search results matching the specified criteria with object metadata
         """
         return self.search_catalog_tool.run(
-            search_term=search_term,
-            object_types=object_types,
-            filters=filters
+            search_term=search_term, object_types=object_types, filters=filters
         )
 
-    def get_search_filter_fields(self, search_term: str, limit: int = 10) -> Dict[str, Any]:
+    def get_search_filter_fields(
+        self, search_term: str, limit: int = 10
+    ) -> Dict[str, Any]:
         """
         Get available search filter fields for catalog search.
 
@@ -691,9 +717,13 @@ class AlationAIAgentSDK:
         Returns:
             Dict[str, Any]: List of available search filter fields with their metadata
         """
-        return self.get_search_filter_fields_tool.run(search_term=search_term, limit=limit)
+        return self.get_search_filter_fields_tool.run(
+            search_term=search_term, limit=limit
+        )
 
-    def get_search_filter_values(self, field_id: int, search_term: str, limit: int = 10) -> Dict[str, Any]:
+    def get_search_filter_values(
+        self, field_id: int, search_term: str, limit: int = 10
+    ) -> Dict[str, Any]:
         """
         Get available values for a specific search filter field.
 
@@ -706,12 +736,12 @@ class AlationAIAgentSDK:
             Dict[str, Any]: List of available values for the specified filter field
         """
         return self.get_search_filter_values_tool.run(
-            field_id=field_id,
-            search_term=search_term,
-            limit=limit
+            field_id=field_id, search_term=search_term, limit=limit
         )
 
-    def execute_custom_agent(self, agent_config_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    def execute_custom_agent(
+        self, agent_config_id: str, payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Execute a custom agent configuration by its UUID.
 
@@ -729,7 +759,9 @@ class AlationAIAgentSDK:
                 payload={"message": "Analyze this data"}
             )
         """
-        return self.custom_agent_tool.run(agent_config_id=agent_config_id, payload=payload)
+        return self.custom_agent_tool.run(
+            agent_config_id=agent_config_id, payload=payload
+        )
 
     def get_tools(self):
         from .utils import is_tool_enabled
@@ -743,27 +775,45 @@ class AlationAIAgentSDK:
         ):
             tools.append(self.context_tool)
         if is_tool_enabled(
-            AlationTools.BULK_RETRIEVAL, self.enabled_tools, self.disabled_tools, self.enabled_beta_tools
+            AlationTools.BULK_RETRIEVAL,
+            self.enabled_tools,
+            self.disabled_tools,
+            self.enabled_beta_tools,
         ):
             tools.append(self.bulk_retrieval_tool)
         if is_tool_enabled(
-            AlationTools.GET_DATA_PRODUCT, self.enabled_tools, self.disabled_tools, self.enabled_beta_tools
+            AlationTools.GET_DATA_PRODUCT,
+            self.enabled_tools,
+            self.disabled_tools,
+            self.enabled_beta_tools,
         ):
             tools.append(self.data_product_tool)
         if is_tool_enabled(
-            AlationTools.UPDATE_METADATA, self.enabled_tools, self.disabled_tools, self.enabled_beta_tools
+            AlationTools.UPDATE_METADATA,
+            self.enabled_tools,
+            self.disabled_tools,
+            self.enabled_beta_tools,
         ):
             tools.append(self.update_catalog_asset_metadata_tool)
         if is_tool_enabled(
-            AlationTools.CHECK_JOB_STATUS, self.enabled_tools, self.disabled_tools, self.enabled_beta_tools
+            AlationTools.CHECK_JOB_STATUS,
+            self.enabled_tools,
+            self.disabled_tools,
+            self.enabled_beta_tools,
         ):
             tools.append(self.check_job_status_tool)
         if is_tool_enabled(
-            AlationTools.LINEAGE, self.enabled_tools, self.disabled_tools, self.enabled_beta_tools
+            AlationTools.LINEAGE,
+            self.enabled_tools,
+            self.disabled_tools,
+            self.enabled_beta_tools,
         ):
             tools.append(self.lineage_tool)
         if is_tool_enabled(
-            AlationTools.DATA_QUALITY, self.enabled_tools, self.disabled_tools, self.enabled_beta_tools
+            AlationTools.DATA_QUALITY,
+            self.enabled_tools,
+            self.disabled_tools,
+            self.enabled_beta_tools,
         ):
             tools.append(self.check_data_quality_tool)
         if is_tool_enabled(
