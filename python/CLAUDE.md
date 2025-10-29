@@ -121,7 +121,7 @@ For MCP HTTP mode, authentication is handled per-request via OAuth bearer tokens
 
 ## Important Notes
 
-- All three packages maintain synchronized version numbers (currently 0.12.0)
+- All three packages maintain synchronized version numbers (currently 1.0.0rc1)
 - The core SDK is the foundation; LangChain and MCP packages depend on it
 - When making changes, ensure version bumps are coordinated across packages that are affected
 - The MCP server can run in two modes: STDIO (for direct MCP clients) and HTTP (for web integrations)

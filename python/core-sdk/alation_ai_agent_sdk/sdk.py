@@ -100,7 +100,7 @@ class AgentSDKOptions:
         skip_instance_info: Optional[bool] = False,
         enable_streaming: Optional[bool] = False,
         decode_nested_json: Optional[bool] = True,
-        # TBD: option for only preserver content from part instead of whole response
+        # TBD: option for only preserving content from part instead of whole response
     ):
         self.skip_instance_info = skip_instance_info
         self.enable_streaming = enable_streaming
