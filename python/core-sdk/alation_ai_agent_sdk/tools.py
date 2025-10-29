@@ -12,6 +12,7 @@ from alation_ai_agent_sdk.api import (
     AlationAPIError,
     CatalogAssetMetadataPayloadItem,
 )
+from alation_ai_agent_sdk.types import Filter
 from alation_ai_agent_sdk.lineage import (
     LineageBatchSizeType,
     LineageDesignTimeType,
@@ -909,6 +910,8 @@ class BiReportSearchTool:
         Parameters:
         - search_term (required, str): Search term to filter BI reports by name
         - limit (optional, int): Maximum number of results to return (default: 20, max: 100)
+        - filters (optional, List[Filter]): Additional filters to apply to the search. Each filter
+          must include filter_id (int) and filter_values (List[str]) per the API specification
         - chat_id (optional, str): Chat session identifier
 
         Returns:
@@ -917,8 +920,8 @@ class BiReportSearchTool:
         """
 
     @track_tool_execution()
-    def run(self, *, search_term: str, limit: int = 20, chat_id: Optional[str] = None):
-        kwargs = {"search_term": search_term, "limit": limit, "chat_id": chat_id}
+    def run(self, *, search_term: str, limit: int = 20, filters: Optional[List[Filter]] = None, chat_id: Optional[str] = None):
+        kwargs = {"search_term": search_term, "limit": limit, "filters": filters, "chat_id": chat_id}
         try:
             ref = self.api.search_bi_reports_stream(**kwargs)
             return ref if self.api.enable_streaming else next(ref)
@@ -1503,7 +1506,8 @@ class SearchCatalogTool:
         Parameters:
         - search_term (required, str): Search term to match against catalog objects
         - object_types (optional, List[str]): List of object types to filter by
-        - filters (optional, Dict[str, Any]): Additional filters to apply to the search
+        - filters (optional, List[Filter]): Additional filters to apply to the search. Each filter
+          must include filter_id (int) and filter_values (List[str]) per the API specification
         - chat_id (optional, str): Chat session identifier
 
         Returns:
@@ -1516,7 +1520,7 @@ class SearchCatalogTool:
         *,
         search_term: str,
         object_types: Optional[List[str]] = None,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: Optional[List[Filter]] = None,
         chat_id: Optional[str] = None,
     ):
         try:

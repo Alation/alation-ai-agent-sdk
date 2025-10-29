@@ -1,5 +1,6 @@
 from typing import Any, Optional
 from alation_ai_agent_sdk import AlationAIAgentSDK
+from alation_ai_agent_sdk.types import Filter
 from alation_ai_agent_sdk.lineage import (
     LineageBatchSizeType,
     LineageDesignTimeType,
@@ -281,9 +282,9 @@ def get_analyze_catalog_question_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
 def get_bi_report_search_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     bi_report_search_tool = sdk.bi_report_search_tool
 
-    def run_with_args(search_term: str, limit: int = 20, chat_id: Optional[str] = None):
+    def run_with_args(search_term: str, limit: int = 20, filters: Optional[list[Filter]] = None, chat_id: Optional[str] = None):
         return bi_report_search_tool.run(
-            search_term=search_term, limit=limit, chat_id=chat_id
+            search_term=search_term, limit=limit, filters=filters, chat_id=chat_id
         )
 
     return StructuredTool.from_function(
@@ -518,7 +519,7 @@ def get_search_catalog_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     def run_with_args(
         search_term: str,
         object_types: Optional[list[str]] = None,
-        filters: Optional[dict[str, Any]] = None,
+        filters: Optional[list[Filter]] = None,
         chat_id: Optional[str] = None,
     ):
         return search_catalog_tool.run(

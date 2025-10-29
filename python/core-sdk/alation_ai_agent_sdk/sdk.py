@@ -58,7 +58,6 @@ from .lineage import (
     LineageBatchSizeType,
 )
 
-
 class AlationTools:
     # Tools
     AGGREGATED_CONTEXT = "aggregated_context"

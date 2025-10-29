@@ -26,6 +26,7 @@ from alation_ai_agent_sdk import (
     AlationTools,
     BearerTokenAuthParams,
 )
+from alation_ai_agent_sdk.types import Filter
 from alation_ai_agent_sdk.utils import is_tool_enabled, get_tool_metadata
 from alation_ai_agent_sdk.tools import (
     AlationContextTool,
@@ -390,11 +391,11 @@ def register_tools(
 
         @mcp.tool(name=metadata["name"], description=metadata["description"])
         def bi_report_search(
-            search_term: str, limit: int = 20, chat_id: Optional[str] = None
+            search_term: str, limit: int = 20, filters: list[Filter] | None = None, chat_id: Optional[str] = None
         ):
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.search_bi_reports(
-                search_term=search_term, limit=limit, chat_id=chat_id
+                search_term=search_term, limit=limit, filters=filters, chat_id=chat_id
             )
             return result
 
@@ -455,7 +456,7 @@ def register_tools(
         def search_catalog_tool(
             search_term: str,
             object_types: list | None = None,
-            filters: dict | None = None,
+            filters: list[Filter] | None = None,
             chat_id: Optional[str] = None,
         ):
             alation_sdk = create_sdk_for_tool()

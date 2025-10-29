@@ -14,6 +14,7 @@ from .types import (
     SessionAuthParams,
     AuthParams,
     CatalogAssetMetadataPayloadItem,
+    Filter,
 )
 from .utils import SDK_VERSION
 from .errors import AlationAPIError, AlationErrorClassifier
@@ -716,7 +717,7 @@ class AlationAPI:
 
     def _iter_sse_response(
         self, response: requests.Response
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         response.raise_for_status()
         for line in response.iter_lines():
             if not line:
@@ -737,7 +738,7 @@ class AlationAPI:
     def _sse_stream_or_last_event(
         self,
         response: requests.Response,
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         Generator to yield events from a Server-Sent Events (SSE) response.
 
@@ -766,7 +767,7 @@ class AlationAPI:
         url: str,
         payload: Dict[str, Any],
         timeouts: Optional[Tuple[Union[float, int], Union[float, int]]] = None,
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         self._with_valid_auth(disallowed_methods=["user_account", AUTH_METHOD_SESSION])
 
         headers = self._get_streaming_request_headers()
@@ -843,51 +844,6 @@ class AlationAPI:
                 reason="Malformed Response",
                 resolution_hint="The server returned a non-JSON response. Contact support if this persists.",
                 help_links=["https://developer.alation.com/"],
-            )
-
-    def get_bulk_objects_from_catalog(self, signature: Dict[str, Any]):
-        """
-        Retrieve bulk objects from the Alation catalog based on signature specifications.
-        Uses the context API in bulk mode without requiring a natural language question.
-        """
-        if not signature:
-            raise ValueError("Signature cannot be empty for bulk retrieval")
-
-        self._with_valid_auth()
-
-        headers = self._get_request_headers()
-
-        params = {
-            "mode": "bulk",
-            "signature": json.dumps(signature, separators=(",", ":")),
-        }
-
-        encoded_params = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
-        url = f"{self.base_url}/integration/v2/context/?{encoded_params}"
-
-        try:
-            response = requests.get(
-                url, headers=headers, timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS
-            )
-            response.raise_for_status()
-
-        except requests.RequestException as e:
-            self._handle_request_error(
-                e, "bulk catalog retrieval", timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS
-            )
-
-        try:
-            return self._format_successful_response(response)
-        except ValueError:
-            raise AlationAPIError(
-                message="Invalid JSON in bulk catalog response",
-                status_code=response.status_code,
-                response_body=response.text,
-                reason="Malformed Response",
-                resolution_hint="The server returned a non-JSON response. Contact support if this persists.",
-                help_links=[
-                    "https://developer.alation.com/dev/reference/getaggregatedcontext"
-                ],
             )
 
     def _fetch_marketplace_id(self, headers: Dict[str, str]) -> str:
@@ -1288,10 +1244,18 @@ class AlationAPI:
         self,
         search_term: str,
         limit: int = 20,
+        filters: Optional[List[Filter]] = None,
         chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         Search for BI report objects in the Alation catalog.
+
+        Args:
+            search_term: Search term to filter BI reports by name
+            limit: Maximum number of results to return (default: 20, max: 100)
+            filters: Additional filters to apply to the search. Each filter must include
+                    filter_id (int) and filter_values (List[str]) per the API specification
+            chat_id: Chat session identifier
         """
         url = (
             f"{self.base_url}/ai/api/v1/chats/tool/default/bi_report_search_tool/stream"
@@ -1299,13 +1263,17 @@ class AlationAPI:
         if chat_id is not None:
             url += f"?chat_id={chat_id}"
 
+        payload = {
+            "search_term": search_term,
+            "limit": limit,
+        }
+        if filters is not None:
+            payload["filters"] = filters
+
         yield from self._safe_sse_post_request(
             tool_name="search_bi_reports",
             url=url,
-            payload={
-                "search_term": search_term,
-                "limit": limit,
-            },
+            payload=payload,
             timeouts=None,
         )
 
@@ -1314,7 +1282,7 @@ class AlationAPI:
         question: str,
         signature: Optional[Dict[str, Any]] = None,
         chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         Retrieve contextual information from the Alation catalog using alation_context_tool.
         """
@@ -1338,7 +1306,7 @@ class AlationAPI:
         self,
         question: str,
         chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         Analyze catalog questions and return workflow guidance.
         """
@@ -1356,7 +1324,7 @@ class AlationAPI:
         self,
         signature: Dict[str, Any],
         chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         Retrieve bulk objects from the Alation catalog using bulk_retrieval_tool.
         """
@@ -1373,7 +1341,7 @@ class AlationAPI:
     def get_custom_field_definitions_stream(
         self,
         chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         Retrieve all custom field definitions from the Alation instance.
         """
@@ -1389,7 +1357,7 @@ class AlationAPI:
 
     def get_signature_creation_instructions_stream(
         self, chat_id: Optional[str] = None
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         Returns comprehensive instructions for creating the signature parameter.
         """
@@ -1407,7 +1375,7 @@ class AlationAPI:
         self,
         message: str,
         chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         BI Report Agent for searching and analyzing BI report objects.
         """
@@ -1425,7 +1393,7 @@ class AlationAPI:
         self,
         message: str,
         chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         Catalog Context Search Agent for searching catalog objects with context.
         """
@@ -1443,7 +1411,7 @@ class AlationAPI:
         self,
         message: str,
         chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         Catalog Search Agent for general catalog search operations.
         """
@@ -1463,7 +1431,7 @@ class AlationAPI:
         self,
         message: str,
         chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         Chart Create Agent for creating charts and visualizations.
         """
@@ -1483,7 +1451,7 @@ class AlationAPI:
         data_product_id: str,
         auth_id: Optional[str] = None,
         chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         Data Product Query Agent for querying data products.
         """
@@ -1503,7 +1471,7 @@ class AlationAPI:
 
     def deep_research_agent_stream(
         self, message: str, chat_id: Optional[str] = None
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         Deep Research Agent for comprehensive research tasks.
         """
@@ -1523,7 +1491,7 @@ class AlationAPI:
         self,
         message: str,
         chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         Query Flow Agent for SQL query workflow management.
         """
@@ -1541,7 +1509,7 @@ class AlationAPI:
         self,
         message: str,
         chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         SQL Query Agent for SQL query generation and analysis.
         """
@@ -1563,7 +1531,7 @@ class AlationAPI:
         pre_exec_sql: Optional[str] = None,
         auth_id: Optional[str] = None,
         chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         Execute SQL queries within a data product context.
         """
@@ -1596,7 +1564,7 @@ class AlationAPI:
         pre_exec_sql: Optional[str] = None,
         auth_id: Optional[str] = None,
         chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         Generate charts from SQL and code snippets within a data product context.
         """
@@ -1627,7 +1595,7 @@ class AlationAPI:
         pre_exec_sql: Optional[str] = None,
         auth_id: Optional[str] = None,
         chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         Retrieve data schema information for a data product.
         """
@@ -1653,7 +1621,7 @@ class AlationAPI:
         self,
         limit: int = 100,
         chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         Retrieve available data sources from the catalog.
         """
@@ -1677,7 +1645,7 @@ class AlationAPI:
         limit: int = 5,
         marketplace_id: Optional[str] = None,
         chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         List data products based on search criteria.
         """
@@ -1698,11 +1666,18 @@ class AlationAPI:
         self,
         search_term: str,
         object_types: Optional[List[str]] = None,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: Optional[List[Filter]] = None,
         chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         Search the catalog for objects matching the specified criteria.
+
+        Args:
+            search_term: Search term to match against catalog objects
+            object_types: List of object types to filter by
+            filters: Additional filters to apply to the search. Each filter must include
+                    filter_id (int) and filter_values (List[str]) per the API specification
+            chat_id: Chat session identifier
         """
         payload = {"search_term": search_term}
         if object_types is not None:
@@ -1724,7 +1699,7 @@ class AlationAPI:
         search_term: str,
         limit: int = 10,
         chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         Get available search filter fields for catalog search.
         """
@@ -1745,7 +1720,7 @@ class AlationAPI:
         search_term: str,
         limit: int = 10,
         chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         Get available values for a specific search filter field.
         """
@@ -1765,7 +1740,7 @@ class AlationAPI:
         agent_config_id: str,
         payload: Dict[str, Any],
         chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any]]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """
         Stream responses from a custom agent.
         """

@@ -118,7 +118,7 @@ def test_bulk_retrieval_tool_run_without_signature(bulk_retrieval_tool, mock_api
     result = bulk_retrieval_tool.run()
 
     # Verify API was not called
-    mock_api.get_bulk_objects_from_catalog.assert_not_called()
+    mock_api.bulk_retrieval_stream.assert_not_called()
 
     # Verify error response
     assert "error" in result
@@ -132,7 +132,7 @@ def test_bulk_retrieval_tool_run_empty_signature(bulk_retrieval_tool, mock_api):
     result = bulk_retrieval_tool.run(signature={})
 
     # Verify API was not called
-    mock_api.get_bulk_objects_from_catalog.assert_not_called()
+    mock_api.bulk_retrieval_stream.assert_not_called()
 
     # Verify error response
     assert "error" in result

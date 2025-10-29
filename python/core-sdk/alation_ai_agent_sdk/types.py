@@ -1,4 +1,4 @@
-from typing import NamedTuple, Union, Any
+from typing import NamedTuple, Union, Any, List
 from typing_extensions import TypedDict
 
 
@@ -27,3 +27,8 @@ class CatalogAssetMetadataPayloadItem(TypedDict):
     otype: str  # Only 'glossary_v3' or 'glossary_term'
     field_id: int  # Only 3 (TEXT) or 4 (RICH_TEXT)
     value: Any  # Accept any type, validated by field_id -> type mapping
+
+
+class Filter(TypedDict):
+    filter_id: int
+    filter_values: List[str]
