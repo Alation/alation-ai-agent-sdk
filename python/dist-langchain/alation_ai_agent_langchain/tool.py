@@ -87,10 +87,9 @@ def get_alation_data_products_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     def run_with_args(
         product_id: Optional[str] = None,
         query: Optional[str] = None,
-        chat_id: Optional[str] = None,
     ):
         return data_products_tool.run(
-            product_id=product_id, query=query, chat_id=chat_id
+            product_id=product_id, query=query
         )
 
     return StructuredTool.from_function(

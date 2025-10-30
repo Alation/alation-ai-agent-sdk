@@ -4,8 +4,10 @@ import logging
 from typing import (
     Any,
     Dict,
+    Generator,
     List,
     Optional,
+    Union,
 )
 from alation_ai_agent_sdk.api import (
     AlationAPI,
@@ -156,7 +158,7 @@ class AlationContextTool:
         question: str,
         signature: Optional[Dict[str, Any]] = None,
         chat_id: Optional[str] = None,
-    ):
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.alation_context_stream(
                 question=question,
@@ -272,7 +274,7 @@ class AlationBulkRetrievalTool:
         *,
         signature: Optional[Dict[str, Any]] = None,
         chat_id: Optional[str] = None,
-    ):
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         if not signature:
             return {
                 "error": {
@@ -685,7 +687,7 @@ class GetCustomFieldsDefinitionsTool:
         """
 
     @track_tool_execution()
-    def run(self, chat_id: Optional[str] = None) -> Dict[str, Any]:
+    def run(self, chat_id: Optional[str] = None) ->Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Retrieve all custom field definitions from the Alation instance.
 
@@ -697,7 +699,7 @@ class GetCustomFieldsDefinitionsTool:
         """
         try:
             ref = self.api.get_custom_field_definitions_stream(chat_id=chat_id)
-            return next(ref)
+            return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
             return {"error": e.to_dict()}
 
@@ -835,7 +837,7 @@ class SignatureCreationTool:
         """
 
     @track_tool_execution()
-    def run(self, chat_id: Optional[str] = None):
+    def run(self, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.get_signature_creation_instructions_stream(chat_id=chat_id)
             return ref if self.api.enable_streaming else next(ref)
@@ -878,7 +880,7 @@ class AnalyzeCatalogQuestionTool:
         """
 
     @track_tool_execution()
-    def run(self, *, question: str, chat_id: Optional[str] = None):
+    def run(self, *, question: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.analyze_catalog_question_stream(
                 question=question,
@@ -927,7 +929,7 @@ class BiReportSearchTool:
         limit: int = 20,
         filters: Optional[List[Filter]] = None,
         chat_id: Optional[str] = None,
-    ):
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         kwargs = {
             "search_term": search_term,
             "limit": limit,
@@ -969,7 +971,7 @@ class BiReportAgentTool:
         """
 
     @track_tool_execution()
-    def run(self, *, message: str, chat_id: Optional[str] = None):
+    def run(self, *, message: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.bi_report_agent_stream(
                 message=message,
@@ -1007,7 +1009,7 @@ class CatalogContextSearchAgentTool:
         """
 
     @track_tool_execution()
-    def run(self, *, message: str, chat_id: Optional[str] = None):
+    def run(self, *, message: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.catalog_context_search_agent_stream(
                 message=message,
@@ -1045,7 +1047,7 @@ class CatalogSearchAgentTool:
         """
 
     @track_tool_execution()
-    def run(self, *, message: str, chat_id: Optional[str] = None):
+    def run(self, *, message: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.catalog_search_agent_stream(
                 message=message,
@@ -1084,7 +1086,7 @@ class ChartCreateAgentTool:
         """
 
     @track_tool_execution()
-    def run(self, *, message: str, data_product_id: str, chat_id: Optional[str] = None):
+    def run(self, *, message: str, data_product_id: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.chart_create_agent_stream(
                 message=message,
@@ -1132,7 +1134,7 @@ class DataProductQueryAgentTool:
         data_product_id: str,
         auth_id: Optional[str] = None,
         chat_id: Optional[str] = None,
-    ):
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.data_product_query_agent_stream(
                 message=message,
@@ -1173,7 +1175,7 @@ class DeepResearchAgentTool:
         """
 
     @track_tool_execution()
-    def run(self, *, message: str, pre_exec_sql: Optional[str] = None, chat_id: Optional[str] = None):
+    def run(self, *, message: str, pre_exec_sql: Optional[str] = None, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.deep_research_agent_stream(
                 message=message,
@@ -1213,7 +1215,7 @@ class QueryFlowAgentTool:
         """
 
     @track_tool_execution()
-    def run(self, *, message: str, marketplace_id: str, chat_id: Optional[str] = None):
+    def run(self, *, message: str, marketplace_id: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.query_flow_agent_stream(
                 message=message,
@@ -1253,7 +1255,7 @@ class SqlQueryAgentTool:
         """
 
     @track_tool_execution()
-    def run(self, *, message: str, data_product_id: str, chat_id: Optional[str] = None):
+    def run(self, *, message: str, data_product_id: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.sql_query_agent_stream(
                 message=message,
@@ -1304,7 +1306,7 @@ class SqlExecutionTool:
         pre_exec_sql: Optional[str] = None,
         auth_id: Optional[str] = None,
         chat_id: Optional[str] = None,
-    ):
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.sql_execution_tool_stream(
                 data_product_id=data_product_id,
@@ -1360,7 +1362,7 @@ class GenerateChartFromSqlAndCodeTool:
         pre_exec_sql: Optional[str] = None,
         auth_id: Optional[str] = None,
         chat_id: Optional[str] = None,
-    ):
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.generate_chart_from_sql_and_code_tool_stream(
                 data_product_id=data_product_id,
@@ -1411,7 +1413,7 @@ class GetDataSchemaTool:
         pre_exec_sql: Optional[str] = None,
         auth_id: Optional[str] = None,
         chat_id: Optional[str] = None,
-    ):
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.get_data_schema_tool_stream(
                 data_product_id=data_product_id,
@@ -1450,7 +1452,7 @@ class GetDataSourcesTool:
         """
 
     @track_tool_execution()
-    def run(self, *, limit: int = 100, chat_id: Optional[str] = None):
+    def run(self, *, limit: int = 100, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.get_data_sources_tool_stream(limit=limit, chat_id=chat_id)
             return ref if self.api.enable_streaming else next(ref)
@@ -1493,7 +1495,7 @@ class ListDataProductsTool:
         limit: int = 5,
         marketplace_id: Optional[str] = None,
         chat_id: Optional[str] = None,
-    ):
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.list_data_products_tool_stream(
                 search_term=search_term,
@@ -1542,7 +1544,7 @@ class SearchCatalogTool:
         object_types: Optional[List[str]] = None,
         filters: Optional[List[Filter]] = None,
         chat_id: Optional[str] = None,
-    ):
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.search_catalog_tool_stream(
                 search_term=search_term,
@@ -1582,7 +1584,7 @@ class GetSearchFilterFieldsTool:
         """
 
     @track_tool_execution()
-    def run(self, *, search_term: str, limit: int = 10, chat_id: Optional[str] = None):
+    def run(self, *, search_term: str, limit: int = 10, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.get_search_filter_fields_tool_stream(
                 search_term=search_term,
@@ -1629,7 +1631,7 @@ class GetSearchFilterValuesTool:
         search_term: str,
         limit: int = 10,
         chat_id: Optional[str] = None,
-    ):
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.get_search_filter_values_tool_stream(
                 field_id=field_id,
@@ -1688,7 +1690,7 @@ class CustomAgentTool:
         agent_config_id: str,
         payload: Dict[str, Any],
         chat_id: Optional[str] = None,
-    ):
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.custom_agent_stream(
                 agent_config_id=agent_config_id, payload=payload, chat_id=chat_id

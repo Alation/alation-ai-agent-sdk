@@ -1,6 +1,7 @@
 from typing import (
     Any,
     Dict,
+    Generator,
     List,
     Optional,
     Union,
@@ -44,6 +45,7 @@ from .tools import (
     GetSearchFilterValuesTool,
     CustomAgentTool,
 )
+from .types import Filter
 from .lineage import (
     LineageToolResponse,
     make_lineage_kwargs,
@@ -193,23 +195,29 @@ class AlationAIAgentSDK:
     BETA_TOOLS = {AlationTools.LINEAGE}
 
     def get_context(
-        self, question: str, signature: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, question: str, signature: Optional[Dict[str, Any]] = None, chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Fetch context from Alation's catalog for a given question and signature.
+
+        Args:
+            question (str): Natural language question about the data catalog
+            signature (optional, Dict[str, Any]): A signature defining object types, fields, and filters.
+            chat_id (optional, str): Chat session identifier
 
         Returns either:
         - JSON context result (dict)
         - Error object with keys: message, reason, resolution_hint, response_body
         """
-        return self.context_tool.run(question=question, signature=signature)
+        return self.context_tool.run(question=question, signature=signature, chat_id=chat_id)
 
-    def get_bulk_objects(self, signature: Dict[str, Any]) -> Dict[str, Any]:
+    def get_bulk_objects(self, signature: Dict[str, Any], chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Fetch bulk objects from Alation's catalog based on signature specifications.
 
         Args:
             signature (Dict[str, Any]): A signature defining object types, fields, and filters.
+            chat_id (optional, str): Chat session identifier
 
         Returns:
             Dict[str, Any]: Contains the catalog objects matching the signature criteria.
@@ -225,7 +233,7 @@ class AlationAIAgentSDK:
                 }
             }
         """
-        return self.bulk_retrieval_tool.run(signature=signature)
+        return self.bulk_retrieval_tool.run(signature=signature, chat_id=chat_id)
 
     def get_data_products(
         self, product_id: Optional[str] = None, query: Optional[str] = None
@@ -408,13 +416,16 @@ class AlationAIAgentSDK:
         """
         return self.generate_data_product_tool.run()
 
-    def get_custom_fields_definitions(self) -> Dict[str, Any]:
+    def get_custom_fields_definitions(self, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Retrieve all custom field definitions from the Alation instance.
 
+        Args:
+            chat_id (optional, str): Chat session identifier
+
         Custom fields are user-defined metadata fields. This method requires admin permissions.
         """
-        return self.get_custom_fields_definitions_tool.run()
+        return self.get_custom_fields_definitions_tool.run(chat_id=chat_id)
 
     def get_data_dictionary_instructions(self) -> str:
         """
@@ -425,10 +436,13 @@ class AlationAIAgentSDK:
         """
         return self.get_data_dictionary_instructions_tool.run()
 
-    def get_signature_creation_instructions(self) -> str:
+    def get_signature_creation_instructions(self, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Returns comprehensive instructions for creating the signature parameter for alation_context
         and bulk_retrieval tools.
+
+        Args:
+            chat_id (optional, str): Chat session identifier
 
         Returns:
         Comprehensive signature creation instructions including:
@@ -439,9 +453,9 @@ class AlationAIAgentSDK:
             - Decision workflow
             - Validation rules
         """
-        return self.signature_creation_tool.run()
+        return self.signature_creation_tool.run(chat_id=chat_id)
 
-    def analyze_catalog_question(self, question: str) -> str:
+    def analyze_catalog_question(self, question: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Analyze a catalog question and return workflow guidance.
 
@@ -450,79 +464,86 @@ class AlationAIAgentSDK:
 
         Args:
             question (str): Natural language question about the data catalog
+            chat_id (optional, str): Chat session identifier
 
         Returns:
             str: Formatted workflow instructions including
         """
-        return self.analyze_catalog_question_tool.run(question=question)
+        return self.analyze_catalog_question_tool.run(question=question, chat_id=chat_id)
 
-    def search_bi_reports(self, search_term: str, limit: int = 20) -> Dict[str, Any]:
+    def search_bi_reports(self, search_term: str, limit: int = 20, filters: Optional[List[Filter]] = None, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Search over the Alation catalog to find BI report objects.
 
         Args:
             search_term (str): Search term to filter BI reports by name
             limit (int, optional): Maximum number of results to return (default: 20, max: 100)
+            filters (optional, List[Filter]): Additional filters to apply to the search. Each filter
+            chat_id (optional, str): Chat session identifier
 
         Returns:
             Dict[str, Any]: List of BI report objects that match the search query parameters
         """
-        return self.bi_report_search_tool.run(search_term=search_term, limit=limit)
+        return self.bi_report_search_tool.run(search_term=search_term, limit=limit, filters=filters, chat_id=chat_id)
 
-    def bi_report_agent(self, message: str) -> Dict[str, Any]:
+    def bi_report_agent(self, message: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         BI Report Agent for searching and analyzing BI report objects.
 
         Args:
             message (str): Natural language message describing what you're looking for
+            chat_id (optional, str): Chat session identifier
 
         Returns:
             Dict[str, Any]: Detailed information about BI reports matching your request
         """
-        return self.bi_report_agent_tool.run(message=message)
+        return self.bi_report_agent_tool.run(message=message, chat_id=chat_id)
 
-    def catalog_context_search_agent(self, message: str) -> Dict[str, Any]:
+    def catalog_context_search_agent(self, message: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Catalog Context Search Agent for searching catalog objects with enhanced context.
 
         Args:
             message (str): Natural language description of what you're searching for
+            chat_id (optional, str): Chat session identifier
 
         Returns:
             Dict[str, Any]: Contextually-aware search results with enhanced metadata and relationships
         """
-        return self.catalog_context_search_agent_tool.run(message=message)
+        return self.catalog_context_search_agent_tool.run(message=message, chat_id=chat_id)
 
-    def catalog_search_agent(self, message: str) -> Dict[str, Any]:
+    def catalog_search_agent(self, message: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Catalog Search Agent for general catalog search operations.
 
         Args:
             message (str): Natural language search query
+            chat_id (optional, str): Chat session identifier
 
         Returns:
             Dict[str, Any]: Search results from the data catalog matching your query
         """
-        return self.catalog_search_agent_tool.run(message=message)
+        return self.catalog_search_agent_tool.run(message=message, chat_id=chat_id)
 
-    def chart_create_agent(self, message: str, data_product_id: str) -> Dict[str, Any]:
+    def chart_create_agent(self, message: str, data_product_id: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Chart Create Agent for creating charts and visualizations.
 
         Args:
             message (str): Description of the chart or visualization you want to create
             data_product_id (str): The ID of the data product to work with
+            chat_id (optional, str): Chat session identifier
 
         Returns:
             Dict[str, Any]: Chart creation guidance, code, or visualization assets
         """
         return self.chart_create_agent_tool.run(
-            message=message, data_product_id=data_product_id
+            message=message, data_product_id=data_product_id, chat_id=chat_id
         )
 
     def data_product_query_agent(
-        self, message: str, data_product_id: str, auth_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, message: str, data_product_id: str, auth_id: Optional[str] = None, chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Data Product Query Agent for querying data products.
 
@@ -530,54 +551,59 @@ class AlationAIAgentSDK:
             message (str): Your query or request related to the data product
             data_product_id (str): The ID of the data product to work with
             auth_id (str, optional): Authentication ID for data access
+            chat_id (optional, str): Chat session identifier
 
         Returns:
             Dict[str, Any]: Query results, analysis, or guidance specific to the requested data product
         """
         return self.data_product_query_agent_tool.run(
-            message=message, data_product_id=data_product_id, auth_id=auth_id
+            message=message, data_product_id=data_product_id, auth_id=auth_id, chat_id=chat_id
         )
 
-    def deep_research_agent(self, message: str, pre_exec_sql: Optional[str] = None) -> Dict[str, Any]:
+    def deep_research_agent(self, message: str, pre_exec_sql: Optional[str] = None, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Deep Research Agent for comprehensive research tasks.
 
         Args:
             message (str): Research question or topic you want to investigate
+            pre_exec_sql (str, optional): SQL to execute before starting the research (set session etc)
+            chat_id (optional, str): Chat session identifier
 
         Returns:
             Dict[str, Any]: Comprehensive research results with detailed analysis and insights
         """
-        return self.deep_research_agent_tool.run(message=message, pre_exec_sql=pre_exec_sql)
+        return self.deep_research_agent_tool.run(message=message, pre_exec_sql=pre_exec_sql, chat_id=chat_id)
 
-    def query_flow_agent(self, message: str, marketplace_id: str) -> Dict[str, Any]:
+    def query_flow_agent(self, message: str, marketplace_id: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Query Flow Agent for SQL query workflow management.
 
         Args:
             message (str): Description of your query workflow needs
             marketplace_id (str): The ID of the marketplace to work with
+            chat_id (optional, str): Chat session identifier
 
         Returns:
             Dict[str, Any]: Query workflow guidance, optimization suggestions, and execution plans
         """
         return self.query_flow_agent_tool.run(
-            message=message, marketplace_id=marketplace_id
+            message=message, marketplace_id=marketplace_id, chat_id=chat_id
         )
 
-    def sql_query_agent(self, message: str, data_product_id: str) -> Dict[str, Any]:
+    def sql_query_agent(self, message: str, data_product_id: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         SQL Query Agent for SQL query generation and analysis.
 
         Args:
             message (str): Description of the data you need or SQL task
             data_product_id (str): The ID of the data product to work with
+            chat_id (optional, str): Chat session identifier
 
         Returns:
             Dict[str, Any]: SQL queries, query analysis, optimization suggestions, and execution guidance
         """
         return self.sql_query_agent_tool.run(
-            message=message, data_product_id=data_product_id
+            message=message, data_product_id=data_product_id, chat_id=chat_id
         )
 
     def execute_sql(
@@ -587,7 +613,8 @@ class AlationAIAgentSDK:
         result_table_name: str,
         pre_exec_sql: Optional[str] = None,
         auth_id: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Execute SQL queries within a data product context.
 
@@ -597,6 +624,7 @@ class AlationAIAgentSDK:
             result_table_name (str): Name for the result table
             pre_exec_sql (str, optional): SQL to execute before the main query
             auth_id (str, optional): Authentication ID for data access
+            chat_id (optional, str): Chat session identifier
 
         Returns:
             Dict[str, Any]: Query execution results including data and metadata
@@ -607,6 +635,7 @@ class AlationAIAgentSDK:
             result_table_name=result_table_name,
             pre_exec_sql=pre_exec_sql,
             auth_id=auth_id,
+            chat_id=chat_id,
         )
 
     def generate_chart_from_sql_and_code(
@@ -617,7 +646,8 @@ class AlationAIAgentSDK:
         image_title: str,
         pre_exec_sql: Optional[str] = None,
         auth_id: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        chat_id: Optional[str] = None,
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Generate charts from SQL queries and code snippets within a data product context.
 
@@ -628,6 +658,7 @@ class AlationAIAgentSDK:
             image_title (str): Title for the generated chart image
             pre_exec_sql (str, optional): SQL to execute before the main query
             auth_id (str, optional): Authentication ID for data access
+            chat_id (optional, str): Chat session identifier
 
         Returns:
             Dict[str, Any]: Generated chart data and visualization assets
@@ -639,6 +670,7 @@ class AlationAIAgentSDK:
             image_title=image_title,
             pre_exec_sql=pre_exec_sql,
             auth_id=auth_id,
+            chat_id=chat_id,
         )
 
     def get_data_schema(
@@ -646,7 +678,8 @@ class AlationAIAgentSDK:
         data_product_id: str,
         pre_exec_sql: Optional[str] = None,
         auth_id: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        chat_id: Optional[str] = None,
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Retrieve data schema information for a data product.
 
@@ -654,29 +687,31 @@ class AlationAIAgentSDK:
             data_product_id (str): The ID of the data product to get schema for
             pre_exec_sql (str, optional): SQL to execute before schema retrieval
             auth_id (str, optional): Authentication ID for data access
+            chat_id (optional, str): Chat session identifier
 
         Returns:
             Dict[str, Any]: Data schema information including table structures and metadata
         """
         return self.get_data_schema_tool.run(
-            data_product_id=data_product_id, pre_exec_sql=pre_exec_sql, auth_id=auth_id
+            data_product_id=data_product_id, pre_exec_sql=pre_exec_sql, auth_id=auth_id, chat_id=chat_id
         )
 
-    def get_data_sources(self, limit: int = 100) -> Dict[str, Any]:
+    def get_data_sources(self, limit: int = 100, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Retrieve available data sources from the catalog.
 
         Args:
             limit (int, optional): Maximum number of data sources to return (default: 100)
+            chat_id (optional, str): Chat session identifier
 
         Returns:
             Dict[str, Any]: List of available data sources with their metadata and connection information
         """
-        return self.get_data_sources_tool.run(limit=limit)
+        return self.get_data_sources_tool.run(limit=limit, chat_id=chat_id)
 
     def list_data_products(
-        self, search_term: str, limit: int = 5, marketplace_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, search_term: str, limit: int = 5, marketplace_id: Optional[str] = None, chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         List data products based on search criteria.
 
@@ -684,55 +719,59 @@ class AlationAIAgentSDK:
             search_term (str): Search term to filter data products
             limit (int, optional): Maximum number of results to return (default: 5)
             marketplace_id (str, optional): ID of the marketplace to search in
+            hat_id (optional, str): Chat session identifier
 
         Returns:
             Dict[str, Any]: List of data products matching the search criteria
         """
         return self.list_data_products_tool.run(
-            search_term=search_term, limit=limit, marketplace_id=marketplace_id
+            search_term=search_term, limit=limit, marketplace_id=marketplace_id, chat_id=chat_id
         )
 
     def search_catalog(
         self,
         search_term: str,
         object_types: Optional[List[str]] = None,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        filters: Optional[List[Filter]] = None,
+        chat_id: Optional[str] = None,
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Search the catalog for objects matching specified criteria.
 
         Args:
             search_term (str): Search term to match against catalog objects
             object_types (List[str], optional): List of object types to filter by
-            filters (Dict[str, Any], optional): Additional filters to apply to the search
+            filters (List[Filter], optional): Additional filters to apply to the search
+            chat_id (optional, str): Chat session identifier
 
         Returns:
             Dict[str, Any]: Search results matching the specified criteria with object metadata
         """
         return self.search_catalog_tool.run(
-            search_term=search_term, object_types=object_types, filters=filters
+            search_term=search_term, object_types=object_types, filters=filters, chat_id=chat_id
         )
 
     def get_search_filter_fields(
-        self, search_term: str, limit: int = 10
-    ) -> Dict[str, Any]:
+        self, search_term: str, limit: int = 10, chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Get available search filter fields for catalog search.
 
         Args:
             search_term (str): Search term to match against filter field names
             limit (int, optional): Maximum number of filter fields to return (default: 10)
+            chat_id (optional, str): Chat session identifier
 
         Returns:
             Dict[str, Any]: List of available search filter fields with their metadata
         """
         return self.get_search_filter_fields_tool.run(
-            search_term=search_term, limit=limit
+            search_term=search_term, limit=limit, chat_id=chat_id
         )
 
     def get_search_filter_values(
-        self, field_id: int, search_term: str, limit: int = 10
-    ) -> Dict[str, Any]:
+        self, field_id: int, search_term: str, limit: int = 10, chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Get available values for a specific search filter field.
 
@@ -740,17 +779,18 @@ class AlationAIAgentSDK:
             field_id (int): ID of the filter field to get values for
             search_term (str): Search term to match against filter values
             limit (int, optional): Maximum number of filter values to return (default: 10)
+            chat_id (optional, str): Chat session identifier
 
         Returns:
             Dict[str, Any]: List of available values for the specified filter field
         """
         return self.get_search_filter_values_tool.run(
-            field_id=field_id, search_term=search_term, limit=limit
+            field_id=field_id, search_term=search_term, limit=limit, chat_id=chat_id
         )
 
     def execute_custom_agent(
-        self, agent_config_id: str, payload: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, agent_config_id: str, payload: Dict[str, Any], chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Execute a custom agent configuration by its UUID.
 
@@ -758,6 +798,7 @@ class AlationAIAgentSDK:
             agent_config_id (str): The UUID of the agent configuration to use
             payload (Dict[str, Any]): The payload to send to the agent. Must conform
                 to the agent's specific input JSON schema
+            chat_id (optional, str): Chat session identifier
 
         Returns:
             Dict[str, Any]: Agent response based on the specific agent's capabilities
@@ -769,7 +810,7 @@ class AlationAIAgentSDK:
             )
         """
         return self.custom_agent_tool.run(
-            agent_config_id=agent_config_id, payload=payload
+            agent_config_id=agent_config_id, payload=payload, chat_id=chat_id
         )
 
     def get_tools(self):
