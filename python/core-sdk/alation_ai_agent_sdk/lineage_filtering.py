@@ -1,4 +1,4 @@
-from typing import Any, List, Dict, Set, Union
+from typing import List, Dict, Set, Union
 from typing_extensions import TypedDict
 
 OType = str
