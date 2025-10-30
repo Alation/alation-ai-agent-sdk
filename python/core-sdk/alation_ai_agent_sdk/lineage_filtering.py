@@ -1,4 +1,4 @@
-from typing import List, Dict, Set, Union
+from typing import Any, List, Dict, Set, Union
 from typing_extensions import TypedDict
 
 OType = str
@@ -23,6 +23,16 @@ def get_node_object_key(node: LineageGraphNode) -> str:
     """
     return f"{node['otype']}:{node['id']}"
 
+
+def recursively_process_neighbors(node: LineageGraphNode, key_to_node: Dict[str, LineageGraphNode]) -> Dict[str, LineageGraphNode]:
+    node_key = get_node_object_key(node)
+    if node_key not in key_to_node:
+        if 'neighbors' not in node:
+            node['neighbors'] = []
+        key_to_node[node_key] = node
+        for neighbor_node in node.get("neighbors", []):
+            key_to_node = recursively_process_neighbors(neighbor_node, key_to_node)
+    return key_to_node
 
 def get_initial_graph_state(
     nodes: List[Dict],
@@ -51,11 +61,7 @@ def get_initial_graph_state(
     # This can be due to the limit preventing inclusion of all nodes.
     for node in nodes:
         for neighbor in node.get("neighbors", []):
-            neighbor_key = get_node_object_key(neighbor)
-            if neighbor_key not in key_to_node:
-                if 'neighbors' not in neighbor:
-                    neighbor['neighbors'] = []
-                key_to_node[neighbor_key] = neighbor
+            key_to_node = recursively_process_neighbors(neighbor, key_to_node)
     visited = {}
     return (ordered_keys, key_to_node, visited)
 

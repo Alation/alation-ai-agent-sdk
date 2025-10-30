@@ -1487,7 +1487,7 @@ class AlationAPI:
         yield from self._safe_sse_post_request(
             tool_name="deep_research_agent",
             url=url,
-            payload={"message": message, "pre_exec_sql": pre_exec_sql, "chat_id": chat_id},
+            payload={"message": message, "pre_exec_sql": pre_exec_sql},
             timeouts=None,
         )
 
