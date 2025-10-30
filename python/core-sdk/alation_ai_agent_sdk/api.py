@@ -716,7 +716,7 @@ class AlationAPI:
         return data
 
     def _iter_sse_response(
-        self, response: requests.Response
+        self, response: requests.Response, log_raw_stream_events: bool = False
     ) -> Generator[Dict[str, Any], None, None]:
         response.raise_for_status()
         for line in response.iter_lines():
@@ -724,6 +724,8 @@ class AlationAPI:
                 continue
             decoded_line = line.decode("utf-8")
             if decoded_line.startswith("data:"):
+                if log_raw_stream_events:
+                    logger.info(f"SSE Event: {decoded_line}")
                 json_data_str = decoded_line[len("data:") :].strip()
                 try:
                     event_data = json.loads(json_data_str)
@@ -738,6 +740,7 @@ class AlationAPI:
     def _sse_stream_or_last_event(
         self,
         response: requests.Response,
+        log_raw_stream_events: bool = False,
     ) -> Generator[Dict[str, Any], None, None]:
         """
         Generator to yield events from a Server-Sent Events (SSE) response.
@@ -751,13 +754,13 @@ class AlationAPI:
         """
         if self.enable_streaming:
             # Streaming mode, yield events as they arrive
-            yield from self._iter_sse_response(response)
+            yield from self._iter_sse_response(response, log_raw_stream_events=log_raw_stream_events)
         else:
             # Non-streaming mode: collect all events and yield once.
             # WARNING: There are an awful lot of tokens returned here that aren't particularly applicable.
             # TBD: Maybe clean these up to only return the payload instead of the whole message etc.
             last_event = None
-            for event in self._iter_sse_response(response):
+            for event in self._iter_sse_response(response, log_raw_stream_events=log_raw_stream_events):
                 last_event = event
             yield last_event
 
@@ -767,6 +770,7 @@ class AlationAPI:
         url: str,
         payload: Dict[str, Any],
         timeouts: Optional[Tuple[Union[float, int], Union[float, int]]] = None,
+        log_raw_stream_events: bool = False,
     ) -> Generator[Dict[str, Any], None, None]:
         self._with_valid_auth(disallowed_methods=["user_account", AUTH_METHOD_SESSION])
 
@@ -783,12 +787,11 @@ class AlationAPI:
             ) as response:
                 response_meta = self._get_response_meta(response)
                 if response_meta:
-                    # NOTE: We no longer
-                    # NOTE: Shifting from user seen warnings to only logged warnings
+                    # NOTE: We shifted from user seeing warnings to logging them as warnings
                     logger.warning(
                         f"At or nearing usage limits: {json.dumps(response_meta)}"
                     )
-                yield from self._sse_stream_or_last_event(response)
+                yield from self._sse_stream_or_last_event(response, log_raw_stream_events=log_raw_stream_events)
         except requests.exceptions.ReadTimeout as e:
             logger.error(f"Read timed out while using {tool_name}: {e}")
             self._handle_request_error(

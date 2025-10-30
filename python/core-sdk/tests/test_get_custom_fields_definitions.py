@@ -55,7 +55,7 @@ def test_get_custom_field_definitions_tool_run_success(
 
     mock_api.get_custom_field_definitions_stream.return_value = mock_generator()
 
-    result = get_custom_field_definitions_tool.run()
+    result = next(get_custom_field_definitions_tool.run())
 
     # Verify API was called correctly
     mock_api.get_custom_field_definitions_stream.assert_called_once()
@@ -122,7 +122,7 @@ def test_get_custom_field_definitions_tool_run_403_returns_builtin_fields(
 
     mock_api.get_custom_field_definitions_stream.return_value = mock_generator()
 
-    result = get_custom_field_definitions_tool.run()
+    result = next(get_custom_field_definitions_tool.run())
 
     # Verify API was called
     mock_api.get_custom_field_definitions_stream.assert_called_once()
@@ -184,7 +184,7 @@ def test_get_custom_field_definitions_tool_run_empty_response(
 
     mock_api.get_custom_field_definitions_stream.return_value = mock_generator()
 
-    result = get_custom_field_definitions_tool.run()
+    result = next(get_custom_field_definitions_tool.run())
 
     # Verify API was called correctly
     mock_api.get_custom_field_definitions_stream.assert_called_once()
