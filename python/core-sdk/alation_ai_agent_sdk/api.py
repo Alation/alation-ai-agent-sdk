@@ -1474,7 +1474,7 @@ class AlationAPI:
         )
 
     def deep_research_agent_stream(
-        self, message: str, chat_id: Optional[str] = None
+        self, message: str, pre_exec_sql: Optional[str] = None, chat_id: Optional[str] = None
     ) -> Generator[Dict[str, Any], None, None]:
         """
         Deep Research Agent for comprehensive research tasks.
@@ -1487,7 +1487,7 @@ class AlationAPI:
         yield from self._safe_sse_post_request(
             tool_name="deep_research_agent",
             url=url,
-            payload={"message": message},
+            payload={"message": message, "pre_exec_sql": pre_exec_sql, "chat_id": chat_id},
             timeouts=None,
         )
 
