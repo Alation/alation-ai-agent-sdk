@@ -117,9 +117,9 @@ def register_tools(
       That is no longer the case as we're clocking in at 28 tools (including agents as tools).
     """
     if len(config_enabled) == 0:
-        # TODO: evaluate this set of tools and agents together
         config_enabled = set(
             [
+                # TBD: These tools could be restructured to not overlap such.
                 # Tools
                 AlationTools.AGGREGATED_CONTEXT,
                 AlationTools.ANALYZE_CATALOG_QUESTION,
