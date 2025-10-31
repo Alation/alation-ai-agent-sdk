@@ -683,9 +683,9 @@ class AlationAPI:
                 )
                 response.raise_for_status()
                 response_data = response.json()
-                if isinstance(response_data, list) and response_data:
+                if response_data and (data_products := response_data.get("results", [])):
                     instructions = (
-                        f"Found {len(response_data)} data products matching your query. "
+                        f"Found {len(data_products)} data product{'s' if len(data_products) > 1 else ''} matching your query. "
                         "The following contains summary information (name, id, description, url) for each product. "
                         "To get complete specifications, call this tool again with a specific product_id."
                     )
@@ -700,7 +700,7 @@ class AlationAPI:
                             ]["description"],
                             "url": f"{self.base_url}/app/marketplace/{self.marketplace_id}/data-product/{product['product']['product_id']}/",
                         }
-                        for product in response_data
+                        for product in data_products
                     ]
                     return {"instructions": instructions, "results": results}
                 return {
