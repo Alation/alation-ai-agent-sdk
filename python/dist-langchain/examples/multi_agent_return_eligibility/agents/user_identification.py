@@ -6,16 +6,15 @@ import json
 from typing import Dict, Any
 
 from langchain_openai import ChatOpenAI
-from langchain.agents import AgentExecutor, create_openai_functions_agent
-from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain.tools import Tool
+from langchain.agents import create_agent
+from langchain_core.tools import Tool
 
 from schemas import CustomerState, CUSTOMER_PROFILE_SIGNATURE
 from tools import get_alation_tools, execute_sql
 from config import LLM_MODEL, USE_MOCK_DATA
 
 
-def create_identification_agent() -> AgentExecutor:
+def create_identification_agent():
     """
     Create an agent for identifying customers using Alation context and SQL.
 
@@ -55,7 +54,7 @@ def create_identification_agent() -> AgentExecutor:
         Input should be a valid SQL query string.
         Returns the query results as a JSON object.
 
-        Example: 
+        Example:
         SELECT * FROM table_name WHERE column = 'value'
         """,
         func=execute_sql,
@@ -63,70 +62,61 @@ def create_identification_agent() -> AgentExecutor:
 
     tools.append(sql_tool)
 
-    # Define the agent prompt with a multi-step approach. While these steps could also be
-    # implemented via direct scripting, we're using an agent architecture to showcase how to build
-    # effective LLM-powered agents. This implementation demonstrates the core functionality, but
-    # could be extended with additional views/tables and more sophisticated SQL generation logic.
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            (
-                "system",
-                """You are a customer identification agent for a retail company.
-        Your job is to identify customers based on their email or details in their query.
+    # Define the system prompt for the agent
+    system_prompt = """You are a customer identification agent for a retail company.
+Your job is to identify customers based on their email or details in their query.
 
-        Follow this exact process:
-        1. FIRST, use the alation_context tool to get information about the vw_customer_profile view
-            - IMPORTANT: When calling the alation_context tool, you must pass TWO parameters:
-                 1) The question string: "What are the columns and structure of vw_customer_profile table?"
-                 2) The signature object that was provided to you
-           - DO NOT modify the signature or include it in the question string
+Follow this exact process:
+1. FIRST, use the alation_context tool to get information about the vw_customer_profile view
+    - Ask about the columns and structure of vw_customer_profile table
 
-        2. NEXT, based on the Alation context, create an appropriate SQL query to find the customer
-           - Primarily search by email if available
-           - Fall back to other identifiers (name, phone) if needed
+2. NEXT, based on the Alation context, create an appropriate SQL query to find the customer
+   - Primarily search by email if available
+   - Fall back to other identifiers (name, phone) if needed
 
-        3. THEN, execute the SQL query using the execute_sql tool
+3. THEN, execute the SQL query using the execute_sql tool
 
-        4. FINALLY, organize and return the customer information in a clear JSON format
+4. FINALLY, organize and return the customer information in a clear JSON format
 
-        If you cannot identify the customer with confidence, clearly state this.
-        """,
-            ),
-            (
-                "human",
-                """
-        Customer query: {input}
-        Customer email: {email}
-        Signature: {signature}
-        """,
-            ),
-            MessagesPlaceholder(variable_name="agent_scratchpad"),
-        ]
-    )
+If you cannot identify the customer with confidence, clearly state this."""
 
-    # Create the agent
-    agent = create_openai_functions_agent(llm=llm, tools=tools, prompt=prompt)
-    return AgentExecutor(agent=agent, tools=tools, verbose=False)
+    # Create the agent using the new pattern
+    agent = create_agent(model=llm, tools=tools, system_prompt=system_prompt)
+    return agent
 
 
 def user_identification_node(state: CustomerState) -> CustomerState:
     """Process the state through the identification agent with Alation context and SQL."""
     agent = create_identification_agent()
 
-    # Prepare input
-    input_data = {
-        "input": state["query"],
-        "email": state.get("email", ""),
-        "signature": CUSTOMER_PROFILE_SIGNATURE,
-    }
+    # Create the user message with all the context
+    user_message = f"""Customer query: {state["query"]}
+Customer email: {state.get("email", "")}
 
-    # Run the agent
-    result = agent.invoke(input_data)
+Please identify the customer using the process you've been instructed to follow."""
+
+    # Run the agent with messages format
+    result = agent.invoke({"messages": [("user", user_message)]})
 
     # Extract customer information from the agent's output
     try:
+        # Get the final message content
+        if hasattr(result, 'get') and 'messages' in result:
+            # Extract the final assistant message
+            messages = result.get('messages', [])
+            if messages:
+                final_message = messages[-1]
+                if hasattr(final_message, 'content'):
+                    output = final_message.content
+                else:
+                    output = str(final_message)
+            else:
+                output = str(result)
+        else:
+            output = str(result)
+
         # Parse the agent output for customer information
-        customer_info = extract_customer_info(result.get("output", ""))
+        customer_info = extract_customer_info(output)
 
         # Update state with customer info
         state["customer_info"] = customer_info
@@ -144,7 +134,7 @@ def user_identification_node(state: CustomerState) -> CustomerState:
 
     # Update phase
     state["agent_notes"] = state.get("agent_notes", []) + [
-        f"Identification complete: {result['output']}"
+        f"Identification complete: {output if 'output' in locals() else 'No output'}"
     ]
     state["current_phase"] = "context"
 

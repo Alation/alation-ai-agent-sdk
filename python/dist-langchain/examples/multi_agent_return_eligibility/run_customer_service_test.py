@@ -54,15 +54,31 @@ def run_test_case(
     print("-" * 50)
 
     agent = create_identification_agent()
-    test_input = {
-        "input": query,
-        "email": email,
-        "signature": CUSTOMER_PROFILE_SIGNATURE,
-    }
-    result = agent.invoke(test_input)
+    user_message = f"""Customer query: {query}
+Customer email: {email}
 
-    # Extract customer info
-    customer_info = extract_customer_info(result.get("output", ""))
+Please identify the customer using the process you've been instructed to follow."""
+    result = agent.invoke({"messages": [("user", user_message)]})
+
+    # Extract customer info - handle new result format
+    try:
+        if hasattr(result, 'get') and 'messages' in result:
+            # Extract the final assistant message
+            messages = result.get('messages', [])
+            if messages:
+                final_message = messages[-1]
+                if hasattr(final_message, 'content'):
+                    output = final_message.content
+                else:
+                    output = str(final_message)
+            else:
+                output = str(result)
+        else:
+            output = str(result)
+    except Exception:
+        output = str(result)
+
+    customer_info = extract_customer_info(output)
     print("\nExtracted Customer Info:")
     print(json.dumps(customer_info, indent=2))
 

@@ -1,8 +1,7 @@
 import os
 import json
 
-from langchain.agents import AgentExecutor, create_openai_functions_agent
-from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
 
 from alation_ai_agent_langchain import (
@@ -54,34 +53,18 @@ sdk = initialize_sdk(base_url, auth_method)
 # LangChain tools
 tools = get_langchain_tools(sdk)
 
-# Define a simpler prompt that doesn't require explicit tool variables
-prompt = ChatPromptTemplate.from_messages(
-    [
-        ("system", "You are a helpful assistant using Alation's metadata catalog."),
-        ("user", "{input}"),
-        MessagesPlaceholder(variable_name="agent_scratchpad"),
-    ]
-)
-
 # LLM (OpenAI)
 llm = ChatOpenAI(model="gpt-4o", temperature=0, openai_api_key=openai_api_key)
 
-# Create agent using OpenAI functions approach - handles tool formatting internally
-agent = create_openai_functions_agent(llm=llm, tools=tools, prompt=prompt)
-
-# Agent executor
-executor = AgentExecutor(
-    agent=agent,
-    tools=tools,
-    verbose=True,
-)
+# Create agent using create_agent - returns a directly invokable CompiledStateGraph
+agent = create_agent(model=llm, tools=tools, system_prompt="You are a helpful assistant using Alation's metadata catalog.")
 
 # Example 1: Without signature
 print("\n=== Example 1: Without Signature ===")
 question = "What are the sales tables in our data warehouse?"
-response = executor.invoke(
+response = agent.invoke(
     {
-        "input": question,
+        "messages": [("user", question)],
     }
 )
 print("\nAgent Response (Without Signature):")
@@ -93,9 +76,9 @@ tables_only_signature = {
     "table": {"fields_required": ["name", "title", "description", "url"]}
 }
 qa_question = "What tables contain sales data?"
-qa_response = executor.invoke(
+qa_response = agent.invoke(
     {
-        "input": qa_question,
+        "messages": [("user", qa_question)],
         "signature": tables_only_signature,
     }
 )
@@ -114,6 +97,6 @@ bulk_table_signature = {
 }
 qa_question = f"""Use the bulk_retrieval tool with this exact signature: {json.dumps(bulk_table_signature)}"""
 
-qa_response = executor.invoke({"input": qa_question})
+qa_response = agent.invoke({"messages": [("user", qa_question)]})
 print("\nAgent Response (Bulk retrieval tool):")
 print(qa_response)
