@@ -171,6 +171,7 @@ def test_create_server_disabled_tool_and_enabled_beta_tool(
         "bulk_retrieval",  # BULK_RETRIEVAL
         "get_data_products",  # GET_DATA_PRODUCT
         "generate_data_product",  # GENERATE_DATA_PRODUCT
+        "get_data_sources_tool",
         "get_custom_fields_definitions",  # GET_CUSTOM_FIELDS_DEFINITIONS
         "get_data_dictionary_instructions",  # GET_DATA_DICTIONARY_INSTRUCTIONS
         "get_signature_creation_instructions",  # SIGNATURE_CREATION
@@ -179,8 +180,6 @@ def test_create_server_disabled_tool_and_enabled_beta_tool(
         "query_flow_agent",  # QUERY_FLOW_AGENT
         "sql_query_agent",  # SQL_QUERY_AGENT
         "get_lineage",  # LINEAGE (beta tool)
-        "custom_agent",  # CUSTOM_AGENT (additional default tool)
-        "chart_create_agent",  # CHART_CREATE_AGENT (additional default tool)
     }
 
     # Assert that alation_context is NOT registered (disabled)
@@ -214,6 +213,7 @@ def test_create_server_disabled_tool_and_enabled_beta_tool_via_environment(
         "bulk_retrieval",  # BULK_RETRIEVAL
         "get_data_products",  # GET_DATA_PRODUCT
         "generate_data_product",  # GENERATE_DATA_PRODUCT
+        "get_data_sources_tool",
         "get_custom_fields_definitions",  # GET_CUSTOM_FIELDS_DEFINITIONS
         "get_data_dictionary_instructions",  # GET_DATA_DICTIONARY_INSTRUCTIONS
         "get_signature_creation_instructions",  # SIGNATURE_CREATION
@@ -222,8 +222,6 @@ def test_create_server_disabled_tool_and_enabled_beta_tool_via_environment(
         "query_flow_agent",  # QUERY_FLOW_AGENT
         "sql_query_agent",  # SQL_QUERY_AGENT
         "get_lineage",  # LINEAGE (beta tool)
-        "custom_agent",  # CUSTOM_AGENT (additional default tool)
-        "chart_create_agent",  # CHART_CREATE_AGENT (additional default tool)
     }
 
     # Assert that alation_context is NOT registered (disabled)
@@ -253,6 +251,7 @@ def test_tool_registration(
         "alation_context",  # AGGREGATED_CONTEXT
         "bulk_retrieval",  # BULK_RETRIEVAL
         "get_data_products",  # GET_DATA_PRODUCT
+        "get_data_sources_tool",
         "generate_data_product",  # GENERATE_DATA_PRODUCT
         "get_custom_fields_definitions",  # GET_CUSTOM_FIELDS_DEFINITIONS
         "get_data_dictionary_instructions",  # GET_DATA_DICTIONARY_INSTRUCTIONS
@@ -261,8 +260,6 @@ def test_tool_registration(
         "catalog_context_search_agent",  # CATALOG_CONTEXT_SEARCH_AGENT
         "query_flow_agent",  # QUERY_FLOW_AGENT
         "sql_query_agent",  # SQL_QUERY_AGENT
-        "custom_agent",  # CUSTOM_AGENT (additional default tool)
-        "chart_create_agent",  # CHART_CREATE_AGENT (additional default tool)
     }
 
     # Assert all expected default tools are registered
