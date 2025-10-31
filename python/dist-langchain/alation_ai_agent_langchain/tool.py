@@ -325,8 +325,8 @@ def get_data_sources_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
 def get_query_flow_agent_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     query_flow_agent_tool = sdk.query_flow_agent_tool
 
-    def run_with_message(message: str, chat_id: Optional[str] = None):
-        return query_flow_agent_tool.run(message=message, chat_id=chat_id)
+    def run_with_message(message: str, marketplace_id: str, chat_id: Optional[str] = None):
+        return query_flow_agent_tool.run(message=message, marketplace_id=marketplace_id, chat_id=chat_id)
 
     return StructuredTool.from_function(
         name=query_flow_agent_tool.name,
