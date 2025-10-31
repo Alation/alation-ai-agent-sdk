@@ -137,7 +137,7 @@ def get_stdio_auth_params() -> tuple[str, ServiceAccountAuthParams]:
 
     else:
         raise ValueError(
-            "Invalid ALATION_AUTH_METHOD. Must be 'user_account' or 'service_account' for STDIO server"
+            "Invalid ALATION_AUTH_METHOD. Must be 'service_account' for STDIO server"
         )
 
     return auth_method, auth_params

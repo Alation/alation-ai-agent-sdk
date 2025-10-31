@@ -14,7 +14,6 @@ from .types import (
     SessionAuthParams,
     AuthParams,
     CatalogAssetMetadataPayloadItem,
-    Filter,
 )
 from .utils import SDK_VERSION
 from .errors import AlationAPIError, AlationErrorClassifier
@@ -1243,43 +1242,6 @@ class AlationAPI:
                 e, "custom fields retrieval", timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS
             )
 
-    def search_bi_reports_stream(
-        self,
-        search_term: str,
-        limit: int = 20,
-        filters: Optional[List[Filter]] = None,
-        chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any], None, None]:
-        """
-        Search for BI report objects in the Alation catalog.
-
-        Args:
-            search_term: Search term to filter BI reports by name
-            limit: Maximum number of results to return (default: 20, max: 100)
-            filters: Additional filters to apply to the search. Each filter must include
-                    filter_id (int) and filter_values (List[str]) per the API specification
-            chat_id: Chat session identifier
-        """
-        url = (
-            f"{self.base_url}/ai/api/v1/chats/tool/default/bi_report_search_tool/stream"
-        )
-        if chat_id is not None:
-            url += f"?chat_id={chat_id}"
-
-        payload = {
-            "search_term": search_term,
-            "limit": limit,
-        }
-        if filters is not None:
-            payload["filters"] = filters
-
-        yield from self._safe_sse_post_request(
-            tool_name="search_bi_reports",
-            url=url,
-            payload=payload,
-            timeouts=None,
-        )
-
     def alation_context_stream(
         self,
         question: str,
@@ -1374,24 +1336,6 @@ class AlationAPI:
             timeouts=None,
         )
 
-    def bi_report_agent_stream(
-        self,
-        message: str,
-        chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any], None, None]:
-        """
-        BI Report Agent for searching and analyzing BI report objects.
-        """
-        url = f"{self.base_url}/ai/api/v1/chats/agent/default/bi_report_agent/stream"
-        if chat_id is not None:
-            url += f"?chat_id={chat_id}"
-        yield from self._safe_sse_post_request(
-            tool_name="bi_report_agent",
-            url=url,
-            payload={"message": message},
-            timeouts=None,
-        )
-
     def catalog_context_search_agent_stream(
         self,
         message: str,
@@ -1407,87 +1351,6 @@ class AlationAPI:
             tool_name="catalog_context_search_agent",
             url=url,
             payload={"message": message},
-            timeouts=None,
-        )
-
-    def catalog_search_agent_stream(
-        self,
-        message: str,
-        chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any], None, None]:
-        """
-        Catalog Search Agent for general catalog search operations.
-        """
-        url = (
-            f"{self.base_url}/ai/api/v1/chats/agent/default/catalog_search_agent/stream"
-        )
-        if chat_id is not None:
-            url += f"?chat_id={chat_id}"
-        yield from self._safe_sse_post_request(
-            tool_name="catalog_search_agent",
-            url=url,
-            payload={"message": message},
-            timeouts=None,
-        )
-
-    def chart_create_agent_stream(
-        self,
-        message: str,
-        data_product_id: str,
-        chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any], None, None]:
-        """
-        Chart Create Agent for creating charts and visualizations.
-        """
-        url = f"{self.base_url}/ai/api/v1/chats/agent/default/chart_create_agent/stream"
-        if chat_id is not None:
-            url += f"?chat_id={chat_id}"
-        yield from self._safe_sse_post_request(
-            tool_name="chart_create_agent",
-            url=url,
-            payload={"message": message, "data_product_id": data_product_id},
-            timeouts=None,
-        )
-
-    def data_product_query_agent_stream(
-        self,
-        message: str,
-        data_product_id: str,
-        auth_id: Optional[str] = None,
-        chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any], None, None]:
-        """
-        Data Product Query Agent for querying data products.
-        """
-        payload = {"message": message, "data_product_id": data_product_id}
-        if auth_id is not None:
-            payload["auth_id"] = auth_id
-
-        url = f"{self.base_url}/ai/api/v1/chats/agent/default/data_product_query_agent/stream"
-        if chat_id is not None:
-            url += f"?chat_id={chat_id}"
-        yield from self._safe_sse_post_request(
-            tool_name="data_product_query_agent",
-            url=url,
-            payload=payload,
-            timeouts=None,
-        )
-
-    def deep_research_agent_stream(
-        self, message: str, pre_exec_sql: Optional[str] = None, chat_id: Optional[str] = None
-    ) -> Generator[Dict[str, Any], None, None]:
-        """
-        Deep Research Agent for comprehensive research tasks.
-        """
-        url = (
-            f"{self.base_url}/ai/api/v1/chats/agent/default/deep_research_agent/stream"
-        )
-        if chat_id is not None:
-            url += f"?chat_id={chat_id}"
-        yield from self._safe_sse_post_request(
-            tool_name="deep_research_agent",
-            url=url,
-            payload={"message": message, "pre_exec_sql": pre_exec_sql},
             timeouts=None,
         )
 
@@ -1529,100 +1392,6 @@ class AlationAPI:
             timeouts=None,
         )
 
-    def sql_execution_tool_stream(
-        self,
-        data_product_id: str,
-        sql: str,
-        result_table_name: str,
-        pre_exec_sql: Optional[str] = None,
-        auth_id: Optional[str] = None,
-        chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any], None, None]:
-        """
-        Execute SQL queries within a data product context.
-        """
-        payload = {
-            "data_product_id": data_product_id,
-            "sql": sql,
-            "result_table_name": result_table_name,
-        }
-        if pre_exec_sql is not None:
-            payload["pre_exec_sql"] = pre_exec_sql
-        if auth_id is not None:
-            payload["auth_id"] = auth_id
-
-        url = f"{self.base_url}/ai/api/v1/chats/tool/default/sql_execution_tool/stream"
-        if chat_id is not None:
-            url += f"?chat_id={chat_id}"
-        yield from self._safe_sse_post_request(
-            tool_name="sql_execution_tool",
-            url=url,
-            payload=payload,
-            timeouts=None,
-        )
-
-    def generate_chart_from_sql_and_code_tool_stream(
-        self,
-        data_product_id: str,
-        sql: str,
-        chart_code_snippet: str,
-        image_title: str,
-        pre_exec_sql: Optional[str] = None,
-        auth_id: Optional[str] = None,
-        chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any], None, None]:
-        """
-        Generate charts from SQL and code snippets within a data product context.
-        """
-        payload = {
-            "data_product_id": data_product_id,
-            "sql": sql,
-            "chart_code_snippet": chart_code_snippet,
-            "image_title": image_title,
-        }
-        if pre_exec_sql is not None:
-            payload["pre_exec_sql"] = pre_exec_sql
-        if auth_id is not None:
-            payload["auth_id"] = auth_id
-
-        url = f"{self.base_url}/ai/api/v1/chats/tool/default/generate_chart_from_sql_and_code_tool/stream"
-        if chat_id is not None:
-            url += f"?chat_id={chat_id}"
-        yield from self._safe_sse_post_request(
-            tool_name="generate_chart_from_sql_and_code_tool",
-            url=url,
-            payload=payload,
-            timeouts=None,
-        )
-
-    def get_data_schema_tool_stream(
-        self,
-        data_product_id: str,
-        pre_exec_sql: Optional[str] = None,
-        auth_id: Optional[str] = None,
-        chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any], None, None]:
-        """
-        Retrieve data schema information for a data product.
-        """
-        payload = {"data_product_id": data_product_id}
-        if pre_exec_sql is not None:
-            payload["pre_exec_sql"] = pre_exec_sql
-        if auth_id is not None:
-            payload["auth_id"] = auth_id
-
-        url = (
-            f"{self.base_url}/ai/api/v1/chats/tool/default/get_data_schema_tool/stream"
-        )
-        if chat_id is not None:
-            url += f"?chat_id={chat_id}"
-        yield from self._safe_sse_post_request(
-            tool_name="get_data_schema_tool",
-            url=url,
-            payload=payload,
-            timeouts=None,
-        )
-
     def get_data_sources_tool_stream(
         self,
         limit: int = 100,
@@ -1640,102 +1409,6 @@ class AlationAPI:
             url += f"?chat_id={chat_id}"
         yield from self._safe_sse_post_request(
             tool_name="get_data_sources_tool",
-            url=url,
-            payload=payload,
-            timeouts=None,
-        )
-
-    def list_data_products_tool_stream(
-        self,
-        search_term: str,
-        limit: int = 5,
-        marketplace_id: Optional[str] = None,
-        chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any], None, None]:
-        """
-        List data products based on search criteria.
-        """
-        payload = {"search_term": search_term, "limit": limit}
-        if marketplace_id is not None:
-            payload["marketplace_id"] = marketplace_id
-        url = f"{self.base_url}/ai/api/v1/chats/tool/default/list_data_products_tool/stream"
-        if chat_id is not None:
-            url += f"?chat_id={chat_id}"
-        yield from self._safe_sse_post_request(
-            tool_name="list_data_products_tool",
-            url=url,
-            payload=payload,
-            timeouts=None,
-        )
-
-    def search_catalog_tool_stream(
-        self,
-        search_term: str,
-        object_types: Optional[List[str]] = None,
-        filters: Optional[List[Filter]] = None,
-        chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any], None, None]:
-        """
-        Search the catalog for objects matching the specified criteria.
-
-        Args:
-            search_term: Search term to match against catalog objects
-            object_types: List of object types to filter by
-            filters: Additional filters to apply to the search. Each filter must include
-                    filter_id (int) and filter_values (List[str]) per the API specification
-            chat_id: Chat session identifier
-        """
-        payload = {"search_term": search_term}
-        if object_types is not None:
-            payload["object_types"] = object_types
-        if filters is not None:
-            payload["filters"] = filters
-        url = f"{self.base_url}/ai/api/v1/chats/tool/default/search_catalog_tool/stream"
-        if chat_id is not None:
-            url += f"?chat_id={chat_id}"
-        yield from self._safe_sse_post_request(
-            tool_name="search_catalog_tool",
-            url=url,
-            payload=payload,
-            timeouts=None,
-        )
-
-    def get_search_filter_fields_tool_stream(
-        self,
-        search_term: str,
-        limit: int = 10,
-        chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any], None, None]:
-        """
-        Get available search filter fields for catalog search.
-        """
-        payload = {"search_term": search_term, "limit": limit}
-        url = f"{self.base_url}/ai/api/v1/chats/tool/default/get_search_filter_fields_tool/stream"
-        if chat_id is not None:
-            url += f"?chat_id={chat_id}"
-        yield from self._safe_sse_post_request(
-            tool_name="get_search_filter_fields_tool",
-            url=url,
-            payload=payload,
-            timeouts=None,
-        )
-
-    def get_search_filter_values_tool_stream(
-        self,
-        field_id: int,
-        search_term: str,
-        limit: int = 10,
-        chat_id: Optional[str] = None,
-    ) -> Generator[Dict[str, Any], None, None]:
-        """
-        Get available values for a specific search filter field.
-        """
-        payload = {"field_id": field_id, "search_term": search_term, "limit": limit}
-        url = f"{self.base_url}/ai/api/v1/chats/tool/default/get_search_filter_values_tool/stream"
-        if chat_id is not None:
-            url += f"?chat_id={chat_id}"
-        yield from self._safe_sse_post_request(
-            tool_name="get_search_filter_values_tool",
             url=url,
             payload=payload,
             timeouts=None,

@@ -2,7 +2,6 @@ from typing import (
     Any,
     Dict,
     Generator,
-    List,
     Optional,
     Union,
 )
@@ -26,26 +25,12 @@ from .tools import (
     GetDataDictionaryInstructionsTool,
     SignatureCreationTool,
     AnalyzeCatalogQuestionTool,
-    BiReportSearchTool,
-    BiReportAgentTool,
     CatalogContextSearchAgentTool,
-    CatalogSearchAgentTool,
-    ChartCreateAgentTool,
-    DataProductQueryAgentTool,
-    DeepResearchAgentTool,
     QueryFlowAgentTool,
     SqlQueryAgentTool,
-    SqlExecutionTool,
-    GenerateChartFromSqlAndCodeTool,
-    GetDataSchemaTool,
     GetDataSourcesTool,
-    ListDataProductsTool,
-    SearchCatalogTool,
-    GetSearchFilterFieldsTool,
-    GetSearchFilterValuesTool,
     CustomAgentTool,
 )
-from .types import Filter
 from .lineage import (
     LineageToolResponse,
     make_lineage_kwargs,
@@ -65,33 +50,20 @@ class AlationTools:
     # Tools
     AGGREGATED_CONTEXT = "aggregated_context"
     ANALYZE_CATALOG_QUESTION = "analyze_catalog_question"
-    BI_REPORT_SEARCH = "bi_report_search"
     BULK_RETRIEVAL = "bulk_retrieval"
-    CATALOG_SEARCH = "catalog_search"
-    CHART_CREATE_AGENT = "chart_create_agent"
     CHECK_JOB_STATUS = "check_job_status"
     DATA_QUALITY = "data_quality"
-    GENERATE_CHART_FROM_SQL_AND_CODE = "generate_chart_from_sql_and_code"
     GENERATE_DATA_PRODUCT = "generate_data_product"
     GET_CUSTOM_FIELDS_DEFINITIONS = "get_custom_fields_definitions"
     GET_DATA_DICTIONARY_INSTRUCTIONS = "get_data_dictionary_instructions"
-    GET_DATA_PRODUCT = "data_product"  # TODO: jags thinks this may be broken
-    GET_DATA_SCHEMA = "get_data_schema"
+    GET_DATA_PRODUCT = "data_product"
     GET_DATA_SOURCES = "get_data_sources"
-    GET_SEARCH_FILTER_FIELDS = "get_search_filter_fields"
-    GET_SEARCH_FILTER_VALUES = "get_search_filter_values"
     LINEAGE = "lineage"
-    LIST_DATA_PRODUCTS = "list_data_products"
     SIGNATURE_CREATION = "signature_creation"
-    SQL_EXECUTION = "sql_execution"
     UPDATE_METADATA = "update_metadata"
     # Agents
-    BI_REPORT_AGENT = "bi_report_agent"
     CATALOG_CONTEXT_SEARCH_AGENT = "catalog_context_search_agent"
-    CATALOG_SEARCH_AGENT = "catalog_search_agent"
     CUSTOM_AGENT = "custom_agent"
-    DATA_PRODUCT_QUERY_AGENT = "data_product_query_agent"
-    DEEP_RESEARCH_AGENT = "deep_research_agent"
     QUERY_FLOW_AGENT = "query_flow_agent"
     SQL_QUERY_AGENT = "sql_query_agent"
 
@@ -171,25 +143,10 @@ class AlationAIAgentSDK:
         )
         self.signature_creation_tool = SignatureCreationTool(self.api)
         self.analyze_catalog_question_tool = AnalyzeCatalogQuestionTool(self.api)
-        self.bi_report_search_tool = BiReportSearchTool(self.api)
-        self.bi_report_agent_tool = BiReportAgentTool(self.api)
         self.catalog_context_search_agent_tool = CatalogContextSearchAgentTool(self.api)
-        self.catalog_search_agent_tool = CatalogSearchAgentTool(self.api)
-        self.chart_create_agent_tool = ChartCreateAgentTool(self.api)
-        self.data_product_query_agent_tool = DataProductQueryAgentTool(self.api)
-        self.deep_research_agent_tool = DeepResearchAgentTool(self.api)
         self.query_flow_agent_tool = QueryFlowAgentTool(self.api)
         self.sql_query_agent_tool = SqlQueryAgentTool(self.api)
-        self.sql_execution_tool = SqlExecutionTool(self.api)
-        self.generate_chart_from_sql_and_code_tool = GenerateChartFromSqlAndCodeTool(
-            self.api
-        )
-        self.get_data_schema_tool = GetDataSchemaTool(self.api)
         self.get_data_sources_tool = GetDataSourcesTool(self.api)
-        self.list_data_products_tool = ListDataProductsTool(self.api)
-        self.search_catalog_tool = SearchCatalogTool(self.api)
-        self.get_search_filter_fields_tool = GetSearchFilterFieldsTool(self.api)
-        self.get_search_filter_values_tool = GetSearchFilterValuesTool(self.api)
         self.custom_agent_tool = CustomAgentTool(self.api)
 
     BETA_TOOLS = {AlationTools.LINEAGE}
@@ -471,34 +428,6 @@ class AlationAIAgentSDK:
         """
         return self.analyze_catalog_question_tool.run(question=question, chat_id=chat_id)
 
-    def search_bi_reports(self, search_term: str, limit: int = 20, filters: Optional[List[Filter]] = None, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
-        """
-        Search over the Alation catalog to find BI report objects.
-
-        Args:
-            search_term (str): Search term to filter BI reports by name
-            limit (int, optional): Maximum number of results to return (default: 20, max: 100)
-            filters (optional, List[Filter]): Additional filters to apply to the search. Each filter
-            chat_id (optional, str): Chat session identifier
-
-        Returns:
-            Dict[str, Any]: List of BI report objects that match the search query parameters
-        """
-        return self.bi_report_search_tool.run(search_term=search_term, limit=limit, filters=filters, chat_id=chat_id)
-
-    def bi_report_agent(self, message: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
-        """
-        BI Report Agent for searching and analyzing BI report objects.
-
-        Args:
-            message (str): Natural language message describing what you're looking for
-            chat_id (optional, str): Chat session identifier
-
-        Returns:
-            Dict[str, Any]: Detailed information about BI reports matching your request
-        """
-        return self.bi_report_agent_tool.run(message=message, chat_id=chat_id)
-
     def catalog_context_search_agent(self, message: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Catalog Context Search Agent for searching catalog objects with enhanced context.
@@ -511,68 +440,6 @@ class AlationAIAgentSDK:
             Dict[str, Any]: Contextually-aware search results with enhanced metadata and relationships
         """
         return self.catalog_context_search_agent_tool.run(message=message, chat_id=chat_id)
-
-    def catalog_search_agent(self, message: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
-        """
-        Catalog Search Agent for general catalog search operations.
-
-        Args:
-            message (str): Natural language search query
-            chat_id (optional, str): Chat session identifier
-
-        Returns:
-            Dict[str, Any]: Search results from the data catalog matching your query
-        """
-        return self.catalog_search_agent_tool.run(message=message, chat_id=chat_id)
-
-    def chart_create_agent(self, message: str, data_product_id: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
-        """
-        Chart Create Agent for creating charts and visualizations.
-
-        Args:
-            message (str): Description of the chart or visualization you want to create
-            data_product_id (str): The ID of the data product to work with
-            chat_id (optional, str): Chat session identifier
-
-        Returns:
-            Dict[str, Any]: Chart creation guidance, code, or visualization assets
-        """
-        return self.chart_create_agent_tool.run(
-            message=message, data_product_id=data_product_id, chat_id=chat_id
-        )
-
-    def data_product_query_agent(
-        self, message: str, data_product_id: str, auth_id: Optional[str] = None, chat_id: Optional[str] = None
-    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
-        """
-        Data Product Query Agent for querying data products.
-
-        Args:
-            message (str): Your query or request related to the data product
-            data_product_id (str): The ID of the data product to work with
-            auth_id (str, optional): Authentication ID for data access
-            chat_id (optional, str): Chat session identifier
-
-        Returns:
-            Dict[str, Any]: Query results, analysis, or guidance specific to the requested data product
-        """
-        return self.data_product_query_agent_tool.run(
-            message=message, data_product_id=data_product_id, auth_id=auth_id, chat_id=chat_id
-        )
-
-    def deep_research_agent(self, message: str, pre_exec_sql: Optional[str] = None, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
-        """
-        Deep Research Agent for comprehensive research tasks.
-
-        Args:
-            message (str): Research question or topic you want to investigate
-            pre_exec_sql (str, optional): SQL to execute before starting the research (set session etc)
-            chat_id (optional, str): Chat session identifier
-
-        Returns:
-            Dict[str, Any]: Comprehensive research results with detailed analysis and insights
-        """
-        return self.deep_research_agent_tool.run(message=message, pre_exec_sql=pre_exec_sql, chat_id=chat_id)
 
     def query_flow_agent(self, message: str, marketplace_id: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
@@ -606,96 +473,6 @@ class AlationAIAgentSDK:
             message=message, data_product_id=data_product_id, chat_id=chat_id
         )
 
-    def execute_sql(
-        self,
-        data_product_id: str,
-        sql: str,
-        result_table_name: str,
-        pre_exec_sql: Optional[str] = None,
-        auth_id: Optional[str] = None,
-        chat_id: Optional[str] = None
-    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
-        """
-        Execute SQL queries within a data product context.
-
-        Args:
-            data_product_id (str): The ID of the data product to execute queries against
-            sql (str): The SQL query to execute
-            result_table_name (str): Name for the result table
-            pre_exec_sql (str, optional): SQL to execute before the main query
-            auth_id (str, optional): Authentication ID for data access
-            chat_id (optional, str): Chat session identifier
-
-        Returns:
-            Dict[str, Any]: Query execution results including data and metadata
-        """
-        return self.sql_execution_tool.run(
-            data_product_id=data_product_id,
-            sql=sql,
-            result_table_name=result_table_name,
-            pre_exec_sql=pre_exec_sql,
-            auth_id=auth_id,
-            chat_id=chat_id,
-        )
-
-    def generate_chart_from_sql_and_code(
-        self,
-        data_product_id: str,
-        sql: str,
-        chart_code_snippet: str,
-        image_title: str,
-        pre_exec_sql: Optional[str] = None,
-        auth_id: Optional[str] = None,
-        chat_id: Optional[str] = None,
-    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
-        """
-        Generate charts from SQL queries and code snippets within a data product context.
-
-        Args:
-            data_product_id (str): The ID of the data product to work with
-            sql (str): The SQL query to fetch data
-            chart_code_snippet (str): Code snippet for generating the chart
-            image_title (str): Title for the generated chart image
-            pre_exec_sql (str, optional): SQL to execute before the main query
-            auth_id (str, optional): Authentication ID for data access
-            chat_id (optional, str): Chat session identifier
-
-        Returns:
-            Dict[str, Any]: Generated chart data and visualization assets
-        """
-        return self.generate_chart_from_sql_and_code_tool.run(
-            data_product_id=data_product_id,
-            sql=sql,
-            chart_code_snippet=chart_code_snippet,
-            image_title=image_title,
-            pre_exec_sql=pre_exec_sql,
-            auth_id=auth_id,
-            chat_id=chat_id,
-        )
-
-    def get_data_schema(
-        self,
-        data_product_id: str,
-        pre_exec_sql: Optional[str] = None,
-        auth_id: Optional[str] = None,
-        chat_id: Optional[str] = None,
-    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
-        """
-        Retrieve data schema information for a data product.
-
-        Args:
-            data_product_id (str): The ID of the data product to get schema for
-            pre_exec_sql (str, optional): SQL to execute before schema retrieval
-            auth_id (str, optional): Authentication ID for data access
-            chat_id (optional, str): Chat session identifier
-
-        Returns:
-            Dict[str, Any]: Data schema information including table structures and metadata
-        """
-        return self.get_data_schema_tool.run(
-            data_product_id=data_product_id, pre_exec_sql=pre_exec_sql, auth_id=auth_id, chat_id=chat_id
-        )
-
     def get_data_sources(self, limit: int = 100, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Retrieve available data sources from the catalog.
@@ -708,85 +485,6 @@ class AlationAIAgentSDK:
             Dict[str, Any]: List of available data sources with their metadata and connection information
         """
         return self.get_data_sources_tool.run(limit=limit, chat_id=chat_id)
-
-    def list_data_products(
-        self, search_term: str, limit: int = 5, marketplace_id: Optional[str] = None, chat_id: Optional[str] = None
-    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
-        """
-        List data products based on search criteria.
-
-        Args:
-            search_term (str): Search term to filter data products
-            limit (int, optional): Maximum number of results to return (default: 5)
-            marketplace_id (str, optional): ID of the marketplace to search in
-            hat_id (optional, str): Chat session identifier
-
-        Returns:
-            Dict[str, Any]: List of data products matching the search criteria
-        """
-        return self.list_data_products_tool.run(
-            search_term=search_term, limit=limit, marketplace_id=marketplace_id, chat_id=chat_id
-        )
-
-    def search_catalog(
-        self,
-        search_term: str,
-        object_types: Optional[List[str]] = None,
-        filters: Optional[List[Filter]] = None,
-        chat_id: Optional[str] = None,
-    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
-        """
-        Search the catalog for objects matching specified criteria.
-
-        Args:
-            search_term (str): Search term to match against catalog objects
-            object_types (List[str], optional): List of object types to filter by
-            filters (List[Filter], optional): Additional filters to apply to the search
-            chat_id (optional, str): Chat session identifier
-
-        Returns:
-            Dict[str, Any]: Search results matching the specified criteria with object metadata
-        """
-        return self.search_catalog_tool.run(
-            search_term=search_term, object_types=object_types, filters=filters, chat_id=chat_id
-        )
-
-    def get_search_filter_fields(
-        self, search_term: str, limit: int = 10, chat_id: Optional[str] = None
-    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
-        """
-        Get available search filter fields for catalog search.
-
-        Args:
-            search_term (str): Search term to match against filter field names
-            limit (int, optional): Maximum number of filter fields to return (default: 10)
-            chat_id (optional, str): Chat session identifier
-
-        Returns:
-            Dict[str, Any]: List of available search filter fields with their metadata
-        """
-        return self.get_search_filter_fields_tool.run(
-            search_term=search_term, limit=limit, chat_id=chat_id
-        )
-
-    def get_search_filter_values(
-        self, field_id: int, search_term: str, limit: int = 10, chat_id: Optional[str] = None
-    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
-        """
-        Get available values for a specific search filter field.
-
-        Args:
-            field_id (int): ID of the filter field to get values for
-            search_term (str): Search term to match against filter values
-            limit (int, optional): Maximum number of filter values to return (default: 10)
-            chat_id (optional, str): Chat session identifier
-
-        Returns:
-            Dict[str, Any]: List of available values for the specified filter field
-        """
-        return self.get_search_filter_values_tool.run(
-            field_id=field_id, search_term=search_term, limit=limit, chat_id=chat_id
-        )
 
     def execute_custom_agent(
         self, agent_config_id: str, payload: Dict[str, Any], chat_id: Optional[str] = None
@@ -902,20 +600,6 @@ class AlationAIAgentSDK:
         ):
             tools.append(self.analyze_catalog_question_tool)
         if is_tool_enabled(
-            AlationTools.BI_REPORT_SEARCH,
-            self.enabled_tools,
-            self.disabled_tools,
-            self.enabled_beta_tools,
-        ):
-            tools.append(self.bi_report_search_tool)
-        if is_tool_enabled(
-            AlationTools.BI_REPORT_AGENT,
-            self.enabled_tools,
-            self.disabled_tools,
-            self.enabled_beta_tools,
-        ):
-            tools.append(self.bi_report_agent_tool)
-        if is_tool_enabled(
             AlationTools.CATALOG_CONTEXT_SEARCH_AGENT,
             self.enabled_tools,
             self.disabled_tools,
@@ -923,82 +607,12 @@ class AlationAIAgentSDK:
         ):
             tools.append(self.catalog_context_search_agent_tool)
         if is_tool_enabled(
-            AlationTools.CATALOG_SEARCH_AGENT,
-            self.enabled_tools,
-            self.disabled_tools,
-            self.enabled_beta_tools,
-        ):
-            tools.append(self.catalog_search_agent_tool)
-        if is_tool_enabled(
-            AlationTools.CATALOG_SEARCH,
-            self.enabled_tools,
-            self.disabled_tools,
-            self.enabled_beta_tools,
-        ):
-            tools.append(self.search_catalog_tool)
-        if is_tool_enabled(
-            AlationTools.CHART_CREATE_AGENT,
-            self.enabled_tools,
-            self.disabled_tools,
-            self.enabled_beta_tools,
-        ):
-            tools.append(self.chart_create_agent_tool)
-        if is_tool_enabled(
-            AlationTools.DATA_PRODUCT_QUERY_AGENT,
-            self.enabled_tools,
-            self.disabled_tools,
-            self.enabled_beta_tools,
-        ):
-            tools.append(self.data_product_query_agent_tool)
-        if is_tool_enabled(
-            AlationTools.DEEP_RESEARCH_AGENT,
-            self.enabled_tools,
-            self.disabled_tools,
-            self.enabled_beta_tools,
-        ):
-            tools.append(self.deep_research_agent_tool)
-        if is_tool_enabled(
-            AlationTools.GENERATE_CHART_FROM_SQL_AND_CODE,
-            self.enabled_tools,
-            self.disabled_tools,
-            self.enabled_beta_tools,
-        ):
-            tools.append(self.generate_chart_from_sql_and_code_tool)
-        if is_tool_enabled(
-            AlationTools.GET_DATA_SCHEMA,
-            self.enabled_tools,
-            self.disabled_tools,
-            self.enabled_beta_tools,
-        ):
-            tools.append(self.get_data_schema_tool)
-        if is_tool_enabled(
             AlationTools.GET_DATA_SOURCES,
             self.enabled_tools,
             self.disabled_tools,
             self.enabled_beta_tools,
         ):
             tools.append(self.get_data_sources_tool)
-        if is_tool_enabled(
-            AlationTools.GET_SEARCH_FILTER_FIELDS,
-            self.enabled_tools,
-            self.disabled_tools,
-            self.enabled_beta_tools,
-        ):
-            tools.append(self.get_search_filter_fields_tool)
-        if is_tool_enabled(
-            AlationTools.GET_SEARCH_FILTER_VALUES,
-            self.enabled_tools,
-            self.disabled_tools,
-            self.enabled_beta_tools,
-        ):
-            tools.append(self.get_search_filter_values_tool)
-        if is_tool_enabled(
-            AlationTools.LIST_DATA_PRODUCTS,
-            self.enabled_tools,
-            self.disabled_tools,
-            self.enabled_beta_tools,
-        ):
-            tools.append(self.list_data_products_tool)
         if is_tool_enabled(
             AlationTools.QUERY_FLOW_AGENT,
             self.enabled_tools,
@@ -1013,13 +627,6 @@ class AlationAIAgentSDK:
             self.enabled_beta_tools,
         ):
             tools.append(self.sql_query_agent_tool)
-        if is_tool_enabled(
-            AlationTools.SQL_EXECUTION,
-            self.enabled_tools,
-            self.disabled_tools,
-            self.enabled_beta_tools,
-        ):
-            tools.append(self.sql_execution_tool)
         if is_tool_enabled(
             AlationTools.CUSTOM_AGENT,
             self.enabled_tools,

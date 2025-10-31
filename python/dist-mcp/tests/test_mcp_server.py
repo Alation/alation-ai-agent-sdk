@@ -166,18 +166,32 @@ def test_create_server_disabled_tool_and_enabled_beta_tool(
     mock_mcp_class.assert_called_once_with(name="Alation MCP Server")
     assert mcp_result is mock_mcp_instance
 
-    assert mock_mcp_instance.tool.call_count == 13
+    # Expected tools: All default tools except alation_context (disabled), plus get_lineage (beta enabled)
+    expected_tools = {
+        "bulk_retrieval",  # BULK_RETRIEVAL
+        "get_data_products",  # GET_DATA_PRODUCT
+        "generate_data_product",  # GENERATE_DATA_PRODUCT
+        "get_custom_fields_definitions",  # GET_CUSTOM_FIELDS_DEFINITIONS
+        "get_data_dictionary_instructions",  # GET_DATA_DICTIONARY_INSTRUCTIONS
+        "get_signature_creation_instructions",  # SIGNATURE_CREATION
+        "analyze_catalog_question",  # ANALYZE_CATALOG_QUESTION
+        "catalog_context_search_agent",  # CATALOG_CONTEXT_SEARCH_AGENT
+        "query_flow_agent",  # QUERY_FLOW_AGENT
+        "sql_query_agent",  # SQL_QUERY_AGENT
+        "get_lineage",  # LINEAGE (beta tool)
+        "custom_agent",  # CUSTOM_AGENT (additional default tool)
+        "chart_create_agent",  # CHART_CREATE_AGENT (additional default tool)
+    }
 
-    # NOTE: each distribution may refer to the tools differently. These should be standardized so we can
-    # reuse a set of constants across all projects.
+    # Assert that alation_context is NOT registered (disabled)
     assert "alation_context" not in mock_mcp_instance.tools
 
-    assert "bulk_retrieval" in mock_mcp_instance.tools
-    assert "get_data_products" in mock_mcp_instance.tools
-    assert "get_lineage" in mock_mcp_instance.tools
-    assert "generate_data_product" in mock_mcp_instance.tools
-    assert "analyze_catalog_question" in mock_mcp_instance.tools
-    assert "get_signature_creation_instructions" in mock_mcp_instance.tools
+    # Assert all expected tools are registered
+    for tool_name in expected_tools:
+        assert tool_name in mock_mcp_instance.tools, f"Tool '{tool_name}' should be registered"
+
+    # Assert correct number of tools are registered
+    assert mock_mcp_instance.tool.call_count == len(expected_tools)
 
 
 def test_create_server_disabled_tool_and_enabled_beta_tool_via_environment(
@@ -195,37 +209,70 @@ def test_create_server_disabled_tool_and_enabled_beta_tool_via_environment(
     mock_mcp_class.assert_called_once_with(name="Alation MCP Server")
     assert mcp_result is mock_mcp_instance
 
-    assert mock_mcp_instance.tool.call_count == 13
+    # Expected tools: All default tools except alation_context (disabled), plus get_lineage (beta enabled)
+    expected_tools = {
+        "bulk_retrieval",  # BULK_RETRIEVAL
+        "get_data_products",  # GET_DATA_PRODUCT
+        "generate_data_product",  # GENERATE_DATA_PRODUCT
+        "get_custom_fields_definitions",  # GET_CUSTOM_FIELDS_DEFINITIONS
+        "get_data_dictionary_instructions",  # GET_DATA_DICTIONARY_INSTRUCTIONS
+        "get_signature_creation_instructions",  # SIGNATURE_CREATION
+        "analyze_catalog_question",  # ANALYZE_CATALOG_QUESTION
+        "catalog_context_search_agent",  # CATALOG_CONTEXT_SEARCH_AGENT
+        "query_flow_agent",  # QUERY_FLOW_AGENT
+        "sql_query_agent",  # SQL_QUERY_AGENT
+        "get_lineage",  # LINEAGE (beta tool)
+        "custom_agent",  # CUSTOM_AGENT (additional default tool)
+        "chart_create_agent",  # CHART_CREATE_AGENT (additional default tool)
+    }
 
-    # NOTE: each distribution may refer to the tools differently. These should be standardized so we can
-    # reuse a set of constants across all projects.
+    # Assert that alation_context is NOT registered (disabled)
     assert "alation_context" not in mock_mcp_instance.tools
 
-    assert "bulk_retrieval" in mock_mcp_instance.tools
-    assert "get_data_products" in mock_mcp_instance.tools
-    assert "get_lineage" in mock_mcp_instance.tools
-    assert "generate_data_product" in mock_mcp_instance.tools
-    assert "analyze_catalog_question" in mock_mcp_instance.tools
-    assert "get_signature_creation_instructions" in mock_mcp_instance.tools
+    # Assert all expected tools are registered
+    for tool_name in expected_tools:
+        assert tool_name in mock_mcp_instance.tools, f"Tool '{tool_name}' should be registered"
+
+    # Assert correct number of tools are registered
+    assert mock_mcp_instance.tool.call_count == len(expected_tools)
 
 
 def test_tool_registration(
     manage_environment_variables, mock_alation_sdk, mock_fastmcp
 ):
     """
-    Test that the alation_context tool is registered correctly on the mocked MCP.
+    Test that all default tools are registered correctly on the mocked MCP.
     """
     mock_sdk_class, mock_sdk_instance = mock_alation_sdk
     mock_mcp_class, mock_mcp_instance = mock_fastmcp
 
     server.create_server("stdio")
 
-    # Check that tools are registered
-    # The tool name is now determined by get_tool_metadata() from the actual tool class
-    tool_name = "alation_context"  # AlationContextTool._get_name()
-    assert tool_name in mock_mcp_instance.tools
-    assert isinstance(mock_mcp_instance.tools[tool_name], MagicMock)
-    assert hasattr(mock_mcp_instance.tools[tool_name], "__wrapped__")
+    # Expected default tools (no disabled tools, no beta tools enabled)
+    expected_default_tools = {
+        "alation_context",  # AGGREGATED_CONTEXT
+        "bulk_retrieval",  # BULK_RETRIEVAL
+        "get_data_products",  # GET_DATA_PRODUCT
+        "generate_data_product",  # GENERATE_DATA_PRODUCT
+        "get_custom_fields_definitions",  # GET_CUSTOM_FIELDS_DEFINITIONS
+        "get_data_dictionary_instructions",  # GET_DATA_DICTIONARY_INSTRUCTIONS
+        "get_signature_creation_instructions",  # SIGNATURE_CREATION
+        "analyze_catalog_question",  # ANALYZE_CATALOG_QUESTION
+        "catalog_context_search_agent",  # CATALOG_CONTEXT_SEARCH_AGENT
+        "query_flow_agent",  # QUERY_FLOW_AGENT
+        "sql_query_agent",  # SQL_QUERY_AGENT
+        "custom_agent",  # CUSTOM_AGENT (additional default tool)
+        "chart_create_agent",  # CHART_CREATE_AGENT (additional default tool)
+    }
+
+    # Assert all expected default tools are registered
+    for tool_name in expected_default_tools:
+        assert tool_name in mock_mcp_instance.tools, f"Tool '{tool_name}' should be registered"
+        assert isinstance(mock_mcp_instance.tools[tool_name], MagicMock)
+        assert hasattr(mock_mcp_instance.tools[tool_name], "__wrapped__")
+
+    # Assert correct number of tools are registered
+    assert mock_mcp_instance.tool.call_count == len(expected_default_tools)
 
 
 def test_alation_context_tool_logic(

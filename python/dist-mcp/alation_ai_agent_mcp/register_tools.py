@@ -26,7 +26,6 @@ from alation_ai_agent_sdk import (
     AlationTools,
     BearerTokenAuthParams,
 )
-from alation_ai_agent_sdk.types import Filter
 from alation_ai_agent_sdk.utils import is_tool_enabled, get_tool_metadata
 from alation_ai_agent_sdk.tools import (
     AlationContextTool,
@@ -41,23 +40,10 @@ from alation_ai_agent_sdk.tools import (
     GetDataDictionaryInstructionsTool,
     SignatureCreationTool,
     AnalyzeCatalogQuestionTool,
-    BiReportSearchTool,
-    BiReportAgentTool,
     CatalogContextSearchAgentTool,
-    CatalogSearchAgentTool,
-    ChartCreateAgentTool,
-    DataProductQueryAgentTool,
-    DeepResearchAgentTool,
     QueryFlowAgentTool,
     SqlQueryAgentTool,
-    SqlExecutionTool,
-    GenerateChartFromSqlAndCodeTool,
-    GetDataSchemaTool,
     GetDataSourcesTool,
-    ListDataProductsTool,
-    SearchCatalogTool,
-    GetSearchFilterFieldsTool,
-    GetSearchFilterValuesTool,
     CustomAgentTool,
 )
 from mcp.server.fastmcp import FastMCP
@@ -142,12 +128,11 @@ def register_tools(
                 AlationTools.GET_CUSTOM_FIELDS_DEFINITIONS,
                 AlationTools.GET_DATA_DICTIONARY_INSTRUCTIONS,
                 AlationTools.GET_DATA_PRODUCT,
+                AlationTools.GET_DATA_SOURCES,
                 AlationTools.SIGNATURE_CREATION,
                 # Agents as Tools
-                AlationTools.CUSTOM_AGENT,
                 AlationTools.CATALOG_CONTEXT_SEARCH_AGENT,
                 AlationTools.QUERY_FLOW_AGENT,
-                AlationTools.CHART_CREATE_AGENT,
                 AlationTools.SQL_QUERY_AGENT,
             ]
         )
@@ -380,42 +365,6 @@ def register_tools(
             result = alation_sdk.analyze_catalog_question(question, chat_id=chat_id)
             return result
 
-    # BI Report Tools
-    if is_tool_enabled(
-        AlationTools.BI_REPORT_SEARCH,
-        config_enabled,
-        config_disabled,
-        config_enabled_beta,
-    ):
-        metadata = get_tool_metadata(BiReportSearchTool)
-
-        @mcp.tool(name=metadata["name"], description=metadata["description"])
-        def bi_report_search(
-            search_term: str,
-            limit: int = 20,
-            filters: list[Filter] | None = None,
-            chat_id: Optional[str] = None,
-        ):
-            alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.search_bi_reports(
-                search_term=search_term, limit=limit, filters=filters, chat_id=chat_id
-            )
-            return result
-
-    if is_tool_enabled(
-        AlationTools.BI_REPORT_AGENT,
-        config_enabled,
-        config_disabled,
-        config_enabled_beta,
-    ):
-        metadata = get_tool_metadata(BiReportAgentTool)
-
-        @mcp.tool(name=metadata["name"], description=metadata["description"])
-        def bi_report_agent(message: str, chat_id: Optional[str] = None):
-            alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.bi_report_agent(message=message, chat_id=chat_id)
-            return result
-
     # Catalog Search Tools
     if is_tool_enabled(
         AlationTools.CATALOG_CONTEXT_SEARCH_AGENT,
@@ -430,166 +379,6 @@ def register_tools(
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.catalog_context_search_agent(
                 message=message, chat_id=chat_id
-            )
-            return result
-
-    if is_tool_enabled(
-        AlationTools.CATALOG_SEARCH_AGENT,
-        config_enabled,
-        config_disabled,
-        config_enabled_beta,
-    ):
-        metadata = get_tool_metadata(CatalogSearchAgentTool)
-
-        @mcp.tool(name=metadata["name"], description=metadata["description"])
-        def catalog_search_agent(message: str, chat_id: Optional[str] = None):
-            alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.catalog_search_agent(message=message, chat_id=chat_id)
-            return result
-
-    if is_tool_enabled(
-        AlationTools.CATALOG_SEARCH,
-        config_enabled,
-        config_disabled,
-        config_enabled_beta,
-    ):
-        metadata = get_tool_metadata(SearchCatalogTool)
-
-        @mcp.tool(name=metadata["name"], description=metadata["description"])
-        def search_catalog_tool(
-            search_term: str,
-            object_types: list | None = None,
-            filters: list[Filter] | None = None,
-            chat_id: Optional[str] = None,
-        ):
-            alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.search_catalog_tool(
-                search_term=search_term,
-                object_types=object_types,
-                filters=filters,
-                chat_id=chat_id,
-            )
-            return result
-
-    # Chart and Visualization Tools
-    if is_tool_enabled(
-        AlationTools.CHART_CREATE_AGENT,
-        config_enabled,
-        config_disabled,
-        config_enabled_beta,
-    ):
-        metadata = get_tool_metadata(ChartCreateAgentTool)
-
-        @mcp.tool(name=metadata["name"], description=metadata["description"])
-        def chart_create_agent(
-            message: str, data_product_id: str, chat_id: Optional[str] = None
-        ):
-            alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.chart_create_agent(
-                message=message, data_product_id=data_product_id, chat_id=chat_id
-            )
-            return result
-
-    if is_tool_enabled(
-        AlationTools.GENERATE_CHART_FROM_SQL_AND_CODE,
-        config_enabled,
-        config_disabled,
-        config_enabled_beta,
-    ):
-        metadata = get_tool_metadata(GenerateChartFromSqlAndCodeTool)
-
-        @mcp.tool(name=metadata["name"], description=metadata["description"])
-        def generate_chart_from_sql_and_code_tool(
-            data_product_id: str,
-            sql: str,
-            chart_code_snippet: str,
-            image_title: str,
-            pre_exec_sql: Optional[str] = None,
-            auth_id: Optional[str] = None,
-            chat_id: Optional[str] = None,
-        ):
-            alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.generate_chart_from_sql_and_code_tool(
-                data_product_id=data_product_id,
-                sql=sql,
-                chart_code_snippet=chart_code_snippet,
-                image_title=image_title,
-                pre_exec_sql=pre_exec_sql,
-                auth_id=auth_id,
-                chat_id=chat_id,
-            )
-            return result
-
-    # Data Product Tools
-    if is_tool_enabled(
-        AlationTools.DATA_PRODUCT_QUERY_AGENT,
-        config_enabled,
-        config_disabled,
-        config_enabled_beta,
-    ):
-        metadata = get_tool_metadata(DataProductQueryAgentTool)
-
-        @mcp.tool(name=metadata["name"], description=metadata["description"])
-        def data_product_query_agent(
-            message: str,
-            data_product_id: str,
-            auth_id: Optional[str] = None,
-            chat_id: Optional[str] = None,
-        ):
-            alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.data_product_query_agent(
-                message=message,
-                data_product_id=data_product_id,
-                auth_id=auth_id,
-                chat_id=chat_id,
-            )
-            return result
-
-    if is_tool_enabled(
-        AlationTools.LIST_DATA_PRODUCTS,
-        config_enabled,
-        config_disabled,
-        config_enabled_beta,
-    ):
-        metadata = get_tool_metadata(ListDataProductsTool)
-
-        @mcp.tool(name=metadata["name"], description=metadata["description"])
-        def list_data_products_tool(
-            search_term: str,
-            limit: int = 5,
-            marketplace_id: Optional[str] = None,
-            chat_id: Optional[str] = None,
-        ):
-            alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.list_data_products_tool(
-                search_term=search_term,
-                limit=limit,
-                marketplace_id=marketplace_id,
-                chat_id=chat_id,
-            )
-            return result
-
-    if is_tool_enabled(
-        AlationTools.GET_DATA_SCHEMA,
-        config_enabled,
-        config_disabled,
-        config_enabled_beta,
-    ):
-        metadata = get_tool_metadata(GetDataSchemaTool)
-
-        @mcp.tool(name=metadata["name"], description=metadata["description"])
-        def get_data_schema_tool(
-            data_product_id: str,
-            pre_exec_sql: Optional[str] = None,
-            auth_id: Optional[str] = None,
-            chat_id: Optional[str] = None,
-        ):
-            alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.get_data_schema_tool(
-                data_product_id=data_product_id,
-                pre_exec_sql=pre_exec_sql,
-                auth_id=auth_id,
-                chat_id=chat_id,
             )
             return result
 
@@ -627,31 +416,6 @@ def register_tools(
             return result
 
     if is_tool_enabled(
-        AlationTools.SQL_EXECUTION, config_enabled, config_disabled, config_enabled_beta
-    ):
-        metadata = get_tool_metadata(SqlExecutionTool)
-
-        @mcp.tool(name=metadata["name"], description=metadata["description"])
-        def sql_execution_tool(
-            data_product_id: str,
-            sql: str,
-            result_table_name: str,
-            pre_exec_sql: Optional[str] = None,
-            auth_id: Optional[str] = None,
-            chat_id: Optional[str] = None,
-        ):
-            alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.sql_execution_tool(
-                data_product_id=data_product_id,
-                sql=sql,
-                result_table_name=result_table_name,
-                pre_exec_sql=pre_exec_sql,
-                auth_id=auth_id,
-                chat_id=chat_id,
-            )
-            return result
-
-    if is_tool_enabled(
         AlationTools.QUERY_FLOW_AGENT,
         config_enabled,
         config_disabled,
@@ -666,61 +430,6 @@ def register_tools(
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.query_flow_agent(
                 message=message, marketplace_id=marketplace_id, chat_id=chat_id
-            )
-            return result
-
-    # Research and Analysis Tools
-    if is_tool_enabled(
-        AlationTools.DEEP_RESEARCH_AGENT,
-        config_enabled,
-        config_disabled,
-        config_enabled_beta,
-    ):
-        metadata = get_tool_metadata(DeepResearchAgentTool)
-
-        @mcp.tool(name=metadata["name"], description=metadata["description"])
-        def deep_research_agent(message: str, pre_exec_sql: Optional[str] = None, chat_id: Optional[str] = None):
-            alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.deep_research_agent(message=message, pre_exec_sql=pre_exec_sql, chat_id=chat_id)
-            return result
-
-    # Search Filter Tools
-    if is_tool_enabled(
-        AlationTools.GET_SEARCH_FILTER_FIELDS,
-        config_enabled,
-        config_disabled,
-        config_enabled_beta,
-    ):
-        metadata = get_tool_metadata(GetSearchFilterFieldsTool)
-
-        @mcp.tool(name=metadata["name"], description=metadata["description"])
-        def get_search_filter_fields_tool(
-            search_term: str, limit: int = 10, chat_id: Optional[str] = None
-        ):
-            alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.get_search_filter_fields_tool(
-                search_term=search_term, limit=limit, chat_id=chat_id
-            )
-            return result
-
-    if is_tool_enabled(
-        AlationTools.GET_SEARCH_FILTER_VALUES,
-        config_enabled,
-        config_disabled,
-        config_enabled_beta,
-    ):
-        metadata = get_tool_metadata(GetSearchFilterValuesTool)
-
-        @mcp.tool(name=metadata["name"], description=metadata["description"])
-        def get_search_filter_values_tool(
-            field_id: int,
-            search_term: str,
-            limit: int = 10,
-            chat_id: Optional[str] = None,
-        ):
-            alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.get_search_filter_values_tool(
-                field_id=field_id, search_term=search_term, limit=limit, chat_id=chat_id
             )
             return result
 
