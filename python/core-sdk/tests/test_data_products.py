@@ -204,34 +204,37 @@ def test_get_data_products_query_multiple_results(
     )
     mock_requests_post(
         "search-internally/mock_marketplace",
-        response_json=[
-            {
-                "product": {
-                    "product_id": "product_123",
-                    "spec_json": {
-                        "product": {
-                            "en": {
-                                "name": "Mock Product",
-                                "description": "Mock data product for testing purposes",
+        response_json={
+            "search_id": "14a64875-d6d4-45c6-943d-d31793834c45",
+            "results":  [
+                {
+                    "product": {
+                        "product_id": "product_123",
+                        "spec_json": {
+                            "product": {
+                                "en": {
+                                    "name": "Mock Product",
+                                    "description": "Mock data product for testing purposes",
+                                }
                             }
-                        }
-                    },
-                }
-            },
-            {
-                "product": {
-                    "product_id": "product_456",
-                    "spec_json": {
-                        "product": {
-                            "en": {
-                                "name": "Another Mock Product",
-                                "description": "Another mock data product for testing purposes",
+                        },
+                    }
+                },
+                {
+                    "product": {
+                        "product_id": "product_456",
+                        "spec_json": {
+                            "product": {
+                                "en": {
+                                    "name": "Another Mock Product",
+                                    "description": "Another mock data product for testing purposes",
+                                }
                             }
-                        }
-                    },
-                }
-            },
-        ],
+                        },
+                    }
+                },
+            ]
+        },
         status_code=200,
     )
 
@@ -258,21 +261,24 @@ def test_get_data_products_query_single_result(
     )
     mock_requests_post(
         "search-internally/mock_marketplace",
-        response_json=[
-            {
-                "product": {
-                    "product_id": "product_123",
-                    "spec_json": {
-                        "product": {
-                            "en": {
-                                "name": "Mock Product",
-                                "description": "Mock data product for testing purposes",
+        response_json={
+            "search_id": "14a64875-d6d4-45c6-943d-d31793834c45",
+            "results":  [
+                {
+                    "product": {
+                        "product_id": "product_123",
+                        "spec_json": {
+                            "product": {
+                                "en": {
+                                    "name": "Mock Product",
+                                    "description": "Mock data product for testing purposes",
+                                }
                             }
-                        }
-                    },
-                }
-            }
-        ],
+                        },
+                    }
+                },
+            ]
+        },
         status_code=200,
     )
 
@@ -281,7 +287,7 @@ def test_get_data_products_query_single_result(
     assert len(response["results"]) == 1
     assert response["results"][0]["id"] == "product_123"
     assert response["instructions"] == (
-        "Found 1 data products matching your query. "
+        "Found 1 data product matching your query. "
         "The following contains summary information (name, id, description, url) for each product. "
         "To get complete specifications, call this tool again with a specific product_id."
     )
