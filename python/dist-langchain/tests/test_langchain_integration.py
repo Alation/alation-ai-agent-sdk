@@ -655,9 +655,9 @@ def test_query_flow_agent_tool_wrapper():
     assert qf_tool.description == "Query Flow Agent"
 
     # Test the tool function
-    result = qf_tool.func(message="test query flow")
+    result = qf_tool.func(message="test query flow", marketplace_id="test")
     mock_sdk.query_flow_agent_tool.run.assert_called_once_with(
-        message="test query flow", chat_id=None
+        message="test query flow", marketplace_id="test", chat_id=None
     )
     assert result == {"query_response": "flow result"}
 
