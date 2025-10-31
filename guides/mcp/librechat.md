@@ -9,7 +9,7 @@ This guide explains how to set up and use the **Alation Context API MCP server**
 - Installed and configured **LibreChat** client v0.7.8 or newer ([instructions](https://www.librechat.ai/docs/quick_start/local_setup))
 - Python 3.10 or higher
 - Access to an Alation Data Catalog instance
-- A valid refresh token or client_id and secret. For more details, refer to the [Authentication Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md).
+- A client_id and secret. For more details, refer to the [Authentication Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md).
 
 ---
 
@@ -57,12 +57,7 @@ mcpServers:
       - "start-alation-mcp-server"
     env:
       ALATION_BASE_URL: "https://your-alation-instance.com"
-      ALATION_AUTH_METHOD: "user_account"  # or "service_account"
-
-      # For user account authentication
-      ALATION_USER_ID: "your-user-id"
-      ALATION_REFRESH_TOKEN: "your-refresh-token"
-
+      ALATION_AUTH_METHOD: "service_account"
       # For service account authentication
       ALATION_CLIENT_ID: "your-client-id"
       ALATION_CLIENT_SECRET: "your-client-secret"
@@ -173,4 +168,4 @@ What trusted tables exist for financial transactions?
 | Symptom | Solution |
 |--------|----------|
 | Tool doesn't show in UI | Confirm `mcpServers` is properly defined in `librechat.yaml`, and restart the backend; `docker logs LibreChat` will show mcp server init logs |
-| Data not fetched correctly | Check Alation credentials (`USER_ID`, `REFRESH_TOKEN`, `ALATION_API_BASE`) |
+| Data not fetched correctly | Check Alation credentials (`CLIENT_ID`, `CLIENT_SECRET`, `ALATION_API_BASE`) |

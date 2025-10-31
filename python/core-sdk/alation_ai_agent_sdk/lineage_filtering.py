@@ -24,6 +24,16 @@ def get_node_object_key(node: LineageGraphNode) -> str:
     return f"{node['otype']}:{node['id']}"
 
 
+def recursively_process_neighbors(node: LineageGraphNode, key_to_node: Dict[str, LineageGraphNode]) -> Dict[str, LineageGraphNode]:
+    node_key = get_node_object_key(node)
+    if node_key not in key_to_node:
+        if 'neighbors' not in node:
+            node['neighbors'] = []
+        key_to_node[node_key] = node
+        for neighbor_node in node.get("neighbors", []):
+            key_to_node = recursively_process_neighbors(neighbor_node, key_to_node)
+    return key_to_node
+
 def get_initial_graph_state(
     nodes: List[Dict],
 ) -> tuple[List[str], Dict[str, Dict], Set[str]]:
@@ -43,8 +53,15 @@ def get_initial_graph_state(
     key_to_node = {}
     for node in nodes:
         node_key = get_node_object_key(node)
+        if 'neighbors' not in node:
+            node['neighbors'] = []
         key_to_node[node_key] = node
         ordered_keys.append(node_key)
+    # Iterate over all neighbors in case they aren't listed at the top level.
+    # This can be due to the limit preventing inclusion of all nodes.
+    for node in nodes:
+        for neighbor in node.get("neighbors", []):
+            key_to_node = recursively_process_neighbors(neighbor, key_to_node)
     visited = {}
     return (ordered_keys, key_to_node, visited)
 
@@ -73,7 +90,14 @@ def resolve_neighbors(
     if node_key in visited:
         return (visited[node_key], visited)
 
-    node = key_to_node[node_key]
+    node = key_to_node.get(node_key, None)
+    # Handle partial graphs where we might not have all nodes
+    if node is None:
+        return ([], visited)
+    node_otype = node.get("otype", None)
+    # Discard any nodes that won't conform to the expected structure
+    if node_otype is None:
+        return ([], visited)
     if node["otype"] in allowed_types:
         new_neighbors = []
         if "neighbors" not in node:

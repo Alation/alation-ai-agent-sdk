@@ -4,12 +4,11 @@ import urllib.parse
 import json
 import requests
 import requests.exceptions
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 from http import HTTPStatus
 from uuid import uuid4
 from alation_ai_agent_sdk.lineage_filtering import filter_graph
 from .types import (
-    UserAccountAuthParams,
     ServiceAccountAuthParams,
     BearerTokenAuthParams,
     SessionAuthParams,
@@ -33,8 +32,6 @@ from alation_ai_agent_sdk.lineage import (
     LineageDirectionType,
 )
 
-
-AUTH_METHOD_USER_ACCOUNT = "user_account"
 AUTH_METHOD_SERVICE_ACCOUNT = "service_account"
 AUTH_METHOD_BEARER_TOKEN = "bearer_token"
 AUTH_METHOD_SESSION = "session"
@@ -90,6 +87,10 @@ class CatalogAssetMetadataPayloadBuilder:
         return validated
 
 
+DEFAULT_CONNECT_TIMEOUT_IN_SECONDS = 60
+DEFAULT_READ_TIMEOUT_IN_SECONDS = 300
+
+
 class AlationAPI:
     """
     Client for interacting with the Alation API.
@@ -98,7 +99,7 @@ class AlationAPI:
 
     Attributes:
         base_url (str): Base URL for the Alation instance
-        auth_method (str): Authentication method ("user_account", "service_account", "bearer_token", or "session")
+        auth_method (str): Authentication method ("service_account", "bearer_token", or "session")
         auth_params (AuthParams): Parameters required for the chosen authentication method
     """
 
@@ -109,24 +110,21 @@ class AlationAPI:
         auth_params: AuthParams,
         dist_version: Optional[str] = None,
         skip_instance_info: Optional[bool] = False,
+        enable_streaming: Optional[bool] = False,
+        decode_nested_json: Optional[bool] = False,
     ):
         self.base_url = base_url.rstrip("/")
         self.access_token: Optional[str] = None
         self.auth_method = auth_method
+        self.enable_streaming = enable_streaming
+        self.decode_nested_json = decode_nested_json
         self.is_cloud = None
         self.alation_release_name = None
         self.alation_version_info = None
         self.dist_version = dist_version
 
         # Validate auth_method and auth_params
-        if auth_method == AUTH_METHOD_USER_ACCOUNT:
-            if not isinstance(auth_params, UserAccountAuthParams):
-                raise ValueError(
-                    "For 'user_account' authentication, provide a tuple with (user_id: int, refresh_token: str)."
-                )
-            self.user_id, self.refresh_token = auth_params
-
-        elif auth_method == AUTH_METHOD_SERVICE_ACCOUNT:
+        if auth_method == AUTH_METHOD_SERVICE_ACCOUNT:
             if not isinstance(auth_params, ServiceAccountAuthParams):
                 raise ValueError(
                     "For 'service_account' authentication, provide a tuple with (client_id: str, client_secret: str)."
@@ -146,7 +144,7 @@ class AlationAPI:
             self.session_cookie = auth_params.session_cookie
         else:
             raise ValueError(
-                "auth_method must be 'user_account', 'service_account', 'bearer_token', or 'session'."
+                "auth_method must be 'service_account', 'bearer_token', or 'session'."
             )
 
         logger.debug(f"AlationAPI initialized with auth method: {self.auth_method}")
@@ -185,17 +183,30 @@ class AlationAPI:
             self.alation_release_name = None
             self.alation_version_info = None
 
-    def _handle_request_error(self, exception: requests.RequestException, context: str):
+    def _handle_request_error(
+        self, exception: requests.RequestException, context: str, timeout=None
+    ):
         """Utility function to handle request exceptions."""
 
         alation_release_name = getattr(self, "alation_release_name", None)
         dist_version = getattr(self, "dist_version", None)
 
         if isinstance(exception, requests.exceptions.Timeout):
+            if timeout is None:
+                timeout = DEFAULT_READ_TIMEOUT_IN_SECONDS
             raise AlationAPIError(
-                f"Request to {context} timed out after 60 seconds.",
+                f"Request to {context} timed out after {timeout} seconds.",
                 reason="Timeout Error",
                 resolution_hint="Ensure the server is reachable and try again later.",
+                help_links=["https://developer.alation.com/"],
+                alation_release_name=alation_release_name,
+                dist_version=dist_version,
+            )
+        if isinstance(exception, requests.exceptions.ReadTimeout):
+            raise AlationAPIError(
+                f"Read operation timed out during {context} after {timeout} seconds.",
+                reason="Read Timeout",
+                resolution_hint="The server took too long to send the next message. Try again later.",
                 help_links=["https://developer.alation.com/"],
                 alation_release_name=alation_release_name,
                 dist_version=dist_version,
@@ -228,6 +239,22 @@ class AlationAPI:
             is_retryable=meta.get("is_retryable"),
         )
 
+    def _get_response_meta(self, response: requests.Response) -> Dict[str, Any] | None:
+        """
+        Extract meta information from the response headers.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing meta information from the response headers.
+        """
+        meta = None
+        if "X-Entitlement-Warning" in getattr(response, "headers", {}):
+            meta = {
+                "X-Entitlement-Limit": response.headers.get("X-Entitlement-Limit"),
+                "X-Entitlement-Usage": response.headers.get("X-Entitlement-Usage"),
+                "X-Entitlement-Warning": response.headers["X-Entitlement-Warning"],
+            }
+        return meta
+
     def _format_successful_response(
         self, response: requests.Response
     ) -> Union[Dict[str, Any], str]:
@@ -241,22 +268,16 @@ class AlationAPI:
 
         data = response.json()
 
+        meta = self._get_response_meta(response)
         # Check for entitlement headers and inject meta information if present
-        if "X-Entitlement-Warning" in getattr(response, "headers", {}):
-            # Only inject limit and usage information if warning is issued.
-            entitlement_meta = {
-                "X-Entitlement-Limit": response.headers.get("X-Entitlement-Limit"),
-                "X-Entitlement-Usage": response.headers.get("X-Entitlement-Usage"),
-                "X-Entitlement-Warning": response.headers["X-Entitlement-Warning"],
-            }
-
+        if meta:
             # Maintain backward compatibility by injecting meta into the existing response structure
             if isinstance(data, dict):
                 # If response is a dict, add _meta field (underscore prefix to avoid conflicts)
-                data["_meta"] = {"headers": entitlement_meta}
+                data["_meta"] = {"headers": meta}
             elif isinstance(data, list):
                 # If response is a list, wrap it to include meta information
-                data = {"results": data, "_meta": {"headers": entitlement_meta}}
+                data = {"results": data, "_meta": {"headers": meta}}
 
         return data
 
@@ -275,10 +296,14 @@ class AlationAPI:
         )
 
         try:
-            response = requests.post(url, json=payload, timeout=60)
+            response = requests.post(
+                url, json=payload, timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS
+            )
             response.raise_for_status()
         except requests.RequestException as e:
-            self._handle_request_error(e, "access token generation")
+            self._handle_request_error(
+                e, "access token generation", timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS
+            )
 
         try:
             data = response.json()
@@ -325,10 +350,17 @@ class AlationAPI:
         }
         logger.debug("Generating JWT token")
         try:
-            response = requests.post(url, data=payload, headers=headers, timeout=60)
+            response = requests.post(
+                url,
+                data=payload,
+                headers=headers,
+                timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS,
+            )
             response.raise_for_status()
         except requests.RequestException as e:
-            self._handle_request_error(e, "JWT token generation")
+            self._handle_request_error(
+                e, "JWT token generation", timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS
+            )
 
         try:
             data = response.json()
@@ -364,9 +396,7 @@ class AlationAPI:
         logger.info(
             "Access token is invalid or expired. Attempting to generate a new one."
         )
-        if self.auth_method == AUTH_METHOD_USER_ACCOUNT:
-            self._generate_access_token_with_refresh_token()
-        elif self.auth_method == AUTH_METHOD_SERVICE_ACCOUNT:
+        if self.auth_method == AUTH_METHOD_SERVICE_ACCOUNT:
             self._generate_jwt_token()
         else:
             raise AlationAPIError(
@@ -387,7 +417,12 @@ class AlationAPI:
         headers = {"accept": "application/json", "content-type": "application/json"}
 
         try:
-            response = requests.post(url, json=payload, headers=headers, timeout=60)
+            response = requests.post(
+                url,
+                json=payload,
+                headers=headers,
+                timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS,
+            )
             response.raise_for_status()
         except requests.RequestException as e:
             status_code = getattr(
@@ -442,7 +477,12 @@ class AlationAPI:
         }
 
         try:
-            response = requests.post(url, data=payload, headers=headers, timeout=60)
+            response = requests.post(
+                url,
+                data=payload,
+                headers=headers,
+                timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS,
+            )
             response.raise_for_status()
             data = response.json()
             return data.get("active", False)
@@ -476,21 +516,28 @@ class AlationAPI:
 
     def _token_is_valid_on_server(self):
         try:
-            if self.auth_method == AUTH_METHOD_USER_ACCOUNT:
-                return self._is_access_token_valid()
-            elif self.auth_method == AUTH_METHOD_SERVICE_ACCOUNT:
+            if self.auth_method == AUTH_METHOD_SERVICE_ACCOUNT:
                 return self._is_jwt_token_valid()
         except Exception as e:
             logger.error(f"Error validating token on server: {e}")
             return False
 
-    def _with_valid_auth(self):
+    def _with_valid_auth(self, disallowed_methods: Optional[List[str]] = None):
         """
         Ensures authentication is ready for API calls.
 
         For token-based auth (user_account, service_account): validates and refreshes tokens as needed.
         For credential-based auth (bearer_token, session): assumes credentials are valid (validation happens at request time).
         """
+
+        # Certain API endpoints may only support specific auth methods
+        if disallowed_methods is not None and self.auth_method in disallowed_methods:
+            raise AlationAPIError(
+                f"Authentication method '{self.auth_method}' is not allowed for this operation.",
+                reason="Invalid Authentication Method",
+                resolution_hint="Use an alternative authorization method.",
+            )
+
         if self.auth_method in (AUTH_METHOD_BEARER_TOKEN, AUTH_METHOD_SESSION):
             # For bearer tokens and session cookies, we assume they are valid
             # Validation happens at the API request level
@@ -506,7 +553,9 @@ class AlationAPI:
 
         self._generate_new_token()
 
-    def _get_request_headers(self) -> Dict[str, str]:
+    def _get_request_headers(
+        self, header_overrides: Optional[Dict[str, str]] = None
+    ) -> Dict[str, str]:
         """
         Get the appropriate request headers including authentication based on the auth method.
 
@@ -527,7 +576,234 @@ class AlationAPI:
         elif self.access_token:
             headers["Token"] = self.access_token
 
+        if header_overrides:
+            headers.update(header_overrides)
+
         return headers
+
+    def _get_streaming_request_headers(self) -> Dict[str, str]:
+        """
+        Get the appropriate request headers for streaming requests including authentication based on the auth method.
+
+        Returns:
+            Dict[str, str]: Headers dictionary with authentication and content type information
+        """
+        headers = {
+            "Accept": "text/event-stream",
+            "Content-Type": "application/json",
+        }
+        if (
+            self.auth_method == AUTH_METHOD_BEARER_TOKEN
+            or self.auth_method == AUTH_METHOD_SERVICE_ACCOUNT
+        ):
+            headers["Authorization"] = f"Bearer {self.access_token}"
+        return self._get_request_headers(header_overrides=headers)
+
+    def _get_streaming_timeouts(
+        self,
+        connect_timeout: Optional[Union[float, int]] = None,
+        read_timeout: Optional[Union[float, int]] = None,
+    ) -> Tuple[Union[float, int], Union[float, int]]:
+        """
+        Get the appropriate timeouts for streaming requests.
+
+        Args:
+            connect_timeout (float|int, optional): Connection timeout in seconds. Defaults to 10 seconds.
+            read_timeout (float|int, optional): Read timeout in seconds. Defaults to 300 seconds.
+
+        Returns:
+            Tuple[Union[float, int], Union[float, int]]: A tuple containing the connect and read timeouts.
+        """
+        return (
+            connect_timeout
+            if connect_timeout is not None
+            else DEFAULT_CONNECT_TIMEOUT_IN_SECONDS,
+            read_timeout
+            if read_timeout is not None
+            else DEFAULT_READ_TIMEOUT_IN_SECONDS,
+        )
+
+    def _is_likely_json_value(self, value: str) -> bool:
+        if not isinstance(value, str):
+            return False
+        if value.startswith("{") and value.endswith("}"):
+            return True
+        if value.startswith("[") and value.endswith("]"):
+            return True
+        return False
+
+    def _decode_json_string(self, value: Any) -> Any:
+        """Attempt to JSON-decode a string value if it appears to be JSON.
+
+        Returns the decoded python object on success, otherwise returns the original value.
+        """
+        if not self._is_likely_json_value(value):
+            return value
+        try:
+            return json.loads(value)  # type: ignore[arg-type]
+        except (json.JSONDecodeError, TypeError):
+            return value
+
+    def _shallow_decode_collection(self, obj: Any) -> Any:
+        """Decode any immediate JSON-encoded string members in a dict or list.
+
+        This mirrors the original behavior which performed a single extra decoding
+        pass on children (i.e. it is intentionally not fully recursive).
+        """
+        if isinstance(obj, dict):
+            decoded: Dict[str, Any] = {}
+            for k, v in obj.items():
+                decoded[k] = self._decode_json_string(v)
+            return decoded
+        if isinstance(obj, list):
+            return [self._decode_json_string(item) for item in obj]
+        return obj
+
+    def _decode_text_part_content(self, part: Dict[str, Any]) -> Any:
+        """Decode the JSON contained in a text part's `content` field if present.
+
+        If the `content` is a JSON string we decode it. If the decoded value is a
+        list or dict we perform a single shallow pass attempting to decode any
+        JSON-looking string children. On failure we return the original part.
+
+        Return value:
+            - Decoded object (dict | list | primitive) if decoding occurred
+            - Original part dict if no decoding happened or an error occurred
+        """
+        if part.get("part_kind") != "text":
+            return part
+        content = part.get("content")
+        if not isinstance(content, str):
+            return part
+        decoded_root = self._decode_json_string(content)
+        # If decoding did not change the value, keep original part
+        if decoded_root is content:
+            return part
+        # Perform one shallow decode pass for children if collection
+        if isinstance(decoded_root, (dict, list)):
+            decoded_root = self._shallow_decode_collection(decoded_root)
+        return decoded_root
+
+    def _decode_nested_json(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Inline replacement of JSON-encoded values nested in model_message parts.
+
+        For each part inside `data['model_message']['parts']` where
+        `part_kind == 'text'`, if the part's `content` is a JSON string we:
+            1. Decode the JSON string.
+            2. If the decoded result is a dict or list, attempt a single shallow
+               decode of its immediate children that also look like JSON strings.
+            3. Replace the entire part object in the parts list with the decoded
+               python object (maintaining original behavior of the previous implementation).
+
+        Non-text parts and parts whose content is not valid JSON are left untouched.
+        Any JSON decoding errors result in leaving the original part unchanged.
+        """
+        model_message = data.get("model_message")
+        if not isinstance(model_message, dict):
+            return data
+        parts = model_message.get("parts")
+        if not isinstance(parts, list):
+            return data
+        new_parts: List[Any] = []
+        for part in parts:
+            if not isinstance(part, dict):
+                # Skip non-dict entries silently (mirrors original behavior of continue)
+                continue
+            decoded = self._decode_text_part_content(part)
+            new_parts.append(decoded)
+        model_message["parts"] = new_parts
+        return data
+
+    def _iter_sse_response(
+        self, response: requests.Response, log_raw_stream_events: bool = False
+    ) -> Generator[Dict[str, Any], None, None]:
+        response.raise_for_status()
+        for line in response.iter_lines():
+            if not line:
+                continue
+            decoded_line = line.decode("utf-8")
+            if decoded_line.startswith("data:"):
+                if log_raw_stream_events:
+                    logger.info(f"SSE Event: {decoded_line}")
+                json_data_str = decoded_line[len("data:") :].strip()
+                try:
+                    event_data = json.loads(json_data_str)
+                    if self.decode_nested_json:
+                        event_data = self._decode_nested_json(event_data)
+                    # Process the parsed JSON event data
+                    yield event_data
+                except json.JSONDecodeError as e:
+                    logger.error(f"Error decoding JSON: {e} in line: {json_data_str}")
+                    continue
+
+    def _sse_stream_or_last_event(
+        self,
+        response: requests.Response,
+        log_raw_stream_events: bool = False,
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Generator to yield events from a Server-Sent Events (SSE) response.
+
+        Args:
+            response (requests.Response): The HTTP response object from the SSE endpoint.
+            enable_streaming (bool): Flag to enable streaming mode.
+
+        Yields:
+            Dict[str, Any]: Parsed JSON data from each SSE event.
+        """
+        if self.enable_streaming:
+            # Streaming mode, yield events as they arrive
+            yield from self._iter_sse_response(response, log_raw_stream_events=log_raw_stream_events)
+        else:
+            # Non-streaming mode: collect all events and yield once.
+            # WARNING: There are an awful lot of tokens returned here that aren't particularly applicable.
+            # TBD: Maybe clean these up to only return the payload instead of the whole message etc.
+            last_event = None
+            for event in self._iter_sse_response(response, log_raw_stream_events=log_raw_stream_events):
+                last_event = event
+            yield last_event
+
+    def _safe_sse_post_request(
+        self,
+        tool_name: str,
+        url: str,
+        payload: Dict[str, Any],
+        timeouts: Optional[Tuple[Union[float, int], Union[float, int]]] = None,
+        log_raw_stream_events: bool = False,
+    ) -> Generator[Dict[str, Any], None, None]:
+        self._with_valid_auth(disallowed_methods=["user_account", AUTH_METHOD_SESSION])
+
+        headers = self._get_streaming_request_headers()
+        if timeouts is None:
+            timeouts = self._get_streaming_timeouts()
+        try:
+            with requests.post(
+                url,
+                headers=headers,
+                json=payload,
+                stream=True,
+                timeout=timeouts,
+            ) as response:
+                response_meta = self._get_response_meta(response)
+                if response_meta:
+                    # NOTE: We shifted from user seeing warnings to logging them as warnings
+                    logger.warning(
+                        f"At or nearing usage limits: {json.dumps(response_meta)}"
+                    )
+                yield from self._sse_stream_or_last_event(response, log_raw_stream_events=log_raw_stream_events)
+        except requests.exceptions.ReadTimeout as e:
+            logger.error(f"Read timed out while using {tool_name}: {e}")
+            self._handle_request_error(
+                e, f"{tool_name} - read timeout", timeout=timeouts[1]
+            )
+        except requests.exceptions.ConnectTimeout as e:
+            logger.error(f"Connection timed out while using {tool_name}: {e}")
+            self._handle_request_error(
+                e, f"{tool_name} - connection timeout", timeout=timeouts[0]
+            )
+        except requests.RequestException as e:
+            logger.error(f"Error occurred while using {tool_name}: {e}")
+            self._handle_request_error(e, f"{tool_name} - general error", timeout=0)
 
     def get_context_from_catalog(
         self, query: str, signature: Optional[Dict[str, Any]] = None
@@ -550,11 +826,15 @@ class AlationAPI:
         url = f"{self.base_url}/integration/v2/context/?{encoded_params}"
 
         try:
-            response = requests.get(url, headers=headers, timeout=60)
+            response = requests.get(
+                url, headers=headers, timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS
+            )
             response.raise_for_status()
 
         except requests.RequestException as e:
-            self._handle_request_error(e, "catalog search")
+            self._handle_request_error(
+                e, "catalog search", timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS
+            )
 
         try:
             return self._format_successful_response(response)
@@ -566,47 +846,6 @@ class AlationAPI:
                 reason="Malformed Response",
                 resolution_hint="The server returned a non-JSON response. Contact support if this persists.",
                 help_links=["https://developer.alation.com/"],
-            )
-
-    def get_bulk_objects_from_catalog(self, signature: Dict[str, Any]):
-        """
-        Retrieve bulk objects from the Alation catalog based on signature specifications.
-        Uses the context API in bulk mode without requiring a natural language question.
-        """
-        if not signature:
-            raise ValueError("Signature cannot be empty for bulk retrieval")
-
-        self._with_valid_auth()
-
-        headers = self._get_request_headers()
-
-        params = {
-            "mode": "bulk",
-            "signature": json.dumps(signature, separators=(",", ":")),
-        }
-
-        encoded_params = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
-        url = f"{self.base_url}/integration/v2/context/?{encoded_params}"
-
-        try:
-            response = requests.get(url, headers=headers, timeout=60)
-            response.raise_for_status()
-
-        except requests.RequestException as e:
-            self._handle_request_error(e, "bulk catalog retrieval")
-
-        try:
-            return self._format_successful_response(response)
-        except ValueError:
-            raise AlationAPIError(
-                message="Invalid JSON in bulk catalog response",
-                status_code=response.status_code,
-                response_body=response.text,
-                reason="Malformed Response",
-                resolution_hint="The server returned a non-JSON response. Contact support if this persists.",
-                help_links=[
-                    "https://developer.alation.com/dev/reference/getaggregatedcontext"
-                ],
             )
 
     def _fetch_marketplace_id(self, headers: Dict[str, str]) -> str:
@@ -812,7 +1051,10 @@ class AlationAPI:
         url = f"{self.base_url}/integration/v2/bulk_lineage/"
         try:
             response = requests.post(
-                url, headers=headers, json=lineage_request_dict, timeout=60
+                url,
+                headers=headers,
+                json=lineage_request_dict,
+                timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS,
             )
             response.raise_for_status()
             response_data = response.json()
@@ -843,7 +1085,9 @@ class AlationAPI:
             return response_data
         except requests.RequestException as e:
             self._handle_request_error(
-                e, f"getting lineage for: {json.dumps(lineage_request_dict)}"
+                e,
+                f"getting lineage for: {json.dumps(lineage_request_dict)}",
+                timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS,
             )
 
     def update_catalog_asset_metadata(
@@ -862,12 +1106,19 @@ class AlationAPI:
         url = f"{self.base_url}/integration/v2/custom_field_value/async/"
         try:
             response = requests.put(
-                url, headers=headers, json=validated_payload, timeout=60
+                url,
+                headers=headers,
+                json=validated_payload,
+                timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS,
             )
             response.raise_for_status()
             return response.json()
         except requests.RequestException as e:
-            self._handle_request_error(e, "update_catalog_asset_metadata")
+            self._handle_request_error(
+                e,
+                "update_catalog_asset_metadata",
+                timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS,
+            )
 
     def check_job_status(self, job_id: int) -> dict:
         """
@@ -937,13 +1188,20 @@ class AlationAPI:
         if dq_score_threshold is not None:
             payload["dq_score_threshold"] = dq_score_threshold
         try:
-            response = requests.post(url, headers=headers, json=payload, timeout=60)
+            response = requests.post(
+                url,
+                headers=headers,
+                json=payload,
+                timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS,
+            )
             response.raise_for_status()
             if output_format and output_format.lower() == "yaml_markdown":
                 return response.text
             return response.json()
         except requests.RequestException as e:
-            self._handle_request_error(e, "check_sql_query_tables")
+            self._handle_request_error(
+                e, "check_sql_query_tables", timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS
+            )
         except ValueError:
             raise AlationAPIError(
                 message="Invalid JSON in data quality check response",
@@ -973,12 +1231,207 @@ class AlationAPI:
         url = f"{self.base_url}/integration/v2/custom_field/"
 
         try:
-            response = requests.get(url, headers=headers, timeout=60)
+            response = requests.get(
+                url, headers=headers, timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS
+            )
             response.raise_for_status()
             return response.json()
 
         except requests.RequestException as e:
-            self._handle_request_error(e, "custom fields retrieval")
+            self._handle_request_error(
+                e, "custom fields retrieval", timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS
+            )
+
+    def alation_context_stream(
+        self,
+        question: str,
+        signature: Optional[Dict[str, Any]] = None,
+        chat_id: Optional[str] = None,
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Retrieve contextual information from the Alation catalog using alation_context_tool.
+        """
+        payload = {"question": question}
+        if signature is not None:
+            payload["signature"] = signature
+        url = (
+            f"{self.base_url}/ai/api/v1/chats/tool/default/alation_context_tool/stream"
+        )
+        if chat_id is not None:
+            url += f"?chat_id={chat_id}"
+
+        yield from self._safe_sse_post_request(
+            tool_name="alation_context",
+            url=url,
+            payload=payload,
+            timeouts=None,
+        )
+
+    def analyze_catalog_question_stream(
+        self,
+        question: str,
+        chat_id: Optional[str] = None,
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Analyze catalog questions and return workflow guidance.
+        """
+        url = f"{self.base_url}/ai/api/v1/chats/tool/default/analyze_catalog_question_tool/stream"
+        if chat_id is not None:
+            url += f"?chat_id={chat_id}"
+        yield from self._safe_sse_post_request(
+            tool_name="analyze_catalog_question",
+            url=url,
+            payload={"question": question},
+            timeouts=None,
+        )
+
+    def bulk_retrieval_stream(
+        self,
+        signature: Dict[str, Any],
+        chat_id: Optional[str] = None,
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Retrieve bulk objects from the Alation catalog using bulk_retrieval_tool.
+        """
+        url = f"{self.base_url}/ai/api/v1/chats/tool/default/bulk_retrieval_tool/stream"
+        if chat_id is not None:
+            url += f"?chat_id={chat_id}"
+        yield from self._safe_sse_post_request(
+            tool_name="bulk_retrieval",
+            url=url,
+            payload={"signature": signature},
+            timeouts=None,
+        )
+
+    def get_custom_field_definitions_stream(
+        self,
+        chat_id: Optional[str] = None,
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Retrieve all custom field definitions from the Alation instance.
+        """
+        url = f"{self.base_url}/ai/api/v1/chats/tool/default/get_custom_fields_definitions_tool/stream"
+        if chat_id is not None:
+            url += f"?chat_id={chat_id}"
+        yield from self._safe_sse_post_request(
+            tool_name="get_custom_field_definitions",
+            url=url,
+            payload={},
+            timeouts=None,
+        )
+
+    def get_signature_creation_instructions_stream(
+        self, chat_id: Optional[str] = None
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Returns comprehensive instructions for creating the signature parameter.
+        """
+        url = f"{self.base_url}/ai/api/v1/chats/tool/default/get_signature_creation_instructions_tool/stream"
+        if chat_id is not None:
+            url += f"?chat_id={chat_id}"
+        yield from self._safe_sse_post_request(
+            tool_name="get_signature_creation_instructions",
+            url=url,
+            payload={},
+            timeouts=None,
+        )
+
+    def catalog_context_search_agent_stream(
+        self,
+        message: str,
+        chat_id: Optional[str] = None,
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Catalog Context Search Agent for searching catalog objects with context.
+        """
+        url = f"{self.base_url}/ai/api/v1/chats/agent/default/catalog_context_search_agent/stream"
+        if chat_id is not None:
+            url += f"?chat_id={chat_id}"
+        yield from self._safe_sse_post_request(
+            tool_name="catalog_context_search_agent",
+            url=url,
+            payload={"message": message},
+            timeouts=None,
+        )
+
+    def query_flow_agent_stream(
+        self,
+        message: str,
+        marketplace_id: str,
+        chat_id: Optional[str] = None,
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Query Flow Agent for SQL query workflow management.
+        """
+        url = f"{self.base_url}/ai/api/v1/chats/agent/default/query_flow_agent/stream"
+        if chat_id is not None:
+            url += f"?chat_id={chat_id}"
+        yield from self._safe_sse_post_request(
+            tool_name="query_flow_agent",
+            url=url,
+            payload={"message": message, "marketplace_id": marketplace_id},
+            timeouts=None,
+        )
+
+    def sql_query_agent_stream(
+        self,
+        message: str,
+        data_product_id: str,
+        chat_id: Optional[str] = None,
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        SQL Query Agent for SQL query generation and analysis.
+        """
+        url = f"{self.base_url}/ai/api/v1/chats/agent/default/sql_query_agent/stream"
+        if chat_id is not None:
+            url += f"?chat_id={chat_id}"
+        yield from self._safe_sse_post_request(
+            tool_name="sql_query_agent",
+            url=url,
+            payload={"message": message, "data_product_id": data_product_id},
+            timeouts=None,
+        )
+
+    def get_data_sources_tool_stream(
+        self,
+        limit: int = 100,
+        chat_id: Optional[str] = None,
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Retrieve available data sources from the catalog.
+        """
+        payload = {"limit": limit}
+
+        url = (
+            f"{self.base_url}/ai/api/v1/chats/tool/default/get_data_sources_tool/stream"
+        )
+        if chat_id is not None:
+            url += f"?chat_id={chat_id}"
+        yield from self._safe_sse_post_request(
+            tool_name="get_data_sources_tool",
+            url=url,
+            payload=payload,
+            timeouts=None,
+        )
+
+    def custom_agent_stream(
+        self,
+        agent_config_id: str,
+        payload: Dict[str, Any],
+        chat_id: Optional[str] = None,
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Stream responses from a custom agent.
+        """
+        url = f"{self.base_url}/ai/api/v1/chats/agent/{agent_config_id}/stream"
+        if chat_id is not None:
+            url += f"?chat_id={chat_id}"
+        yield from self._safe_sse_post_request(
+            tool_name="custom_agent_stream",
+            url=url,
+            payload=payload,
+            timeouts=None,
+        )
 
     def post_tool_event(
         self,

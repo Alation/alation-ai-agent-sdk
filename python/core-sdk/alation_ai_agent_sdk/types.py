@@ -2,11 +2,6 @@ from typing import NamedTuple, Union, Any
 from typing_extensions import TypedDict
 
 
-class UserAccountAuthParams(NamedTuple):
-    user_id: int
-    refresh_token: str
-
-
 class ServiceAccountAuthParams(NamedTuple):
     client_id: str
     client_secret: str
@@ -21,7 +16,6 @@ class SessionAuthParams(NamedTuple):
 
 
 AuthParams = Union[
-    UserAccountAuthParams,
     ServiceAccountAuthParams,
     BearerTokenAuthParams,
     SessionAuthParams,

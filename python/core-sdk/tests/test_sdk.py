@@ -7,11 +7,9 @@ from alation_ai_agent_sdk.sdk import (
     AlationTools,
 )
 from alation_ai_agent_sdk.api import (
-    AUTH_METHOD_USER_ACCOUNT,
     AUTH_METHOD_SERVICE_ACCOUNT,
     AUTH_METHOD_SESSION,
     AlationAPIError,
-    UserAccountAuthParams,
     ServiceAccountAuthParams,
     SessionAuthParams,
 )
@@ -175,27 +173,6 @@ def mock_requests_get(monkeypatch):
 # --- SDK Initialization Tests ---
 
 
-def test_sdk_valid_initialization_user_account(mock_requests_post, mock_requests_get):
-    """Test valid SDK init with user_account auth method."""
-    mock_requests_post(
-        "createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS
-    )
-    mock_requests_get("license", response_json={"is_cloud": True})
-    mock_requests_get(
-        "full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"}
-    )
-    sdk = AlationAIAgentSDK(
-        base_url=MOCK_BASE_URL,
-        auth_method=AUTH_METHOD_USER_ACCOUNT,
-        auth_params=UserAccountAuthParams(MOCK_USER_ID, MOCK_REFRESH_TOKEN),
-        dist_version="test-dist-version",
-    )
-    assert sdk.api.auth_method == AUTH_METHOD_USER_ACCOUNT
-    assert sdk.api.user_id == MOCK_USER_ID
-    assert sdk.api.refresh_token == MOCK_REFRESH_TOKEN
-    assert sdk.api.dist_version == "test-dist-version"
-
-
 def test_sdk_valid_initialization_service_account(
     mock_requests_post, mock_requests_get
 ):
@@ -239,16 +216,6 @@ def test_sdk_valid_initialization_session_auth(mock_requests_get):
     "auth_method, auth_params, expected_error_message_part",
     [
         (
-            AUTH_METHOD_USER_ACCOUNT,
-            (MOCK_USER_ID,),
-            "provide a tuple with (user_id: int, refresh_token: str)",
-        ),
-        (
-            AUTH_METHOD_USER_ACCOUNT,
-            ("invalid_user_id", MOCK_REFRESH_TOKEN),
-            "provide a tuple with (user_id: int, refresh_token: str)",
-        ),
-        (
             AUTH_METHOD_SERVICE_ACCOUNT,
             (MOCK_CLIENT_ID,),
             "provide a tuple with (client_id: str, client_secret: str)",
@@ -261,7 +228,7 @@ def test_sdk_valid_initialization_session_auth(mock_requests_get):
         (
             "invalid_method",
             (MOCK_USER_ID, MOCK_REFRESH_TOKEN),
-            "auth_method must be 'user_account', 'service_account', 'bearer_token', or 'session'",
+            "auth_method must be 'service_account', 'bearer_token', or 'session'",
         ),
     ],
 )
@@ -282,12 +249,6 @@ def test_sdk_invalid_initialization(
 @pytest.mark.parametrize(
     "auth_method, auth_params, side_effect, expected_token_valid_calls",
     [
-        (
-            AUTH_METHOD_USER_ACCOUNT,
-            UserAccountAuthParams(MOCK_USER_ID, MOCK_REFRESH_TOKEN),
-            [True, False, True, True, True],
-            4,
-        ),
         (
             AUTH_METHOD_SERVICE_ACCOUNT,
             ServiceAccountAuthParams(MOCK_CLIENT_ID, MOCK_CLIENT_SECRET),
@@ -342,16 +303,22 @@ def test_token_reuse_and_refresh(
         assert spy_generate_token.call_count == 1
 
 
-def test_error_handling_in_token_validation(mock_requests_post):
+def test_error_handling_in_token_validation(mock_requests_post, mock_requests_get):
     """Test that errors in token validation raise AlationAPIError."""
+    # Mock all required endpoints for SDK initialization
     mock_requests_post(
         "createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS
+    )
+    mock_requests_post("oauth/v2/token", response_json=JWT_RESPONSE_SUCCESS)
+    mock_requests_get("license", response_json={"is_cloud": True})
+    mock_requests_get(
+        "full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"}
     )
 
     sdk = AlationAIAgentSDK(
         base_url=MOCK_BASE_URL,
-        auth_method=AUTH_METHOD_USER_ACCOUNT,
-        auth_params=UserAccountAuthParams(MOCK_USER_ID, MOCK_REFRESH_TOKEN),
+        auth_method=AUTH_METHOD_SERVICE_ACCOUNT,
+        auth_params=ServiceAccountAuthParams(MOCK_CLIENT_ID, MOCK_CLIENT_SECRET),
         dist_version="test-dist-version",
     )
 
@@ -393,8 +360,8 @@ def test_lineage_beta_tools_disabled_by_default(
 
     sdk = AlationAIAgentSDK(
         base_url=MOCK_BASE_URL,
-        auth_method=AUTH_METHOD_USER_ACCOUNT,
-        auth_params=UserAccountAuthParams(MOCK_USER_ID, MOCK_REFRESH_TOKEN),
+        auth_method=AUTH_METHOD_SERVICE_ACCOUNT,
+        auth_params=ServiceAccountAuthParams(MOCK_CLIENT_ID, MOCK_CLIENT_SECRET),
     )
     assert AlationTools.LINEAGE not in sdk.enabled_beta_tools
 
@@ -414,8 +381,8 @@ def test_check_job_status_tool_explicitly_disabled(
 
     sdk = AlationAIAgentSDK(
         base_url=MOCK_BASE_URL,
-        auth_method=AUTH_METHOD_USER_ACCOUNT,
-        auth_params=UserAccountAuthParams(MOCK_USER_ID, MOCK_REFRESH_TOKEN),
+        auth_method=AUTH_METHOD_SERVICE_ACCOUNT,
+        auth_params=ServiceAccountAuthParams(MOCK_CLIENT_ID, MOCK_CLIENT_SECRET),
         disabled_tools={AlationTools.CHECK_JOB_STATUS},
     )
     assert AlationTools.CHECK_JOB_STATUS in sdk.disabled_tools
@@ -457,6 +424,7 @@ def test_user_agent_header_populated_in_api_calls(
     mock_requests_post(
         "createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS
     )
+    mock_requests_post("oauth/v2/token", response_json=JWT_RESPONSE_SUCCESS)
     mock_requests_get("license", response_json={"is_cloud": True})
     mock_requests_get(
         "full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"}
@@ -473,8 +441,8 @@ def test_user_agent_header_populated_in_api_calls(
     # Test 1: SDK with dist_version
     sdk_with_dist = AlationAIAgentSDK(
         base_url=MOCK_BASE_URL,
-        auth_method=AUTH_METHOD_USER_ACCOUNT,
-        auth_params=UserAccountAuthParams(MOCK_USER_ID, MOCK_REFRESH_TOKEN),
+        auth_method=AUTH_METHOD_SERVICE_ACCOUNT,
+        auth_params=ServiceAccountAuthParams(MOCK_CLIENT_ID, MOCK_CLIENT_SECRET),
         dist_version="mcp-2.1.0",
     )
 
@@ -493,8 +461,8 @@ def test_user_agent_header_populated_in_api_calls(
     mock_requests_get_patch.reset_mock()
     sdk_without_dist = AlationAIAgentSDK(
         base_url=MOCK_BASE_URL,
-        auth_method=AUTH_METHOD_USER_ACCOUNT,
-        auth_params=UserAccountAuthParams(MOCK_USER_ID, MOCK_REFRESH_TOKEN),
+        auth_method=AUTH_METHOD_SERVICE_ACCOUNT,
+        auth_params=ServiceAccountAuthParams(MOCK_CLIENT_ID, MOCK_CLIENT_SECRET),
         dist_version=None,
     )
 

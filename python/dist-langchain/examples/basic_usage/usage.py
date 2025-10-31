@@ -1,13 +1,11 @@
 import os
 import json
 
-from langchain.agents import AgentExecutor, create_openai_functions_agent
-from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
 
 from alation_ai_agent_langchain import (
     AlationAIAgentSDK,
-    UserAccountAuthParams,
     ServiceAccountAuthParams,
     get_langchain_tools,
 )
@@ -17,41 +15,19 @@ from alation_ai_agent_langchain import (
 
 # Load credentials from env
 base_url = os.getenv("ALATION_BASE_URL")
-user_id = os.getenv("ALATION_USER_ID")
-refresh_token = os.getenv("ALATION_REFRESH_TOKEN")
+client_id = os.getenv("ALATION_CLIENT_ID")
+client_secret = os.getenv("ALATION_CLIENT_SECRET")
 openai_api_key = os.getenv("OPENAI_API_KEY")
-auth_method = os.getenv("ALATION_AUTH_METHOD", "user_account")
+auth_method = os.getenv("ALATION_AUTH_METHOD", "service_account")
 
-if not all([base_url, user_id, refresh_token, openai_api_key, auth_method]):
+if not all([base_url, client_id, client_secret, openai_api_key, auth_method]):
     value_error_message = "Missing one or more required environment variables."
     raise ValueError(value_error_message)
 
 
 def initialize_sdk(base_url: str, auth_method: str) -> AlationAIAgentSDK:
     """Initialize the Alation AI Agent SDK based on the authentication method."""
-    if auth_method == "user_account":
-        user_id_str = os.getenv("ALATION_USER_ID")
-        refresh_token = os.getenv("ALATION_REFRESH_TOKEN")
-
-        if not all([user_id_str, refresh_token]):
-            raise ValueError(
-                "Missing required environment variables for user account authentication. Please set ALATION_USER_ID and ALATION_REFRESH_TOKEN."
-            )
-
-        try:
-            user_id = int(user_id_str)
-        except ValueError:
-            raise ValueError(f"ALATION_USER_ID must be an integer, got: {user_id_str}")
-
-        return AlationAIAgentSDK(
-            base_url=base_url,
-            auth_method=auth_method,
-            auth_params=UserAccountAuthParams(
-                user_id=user_id, refresh_token=refresh_token
-            ),
-        )
-
-    elif auth_method == "service_account":
+    if auth_method == "service_account":
         client_id = os.getenv("ALATION_CLIENT_ID")
         client_secret = os.getenv("ALATION_CLIENT_SECRET")
 
@@ -77,34 +53,18 @@ sdk = initialize_sdk(base_url, auth_method)
 # LangChain tools
 tools = get_langchain_tools(sdk)
 
-# Define a simpler prompt that doesn't require explicit tool variables
-prompt = ChatPromptTemplate.from_messages(
-    [
-        ("system", "You are a helpful assistant using Alation's metadata catalog."),
-        ("user", "{input}"),
-        MessagesPlaceholder(variable_name="agent_scratchpad"),
-    ]
-)
-
 # LLM (OpenAI)
 llm = ChatOpenAI(model="gpt-4o", temperature=0, openai_api_key=openai_api_key)
 
-# Create agent using OpenAI functions approach - handles tool formatting internally
-agent = create_openai_functions_agent(llm=llm, tools=tools, prompt=prompt)
-
-# Agent executor
-executor = AgentExecutor(
-    agent=agent,
-    tools=tools,
-    verbose=True,
-)
+# Create agent using create_agent - returns a directly invokable CompiledStateGraph
+agent = create_agent(model=llm, tools=tools, system_prompt="You are a helpful assistant using Alation's metadata catalog.")
 
 # Example 1: Without signature
 print("\n=== Example 1: Without Signature ===")
 question = "What are the sales tables in our data warehouse?"
-response = executor.invoke(
+response = agent.invoke(
     {
-        "input": question,
+        "messages": [("user", question)],
     }
 )
 print("\nAgent Response (Without Signature):")
@@ -116,9 +76,9 @@ tables_only_signature = {
     "table": {"fields_required": ["name", "title", "description", "url"]}
 }
 qa_question = "What tables contain sales data?"
-qa_response = executor.invoke(
+qa_response = agent.invoke(
     {
-        "input": qa_question,
+        "messages": [("user", qa_question)],
         "signature": tables_only_signature,
     }
 )
@@ -137,6 +97,6 @@ bulk_table_signature = {
 }
 qa_question = f"""Use the bulk_retrieval tool with this exact signature: {json.dumps(bulk_table_signature)}"""
 
-qa_response = executor.invoke({"input": qa_question})
+qa_response = agent.invoke({"messages": [("user", qa_question)]})
 print("\nAgent Response (Bulk retrieval tool):")
 print(qa_response)

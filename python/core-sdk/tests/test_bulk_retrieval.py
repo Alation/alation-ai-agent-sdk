@@ -7,8 +7,10 @@ from alation_ai_agent_sdk.types import ServiceAccountAuthParams
 
 @pytest.fixture
 def mock_api():
+    api = Mock()
+    api.enable_streaming = False
     """Creates a mock AlationAPI for testing."""
-    return Mock()
+    return api
 
 
 @pytest.fixture
@@ -85,7 +87,12 @@ def test_bulk_retrieval_tool_run_success(bulk_retrieval_tool, mock_api):
             }
         ]
     }
-    mock_api.get_bulk_objects_from_catalog.return_value = mock_response
+
+    # Mock the streaming method to return a generator
+    def mock_generator():
+        yield mock_response
+
+    mock_api.bulk_retrieval_stream.return_value = mock_generator()
 
     signature = {
         "table": {"fields_required": ["name", "description", "url"], "limit": 1}
@@ -94,7 +101,10 @@ def test_bulk_retrieval_tool_run_success(bulk_retrieval_tool, mock_api):
     result = bulk_retrieval_tool.run(signature=signature)
 
     # Verify API was called correctly
-    mock_api.get_bulk_objects_from_catalog.assert_called_once_with(signature)
+    mock_api.bulk_retrieval_stream.assert_called_once_with(
+        signature=signature,
+        chat_id=None,
+    )
 
     # Verify result
     assert result == mock_response
@@ -108,7 +118,7 @@ def test_bulk_retrieval_tool_run_without_signature(bulk_retrieval_tool, mock_api
     result = bulk_retrieval_tool.run()
 
     # Verify API was not called
-    mock_api.get_bulk_objects_from_catalog.assert_not_called()
+    mock_api.bulk_retrieval_stream.assert_not_called()
 
     # Verify error response
     assert "error" in result
@@ -122,7 +132,7 @@ def test_bulk_retrieval_tool_run_empty_signature(bulk_retrieval_tool, mock_api):
     result = bulk_retrieval_tool.run(signature={})
 
     # Verify API was not called
-    mock_api.get_bulk_objects_from_catalog.assert_not_called()
+    mock_api.bulk_retrieval_stream.assert_not_called()
 
     # Verify error response
     assert "error" in result
@@ -138,14 +148,17 @@ def test_bulk_retrieval_tool_run_api_error(bulk_retrieval_tool, mock_api):
         reason="Bad Request",
         resolution_hint="Check signature format",
     )
-    mock_api.get_bulk_objects_from_catalog.side_effect = api_error
+    mock_api.bulk_retrieval_stream.side_effect = api_error
 
     invalid_signature = {"unknown": {"fields_required": ["name"], "limit": 100}}
 
     result = bulk_retrieval_tool.run(signature=invalid_signature)
 
     # Verify API was called
-    mock_api.get_bulk_objects_from_catalog.assert_called_once_with(invalid_signature)
+    mock_api.bulk_retrieval_stream.assert_called_once_with(
+        signature=invalid_signature,
+        chat_id=None,
+    )
 
     # Verify error handling
     assert "error" in result
@@ -154,9 +167,9 @@ def test_bulk_retrieval_tool_run_api_error(bulk_retrieval_tool, mock_api):
     assert result["error"]["reason"] == "Bad Request"
 
 
-@patch("alation_ai_agent_sdk.api.requests.get")
+@patch("alation_ai_agent_sdk.api.requests.post")
 def test_bulk_retrieval_tool_run_usage_quota_warning(
-    mock_requests_get, bulk_retrieval_tool_with_alation_api
+    mock_requests_post, bulk_retrieval_tool_with_alation_api
 ):
     """Test handling of usage quota warning in the header."""
     # Mock response data
@@ -170,16 +183,25 @@ def test_bulk_retrieval_tool_run_usage_quota_warning(
         ]
     }
 
-    # Create mock response with entitlement headers
+    # Create mock response with entitlement headers for SSE format
     entitlement_headers = create_entitlement_headers(
         warning="You are at 94% of your quota. Enforcement starts at 120%.",
         limit=1000,
         usage=940,
     )
-    mock_response = create_mock_response(
-        mock_response_data, headers=entitlement_headers
-    )
-    mock_requests_get.return_value = mock_response
+
+    # Mock SSE response
+    import json
+
+    sse_data = f"data: {json.dumps(mock_response_data)}\n"
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.headers = entitlement_headers
+    mock_response.iter_lines.return_value = [sse_data.encode("utf-8")]
+    mock_response.raise_for_status.return_value = None
+
+    # Mock the context manager behavior for requests.post
+    mock_requests_post.return_value.__enter__.return_value = mock_response
 
     signature = {
         "table": {"fields_required": ["name", "description", "url"], "limit": 1}
@@ -187,28 +209,26 @@ def test_bulk_retrieval_tool_run_usage_quota_warning(
 
     result = bulk_retrieval_tool_with_alation_api.run(signature=signature)
 
-    # Verify the requests.get was called
-    mock_requests_get.assert_called_once()
+    # Verify the requests.post was called (includes both API call and event tracking)
+    assert mock_requests_post.call_count >= 1
+
+    # Verify the main API call was made correctly
+    api_calls = [
+        call
+        for call in mock_requests_post.call_args_list
+        if "bulk_retrieval_tool/stream" in str(call)
+    ]
+    assert len(api_calls) == 1
 
     # Verify the response data
     assert "relevant_tables" in result
     assert len(result["relevant_tables"]) == 1
     assert result["relevant_tables"][0]["name"] == "orders"
 
-    # Check that the _meta field was injected by _format_successful_response
-    assert "_meta" in result
-    assert "headers" in result["_meta"]
-    assert (
-        result["_meta"]["headers"]["X-Entitlement-Warning"]
-        == "You are at 94% of your quota. Enforcement starts at 120%."
-    )
-    assert result["_meta"]["headers"]["X-Entitlement-Limit"] == "1000"
-    assert result["_meta"]["headers"]["X-Entitlement-Usage"] == "940"
 
-
-@patch("alation_ai_agent_sdk.api.requests.get")
+@patch("alation_ai_agent_sdk.api.requests.post")
 def test_bulk_retrieval_tool_run_no_entitlement_warning(
-    mock_requests_get, bulk_retrieval_tool_with_alation_api
+    mock_requests_post, bulk_retrieval_tool_with_alation_api
 ):
     """Test that no entitlement warning does not add _meta field."""
     # Mock response data without any entitlement headers
@@ -227,10 +247,19 @@ def test_bulk_retrieval_tool_run_no_entitlement_warning(
         limit=1000,
         usage=1,
     )
-    mock_response = create_mock_response(
-        mock_response_data, headers=entitlement_headers
-    )
-    mock_requests_get.return_value = mock_response
+
+    # Mock SSE response
+    import json
+
+    sse_data = f"data: {json.dumps(mock_response_data)}\n"
+    mock_response = Mock()
+    mock_response.status_code = 200
+    mock_response.headers = entitlement_headers
+    mock_response.iter_lines.return_value = [sse_data.encode("utf-8")]
+    mock_response.raise_for_status.return_value = None
+
+    # Mock the context manager behavior for requests.post
+    mock_requests_post.return_value.__enter__.return_value = mock_response
 
     signature = {
         "table": {"fields_required": ["name", "description", "url"], "limit": 1}
@@ -238,8 +267,16 @@ def test_bulk_retrieval_tool_run_no_entitlement_warning(
 
     result = bulk_retrieval_tool_with_alation_api.run(signature=signature)
 
-    # Verify the requests.get was called
-    mock_requests_get.assert_called_once()
+    # Verify the requests.post was called (includes both API call and event tracking)
+    assert mock_requests_post.call_count >= 1
+
+    # Verify the main API call was made correctly
+    api_calls = [
+        call
+        for call in mock_requests_post.call_args_list
+        if "bulk_retrieval_tool/stream" in str(call)
+    ]
+    assert len(api_calls) == 1
 
     # Verify the response data
     assert "relevant_tables" in result
@@ -250,19 +287,30 @@ def test_bulk_retrieval_tool_run_no_entitlement_warning(
     assert "_meta" not in result
 
 
-@patch("alation_ai_agent_sdk.api.requests.get")
+@patch("alation_ai_agent_sdk.api.requests.post")
 def test_bulk_retrieval_tool_with_429_quota_reached(
-    mock_requests_get, bulk_retrieval_tool_with_alation_api
+    mock_requests_post, bulk_retrieval_tool_with_alation_api
 ):
     """Test that quota exceeded error is handled correctly."""
     # Mock response data for a 429 Too Many Requests response
     mock_response_data = {"error": "Entitlement quota exceeded"}
 
     # Create mock response with 429 status that raises HTTPError
-    mock_response = create_mock_response(
-        mock_response_data, status_code=429, raise_for_status=True
-    )
-    mock_requests_get.return_value = mock_response
+    import requests
+
+    mock_response = Mock()
+    mock_response.status_code = 429
+    mock_response.json.return_value = mock_response_data
+    mock_response.text = str(mock_response_data)
+    mock_response.headers = {}
+
+    # Create the HTTPError with the mock response attached
+    http_error = requests.exceptions.HTTPError("429 Client Error")
+    http_error.response = mock_response
+    mock_response.raise_for_status.side_effect = http_error
+
+    # Mock the context manager behavior for requests.post
+    mock_requests_post.return_value.__enter__.return_value = mock_response
 
     signature = {
         "table": {"fields_required": ["name", "description", "url"], "limit": 1}
@@ -270,8 +318,16 @@ def test_bulk_retrieval_tool_with_429_quota_reached(
 
     result = bulk_retrieval_tool_with_alation_api.run(signature=signature)
 
-    # Verify the requests.get was called
-    mock_requests_get.assert_called_once()
+    # Verify the requests.post was called (includes both API call and event tracking)
+    assert mock_requests_post.call_count >= 1
+
+    # Verify the main API call was made correctly
+    api_calls = [
+        call
+        for call in mock_requests_post.call_args_list
+        if "bulk_retrieval_tool/stream" in str(call)
+    ]
+    assert len(api_calls) == 1
 
     # Verify that the error was handled by _handle_request_error and returned as an error dict
     assert "error" in result

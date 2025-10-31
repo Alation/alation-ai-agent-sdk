@@ -21,11 +21,7 @@ pip install -r requirements.txt
 Before running the agent, set the following environment variables with your credentials:
 ```
 export ALATION_BASE_URL="https://your-alation-instance.com"
-export ALATION_AUTH_METHOD="user_account"  # or "service_account"
-
-# For user account authentication
-export ALATION_USER_ID="your-user-id"
-export ALATION_REFRESH_TOKEN="your-refresh-token"
+export ALATION_AUTH_METHOD="service_account"
 
 # For service account authentication
 export ALATION_CLIENT_ID="your-client-id"

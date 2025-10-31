@@ -11,14 +11,20 @@ from alation_ai_agent_sdk.lineage import (
     LineageRootNode,
     LineageTimestampType,
 )
-from langchain.tools import StructuredTool
+from langchain_core.tools import StructuredTool
 
 
 def get_alation_context_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     alation_context_tool = sdk.context_tool
 
-    def run_with_signature(question: str, signature: dict[str, Any] | None = None):
-        return alation_context_tool.run(question=question, signature=signature)
+    def run_with_signature(
+        question: str,
+        signature: dict[str, Any] | None = None,
+        chat_id: Optional[str] = None,
+    ):
+        return alation_context_tool.run(
+            question=question, signature=signature, chat_id=chat_id
+        )
 
     return StructuredTool.from_function(
         name=alation_context_tool.name,
@@ -45,6 +51,7 @@ def get_alation_bulk_retrieval_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
         """
 
         signature = None
+        chat_id = kwargs.get("chat_id", None)
 
         # Pattern 1: Called with signature parameter
         if "signature" in kwargs:
@@ -62,7 +69,7 @@ def get_alation_bulk_retrieval_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
         else:
             signature = None
 
-        result = bulk_retrieval_tool.run(signature=signature)
+        result = bulk_retrieval_tool.run(signature=signature, chat_id=chat_id)
         return result
 
     return StructuredTool.from_function(
@@ -76,8 +83,13 @@ def get_alation_bulk_retrieval_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
 def get_alation_data_products_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     data_products_tool = sdk.data_product_tool
 
-    def run_with_args(product_id: Optional[str] = None, query: Optional[str] = None):
-        return data_products_tool.run(product_id=product_id, query=query)
+    def run_with_args(
+        product_id: Optional[str] = None,
+        query: Optional[str] = None,
+    ):
+        return data_products_tool.run(
+            product_id=product_id, query=query
+        )
 
     return StructuredTool.from_function(
         name=data_products_tool.name,
@@ -212,13 +224,13 @@ def get_check_data_quality_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
 def get_custom_fields_definitions_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     custom_fields_definitions_tool = sdk.get_custom_fields_definitions_tool
 
-    def run_with_no_args():
-        return custom_fields_definitions_tool.run()
+    def run_with_args(chat_id: Optional[str] = None):
+        return custom_fields_definitions_tool.run(chat_id=chat_id)
 
     return StructuredTool.from_function(
         name=custom_fields_definitions_tool.name,
         description=custom_fields_definitions_tool.description,
-        func=run_with_no_args,
+        func=run_with_args,
         args_schema=None,
     )
 
@@ -236,16 +248,17 @@ def get_data_dictionary_instructions_tool(sdk: AlationAIAgentSDK) -> StructuredT
         args_schema=None,
     )
 
+
 def get_signature_creation_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     signature_creation_tool = sdk.signature_creation_tool
 
-    def run_with_no_args():
-        return signature_creation_tool.run()
+    def run_with_args(chat_id: Optional[str] = None):
+        return signature_creation_tool.run(chat_id=chat_id)
 
     return StructuredTool.from_function(
         name=signature_creation_tool.name,
         description=signature_creation_tool.description,
-        func=run_with_no_args,
+        func=run_with_args,
         args_schema=None,
     )
 
@@ -253,12 +266,89 @@ def get_signature_creation_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
 def get_analyze_catalog_question_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     analyze_tool = sdk.analyze_catalog_question_tool
 
-    def run_with_question(question: str):
-        return analyze_tool.run(question=question)
+    def run_with_question(question: str, chat_id: Optional[str] = None):
+        return analyze_tool.run(question=question, chat_id=chat_id)
 
     return StructuredTool.from_function(
         name=analyze_tool.name,
         description=analyze_tool.description,
         func=run_with_question,
+        args_schema=None,
+    )
+
+
+def get_catalog_context_search_agent_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
+    catalog_context_search_agent_tool = sdk.catalog_context_search_agent_tool
+
+    def run_with_message(message: str, chat_id: Optional[str] = None):
+        return catalog_context_search_agent_tool.run(message=message, chat_id=chat_id)
+
+    return StructuredTool.from_function(
+        name=catalog_context_search_agent_tool.name,
+        description=catalog_context_search_agent_tool.description,
+        func=run_with_message,
+        args_schema=None,
+    )
+
+def get_custom_agent_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
+    custom_agent_tool = sdk.custom_agent_tool
+
+    def run_with_args(
+        agent_config_id: str, payload: dict[str, Any], chat_id: Optional[str] = None
+    ):
+        return custom_agent_tool.run(
+            agent_config_id=agent_config_id, payload=payload, chat_id=chat_id
+        )
+
+    return StructuredTool.from_function(
+        name=custom_agent_tool.name,
+        description=custom_agent_tool.description,
+        func=run_with_args,
+        args_schema=None,
+    )
+
+
+def get_data_sources_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
+    data_sources_tool = sdk.get_data_sources_tool
+
+    def run_with_args(limit: int = 100, chat_id: Optional[str] = None):
+        return data_sources_tool.run(limit=limit, chat_id=chat_id)
+
+    return StructuredTool.from_function(
+        name=data_sources_tool.name,
+        description=data_sources_tool.description,
+        func=run_with_args,
+        args_schema=None,
+    )
+
+
+def get_query_flow_agent_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
+    query_flow_agent_tool = sdk.query_flow_agent_tool
+
+    def run_with_message(message: str, marketplace_id: str, chat_id: Optional[str] = None):
+        return query_flow_agent_tool.run(message=message, marketplace_id=marketplace_id, chat_id=chat_id)
+
+    return StructuredTool.from_function(
+        name=query_flow_agent_tool.name,
+        description=query_flow_agent_tool.description,
+        func=run_with_message,
+        args_schema=None,
+    )
+
+
+def get_sql_query_agent_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
+    sql_query_agent_tool = sdk.sql_query_agent_tool
+
+    def run_with_message(
+        message: str, data_product_id: str, chat_id: Optional[str] = None
+    ):
+        return sql_query_agent_tool.run(
+            message=message, data_product_id=data_product_id, chat_id=chat_id
+        )
+
+    return StructuredTool.from_function(
+        name=sql_query_agent_tool.name,
+        description=sql_query_agent_tool.description,
+        func=run_with_message,
         args_schema=None,
     )

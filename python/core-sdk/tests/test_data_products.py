@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock
-from alation_ai_agent_sdk import UserAccountAuthParams, AlationAPI, AlationAPIError
+from alation_ai_agent_sdk import AlationAPI, AlationAPIError, ServiceAccountAuthParams
 import requests
 
 
@@ -16,6 +16,17 @@ def global_network_mocks(monkeypatch):
                 "api_access_token": MOCK_ACCESS_TOKEN,
                 "status": "success",
             }
+            response.raise_for_status.return_value = None
+            return response
+        elif "oauth/v2/token" in url:
+            response = MagicMock()
+            response.status_code = 200
+            response.json.return_value = {
+                "access_token": MOCK_ACCESS_TOKEN,
+                "expires_in": 3600,
+                "token_type": "Bearer",
+            }
+            response.raise_for_status.return_value = None
             return response
         return MagicMock(status_code=200, json=MagicMock(return_value={}))
 
@@ -27,13 +38,17 @@ def global_network_mocks(monkeypatch):
             response = MagicMock()
             response.status_code = 200
             response.json.return_value = {"is_cloud": True}
+            response.raise_for_status.return_value = None
             return response
         if "/full_version" in url:
             response = MagicMock()
             response.status_code = 200
             response.json.return_value = {"ALATION_RELEASE_NAME": "2025.1.2"}
+            response.raise_for_status.return_value = None
             return response
-        return MagicMock(status_code=200, json=MagicMock(return_value={}))
+        response = MagicMock(status_code=200, json=MagicMock(return_value={}))
+        response.raise_for_status.return_value = None
+        return response
 
     monkeypatch.setattr(requests, "get", mock_get)
 
@@ -118,8 +133,8 @@ def alation_api():
     """Fixture to initialize AlationAPI instance."""
     api = AlationAPI(
         base_url=MOCK_BASE_URL,
-        auth_method="user_account",
-        auth_params=UserAccountAuthParams(123, "mock-refresh-token"),
+        auth_method="service_account",
+        auth_params=ServiceAccountAuthParams("mock-client-id", "mock-client-secret"),
     )
     api.access_token = MOCK_ACCESS_TOKEN
     return api

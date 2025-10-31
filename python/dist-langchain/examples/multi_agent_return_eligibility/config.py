@@ -10,18 +10,13 @@ load_dotenv()
 
 # Alation configuration
 ALATION_BASE_URL = os.getenv("ALATION_BASE_URL")
-ALATION_AUTH_METHOD = os.getenv("ALATION_AUTH_METHOD", "user_account")
+ALATION_AUTH_METHOD = os.getenv("ALATION_AUTH_METHOD", "service_account")
 
 # Initialize all variables to avoid ImportError
-ALATION_USER_ID = None
-ALATION_REFRESH_TOKEN = None
 ALATION_CLIENT_ID = None
 ALATION_CLIENT_SECRET = None
 
-if ALATION_AUTH_METHOD == "user_account":
-    ALATION_USER_ID = int(os.getenv("ALATION_USER_ID", "0"))
-    ALATION_REFRESH_TOKEN = os.getenv("ALATION_REFRESH_TOKEN")
-elif ALATION_AUTH_METHOD == "service_account":
+if ALATION_AUTH_METHOD == "service_account":
     ALATION_CLIENT_ID = os.getenv("ALATION_CLIENT_ID")
     ALATION_CLIENT_SECRET = os.getenv("ALATION_CLIENT_SECRET")
 else:

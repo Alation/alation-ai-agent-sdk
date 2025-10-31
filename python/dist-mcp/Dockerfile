@@ -10,9 +10,9 @@
 #   docker run --env-file .env alation-mcp-server
 #   # OR with explicit env vars:
 #   docker run -e ALATION_BASE_URL=https://your-instance.alationcloud.com \
-#              -e ALATION_AUTH_METHOD=user_account \
-#              -e ALATION_USER_ID=123 \
-#              -e ALATION_REFRESH_TOKEN=your_token \
+#              -e ALATION_AUTH_METHOD=service_account \
+#              -e ALATION_CLIENT_ID=your_client_id \
+#              -e ALATION_CLIENT_SECRET=your_client_secret \
 #              alation-mcp-server
 #
 # HTTP Mode - only base URL needed, auth via web OAuth:
@@ -24,8 +24,7 @@
 #   ALATION_BASE_URL=https://your-instance.alationcloud.com
 #
 # Environment Variables Required for STDIO Mode:
-#   ALATION_AUTH_METHOD=user_account|service_account
-#   For user_account: ALATION_USER_ID, ALATION_REFRESH_TOKEN
+#   ALATION_AUTH_METHOD=service_account
 #   For service_account: ALATION_CLIENT_ID, ALATION_CLIENT_SECRET
 #
 # Environment Variables for HTTP Mode:
@@ -33,6 +32,7 @@
 #
 # Optional Environment Variables:
 #   ALATION_DISABLED_TOOLS=tool1,tool2
+#   ALATION_ENABLED_TOOLS=tool3,tool4,tool5,tool6
 #   ALATION_ENABLED_BETA_TOOLS=beta_tool1,beta_tool2
 #   MCP_EXTERNAL_URL=https://external-host:8000 (for OAuth in HTTP mode)
 # ---- Builder Stage ----

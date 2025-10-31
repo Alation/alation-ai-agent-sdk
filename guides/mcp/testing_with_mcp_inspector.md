@@ -20,11 +20,7 @@ The Alation MCP server requires three environment variables:
 ```bash
 # Set environment variables for your Alation instance
 export ALATION_BASE_URL="https://your-alation-instance.com"
-export ALATION_AUTH_METHOD="user_account"  # or "service_account"
-
-# For user account authentication
-export ALATION_USER_ID="123456"  # Your numeric user ID
-export ALATION_REFRESH_TOKEN="your-refresh-token"
+export ALATION_AUTH_METHOD="service_account"
 
 # For service account authentication
 export ALATION_CLIENT_ID="your-client-id"
@@ -36,8 +32,6 @@ Verify the variables are properly set:
 ```bash
 echo $ALATION_BASE_URL
 echo $ALATION_AUTH_METHOD
-echo $ALATION_USER_ID
-echo $ALATION_REFRESH_TOKEN
 echo $ALATION_CLIENT_ID
 echo $ALATION_CLIENT_SECRET
 ```

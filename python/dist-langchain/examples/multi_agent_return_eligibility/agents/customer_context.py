@@ -6,8 +6,8 @@ Context Aggregation Agent: intelligently selects and fetches tables based on que
 import json
 import ast
 from langchain_openai import ChatOpenAI
-from langchain.agents import AgentExecutor, create_openai_functions_agent
-from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.agents import create_agent
+from langchain_core.tools import Tool
 from schemas import CustomerState, CUSTOMER_DATA_SIGNATURE
 from config import LLM_MODEL, USE_MOCK_DATA
 from tools import execute_sql, get_alation_tools
@@ -94,7 +94,6 @@ def create_context_agent(selected_table_names):
     # Get Alation context tool and SQL execution tool
     if USE_MOCK_DATA == "true":
         from mocks.alation_mocks import mock_alation_context
-        from langchain.tools import Tool
 
         def mock_alation_wrapper(question: str):
             return mock_alation_context(question, signature=CUSTOMER_DATA_SIGNATURE)
@@ -119,14 +118,11 @@ def create_context_agent(selected_table_names):
 
     tools.append(sql_tool)
 
-    # Create a simpler system message that avoids template issues
-    system_message = f"""You are a database query agent. Your job:
+    # Create system prompt for the agent
+    system_prompt = f"""You are a database query agent. Your job:
 
 1. FIRST, use the alation_context tool to get information for all the relevant table structures.
-    - IMPORTANT: When calling the alation_context tool, you must pass TWO parameters:
-         1) The question string: "What are the columns and structure of {tables_list}?"
-         2) The signature object that was provided to you
-    - DO NOT modify the signature or include it in the question string
+    - Ask about the columns and structure of these tables: {tables_list}
 
 2. THEN, for each of these tables: {tables_list}
    - Create an SQL query that selects all data for a specific customer
@@ -137,22 +133,11 @@ def create_context_agent(selected_table_names):
 
 4. FINALLY, compile all the results into a structured response.
    Return the results as a clean JSON object mapping table names to their query results.
-   Do not include any explanatory text before or after the JSON - just return the raw JSON data.
-"""
+   Do not include any explanatory text before or after the JSON - just return the raw JSON data."""
 
-    # Create the prompt with direct string instead of using formatting
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", system_message),
-            ("human", "Customer ID: {customer_id}"),
-            MessagesPlaceholder(variable_name="agent_scratchpad"),
-        ]
-    )
-
-    # Create the agent
-    agent = create_openai_functions_agent(llm=llm, tools=tools, prompt=prompt)
-
-    return AgentExecutor(agent=agent, tools=tools, verbose=False)
+    # Create the agent using the new pattern
+    agent = create_agent(model=llm, tools=tools, system_prompt=system_prompt)
+    return agent
 
 
 # This Context Aggregation Agent implements a multi-step intelligence process to:
@@ -199,17 +184,32 @@ def customer_context_node(state: CustomerState) -> CustomerState:
     # Step 3: Create and execute context agent with the selected table names
     agent = create_context_agent(selected_table_names)
 
-    # Prepare input
-    input_data = {"customer_id": customer_id}
+    # Create the user message with customer ID
+    user_message = f"Customer ID: {customer_id}"
 
-    # Run the agent
-    result = agent.invoke(input_data)
+    # Run the agent with messages format
+    result = agent.invoke({"messages": [("user", user_message)]})
 
     # Store into state
     state.setdefault("context_data", {})
 
-    # Process the agent result
-    output = result.get("output", "")
+    # Process the agent result - extract output from new result format
+    try:
+        if hasattr(result, 'get') and 'messages' in result:
+            # Extract the final assistant message
+            messages = result.get('messages', [])
+            if messages:
+                final_message = messages[-1]
+                if hasattr(final_message, 'content'):
+                    output = final_message.content
+                else:
+                    output = str(final_message)
+            else:
+                output = str(result)
+        else:
+            output = str(result)
+    except Exception:
+        output = str(result)
 
     try:
         # Try to parse JSON directly from the output

@@ -1,12 +1,12 @@
 [project]
 name = "alation-ai-agent-mcp"
-version = "0.12.0"
+version = "1.0.0rc1"
 description = "Alation Agent SDK with MCP support"
 dependencies = [
-  "alation-ai-agent-sdk>=0.12.0",
+  "alation-ai-agent-sdk>=1.0.0rc1",
   "mcp[cli]>=1.12.0",
-  "fastMCP==2.9.0",
-  "pydantic>=2.8.0,<2.12.0"
+  "fastMCP==2.11.0",
+  "pydantic>=2.8.0,<2.12.0",
 ]
 authors = [
   { name="Jagannath (Jags) Saragadam", email="jags.saragadam@alation.com"},
@@ -60,3 +60,6 @@ Documentation = "https://github.com/Alation/alation-ai-agent-sdk/blob/main/pytho
 
 [tool.ruff.lint]
 ignore = ["TID252", "B021"]
+
+[tool.uv.sources]
+alation-ai-agent-sdk = { path = "../core-sdk" }

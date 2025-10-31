@@ -19,11 +19,7 @@ Environment Variables:
 
 Required (STDIO mode only):
 - ALATION_BASE_URL: Base URL of your Alation instance (e.g., "https://company.alationcloud.com")
-- ALATION_AUTH_METHOD: "user_account" or "service_account"
-
-For user_account authentication:
-- ALATION_USER_ID: Numeric user ID (required)
-- ALATION_REFRESH_TOKEN: User's refresh token (required)
+- ALATION_AUTH_METHOD: "service_account"
 
 For service_account authentication:
 - ALATION_CLIENT_ID: OAuth client ID (required)
@@ -40,12 +36,11 @@ Note: HTTP mode uses OAuth headers instead of authentication environment variabl
 import os
 import time
 import logging
-from typing import Union
 
 import httpx
 from mcp.server.auth.provider import AccessToken, TokenVerifier
 
-from alation_ai_agent_sdk import UserAccountAuthParams, ServiceAccountAuthParams
+from alation_ai_agent_sdk import ServiceAccountAuthParams
 
 
 class AlationTokenVerifier(TokenVerifier):
@@ -109,18 +104,12 @@ class AlationTokenVerifier(TokenVerifier):
                 return None
 
 
-def get_stdio_auth_params() -> tuple[
-    str, Union[UserAccountAuthParams, ServiceAccountAuthParams]
-]:
+def get_stdio_auth_params() -> tuple[str, ServiceAccountAuthParams]:
     """
     Load authentication parameters from environment variables.
 
     Required Environment Variables:
-    - ALATION_AUTH_METHOD: "user_account" or "service_account"
-
-    For user_account method:
-    - ALATION_USER_ID: Integer user ID
-    - ALATION_REFRESH_TOKEN: User's refresh token
+    - ALATION_AUTH_METHOD: "service_account"
 
     For service_account method:
     - ALATION_CLIENT_ID: Service account client ID
@@ -137,20 +126,7 @@ def get_stdio_auth_params() -> tuple[
     if not auth_method:
         raise ValueError("Missing required environment variable: ALATION_AUTH_METHOD")
 
-    if auth_method == "user_account":
-        user_id = os.getenv("ALATION_USER_ID")
-        refresh_token = os.getenv("ALATION_REFRESH_TOKEN")
-        if not user_id or not refresh_token:
-            raise ValueError(
-                "Missing required environment variables: ALATION_USER_ID and ALATION_REFRESH_TOKEN for 'user_account' auth_method"
-            )
-        try:
-            user_id = int(user_id)
-        except ValueError:
-            raise ValueError("ALATION_USER_ID must be an integer.")
-        auth_params = UserAccountAuthParams(user_id, refresh_token)
-
-    elif auth_method == "service_account":
+    if auth_method == "service_account":
         client_id = os.getenv("ALATION_CLIENT_ID")
         client_secret = os.getenv("ALATION_CLIENT_SECRET")
         if not client_id or not client_secret:
@@ -161,7 +137,7 @@ def get_stdio_auth_params() -> tuple[
 
     else:
         raise ValueError(
-            "Invalid ALATION_AUTH_METHOD. Must be 'user_account' or 'service_account' for STDIO server"
+            "Invalid ALATION_AUTH_METHOD. Must be 'service_account' for STDIO server"
         )
 
     return auth_method, auth_params

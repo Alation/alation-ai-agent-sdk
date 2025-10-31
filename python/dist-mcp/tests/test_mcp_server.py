@@ -6,7 +6,6 @@ from alation_ai_agent_mcp import server
 from alation_ai_agent_mcp.utils import MCP_SERVER_VERSION
 from alation_ai_agent_sdk import (
     AlationTools,
-    UserAccountAuthParams,
     ServiceAccountAuthParams,
 )
 
@@ -51,15 +50,13 @@ def manage_environment_variables(monkeypatch):
     original_vars = {
         "ALATION_BASE_URL": os.environ.get("ALATION_BASE_URL"),
         "ALATION_AUTH_METHOD": os.environ.get("ALATION_AUTH_METHOD"),
-        "ALATION_USER_ID": os.environ.get("ALATION_USER_ID"),
-        "ALATION_REFRESH_TOKEN": os.environ.get("ALATION_REFRESH_TOKEN"),
         "ALATION_CLIENT_ID": os.environ.get("ALATION_CLIENT_ID"),
         "ALATION_CLIENT_SECRET": os.environ.get("ALATION_CLIENT_SECRET"),
     }
     monkeypatch.setenv("ALATION_BASE_URL", "https://mock-alation.com")
-    monkeypatch.setenv("ALATION_AUTH_METHOD", "user_account")
-    monkeypatch.setenv("ALATION_USER_ID", "12345")
-    monkeypatch.setenv("ALATION_REFRESH_TOKEN", "mock-token")
+    monkeypatch.setenv("ALATION_AUTH_METHOD", "service_account")
+    monkeypatch.setenv("ALATION_CLIENT_ID", "mock-client-id")
+    monkeypatch.setenv("ALATION_CLIENT_SECRET", "mock-client-secret")
     yield
     for key, value in original_vars.items():
         if value is None:
@@ -132,17 +129,6 @@ def test_create_server_missing_env_var(manage_environment_variables, monkeypatch
         server.create_server("stdio")
 
 
-def test_create_server_invalid_user_id_env_var(
-    manage_environment_variables, monkeypatch
-):
-    """
-    Test that create_server raises ValueError if ALATION_USER_ID is not an integer.
-    """
-    monkeypatch.setenv("ALATION_USER_ID", "not-an-int")
-    with pytest.raises(ValueError):
-        server.create_server("stdio")
-
-
 def test_create_server_success(
     manage_environment_variables, mock_alation_sdk, mock_fastmcp
 ):
@@ -157,8 +143,8 @@ def test_create_server_success(
     mock_mcp_class.assert_called_once_with(name="Alation MCP Server")
     mock_sdk_class.assert_called_once_with(
         "https://mock-alation.com",
-        "user_account",
-        UserAccountAuthParams(12345, "mock-token"),
+        "service_account",
+        ServiceAccountAuthParams("mock-client-id", "mock-client-secret"),
         dist_version=f"mcp-{MCP_SERVER_VERSION}",
     )
     assert mcp_result is mock_mcp_instance
@@ -180,20 +166,31 @@ def test_create_server_disabled_tool_and_enabled_beta_tool(
     mock_mcp_class.assert_called_once_with(name="Alation MCP Server")
     assert mcp_result is mock_mcp_instance
 
-    assert mock_mcp_instance.tool.call_count == 11
+    # Expected tools: All default tools except alation_context (disabled), plus get_lineage (beta enabled)
+    expected_tools = {
+        "bulk_retrieval",  # BULK_RETRIEVAL
+        "get_data_products",  # GET_DATA_PRODUCT
+        "generate_data_product",  # GENERATE_DATA_PRODUCT
+        "get_data_sources_tool",
+        "get_custom_fields_definitions",  # GET_CUSTOM_FIELDS_DEFINITIONS
+        "get_data_dictionary_instructions",  # GET_DATA_DICTIONARY_INSTRUCTIONS
+        "get_signature_creation_instructions",  # SIGNATURE_CREATION
+        "analyze_catalog_question",  # ANALYZE_CATALOG_QUESTION
+        "catalog_context_search_agent",  # CATALOG_CONTEXT_SEARCH_AGENT
+        "query_flow_agent",  # QUERY_FLOW_AGENT
+        "sql_query_agent",  # SQL_QUERY_AGENT
+        "get_lineage",  # LINEAGE (beta tool)
+    }
 
-    # NOTE: each distribution may refer to the tools differently. These should be standardized so we can
-    # reuse a set of constants across all projects.
+    # Assert that alation_context is NOT registered (disabled)
     assert "alation_context" not in mock_mcp_instance.tools
 
-    assert "bulk_retrieval" in mock_mcp_instance.tools
-    assert "get_data_products" in mock_mcp_instance.tools
-    assert "update_catalog_asset_metadata" in mock_mcp_instance.tools
-    assert "check_job_status" in mock_mcp_instance.tools
-    assert "get_lineage" in mock_mcp_instance.tools
-    assert "generate_data_product" in mock_mcp_instance.tools
-    assert "analyze_catalog_question" in mock_mcp_instance.tools
-    assert "get_signature_creation_instructions" in mock_mcp_instance.tools
+    # Assert all expected tools are registered
+    for tool_name in expected_tools:
+        assert tool_name in mock_mcp_instance.tools, f"Tool '{tool_name}' should be registered"
+
+    # Assert correct number of tools are registered
+    assert mock_mcp_instance.tool.call_count == len(expected_tools)
 
 
 def test_create_server_disabled_tool_and_enabled_beta_tool_via_environment(
@@ -211,39 +208,68 @@ def test_create_server_disabled_tool_and_enabled_beta_tool_via_environment(
     mock_mcp_class.assert_called_once_with(name="Alation MCP Server")
     assert mcp_result is mock_mcp_instance
 
-    assert mock_mcp_instance.tool.call_count == 11
+    # Expected tools: All default tools except alation_context (disabled), plus get_lineage (beta enabled)
+    expected_tools = {
+        "bulk_retrieval",  # BULK_RETRIEVAL
+        "get_data_products",  # GET_DATA_PRODUCT
+        "generate_data_product",  # GENERATE_DATA_PRODUCT
+        "get_data_sources_tool",
+        "get_custom_fields_definitions",  # GET_CUSTOM_FIELDS_DEFINITIONS
+        "get_data_dictionary_instructions",  # GET_DATA_DICTIONARY_INSTRUCTIONS
+        "get_signature_creation_instructions",  # SIGNATURE_CREATION
+        "analyze_catalog_question",  # ANALYZE_CATALOG_QUESTION
+        "catalog_context_search_agent",  # CATALOG_CONTEXT_SEARCH_AGENT
+        "query_flow_agent",  # QUERY_FLOW_AGENT
+        "sql_query_agent",  # SQL_QUERY_AGENT
+        "get_lineage",  # LINEAGE (beta tool)
+    }
 
-    # NOTE: each distribution may refer to the tools differently. These should be standardized so we can
-    # reuse a set of constants across all projects.
+    # Assert that alation_context is NOT registered (disabled)
     assert "alation_context" not in mock_mcp_instance.tools
 
-    assert "bulk_retrieval" in mock_mcp_instance.tools
-    assert "get_data_products" in mock_mcp_instance.tools
-    assert "update_catalog_asset_metadata" in mock_mcp_instance.tools
-    assert "check_job_status" in mock_mcp_instance.tools
-    assert "get_lineage" in mock_mcp_instance.tools
-    assert "generate_data_product" in mock_mcp_instance.tools
-    assert "analyze_catalog_question" in mock_mcp_instance.tools
-    assert "get_signature_creation_instructions" in mock_mcp_instance.tools
+    # Assert all expected tools are registered
+    for tool_name in expected_tools:
+        assert tool_name in mock_mcp_instance.tools, f"Tool '{tool_name}' should be registered"
+
+    # Assert correct number of tools are registered
+    assert mock_mcp_instance.tool.call_count == len(expected_tools)
 
 
 def test_tool_registration(
     manage_environment_variables, mock_alation_sdk, mock_fastmcp
 ):
     """
-    Test that the alation_context tool is registered correctly on the mocked MCP.
+    Test that all default tools are registered correctly on the mocked MCP.
     """
     mock_sdk_class, mock_sdk_instance = mock_alation_sdk
     mock_mcp_class, mock_mcp_instance = mock_fastmcp
 
     server.create_server("stdio")
 
-    # Check that tools are registered
-    # The tool name is now determined by get_tool_metadata() from the actual tool class
-    tool_name = "alation_context"  # AlationContextTool._get_name()
-    assert tool_name in mock_mcp_instance.tools
-    assert isinstance(mock_mcp_instance.tools[tool_name], MagicMock)
-    assert hasattr(mock_mcp_instance.tools[tool_name], "__wrapped__")
+    # Expected default tools (no disabled tools, no beta tools enabled)
+    expected_default_tools = {
+        "alation_context",  # AGGREGATED_CONTEXT
+        "bulk_retrieval",  # BULK_RETRIEVAL
+        "get_data_products",  # GET_DATA_PRODUCT
+        "get_data_sources_tool",
+        "generate_data_product",  # GENERATE_DATA_PRODUCT
+        "get_custom_fields_definitions",  # GET_CUSTOM_FIELDS_DEFINITIONS
+        "get_data_dictionary_instructions",  # GET_DATA_DICTIONARY_INSTRUCTIONS
+        "get_signature_creation_instructions",  # SIGNATURE_CREATION
+        "analyze_catalog_question",  # ANALYZE_CATALOG_QUESTION
+        "catalog_context_search_agent",  # CATALOG_CONTEXT_SEARCH_AGENT
+        "query_flow_agent",  # QUERY_FLOW_AGENT
+        "sql_query_agent",  # SQL_QUERY_AGENT
+    }
+
+    # Assert all expected default tools are registered
+    for tool_name in expected_default_tools:
+        assert tool_name in mock_mcp_instance.tools, f"Tool '{tool_name}' should be registered"
+        assert isinstance(mock_mcp_instance.tools[tool_name], MagicMock)
+        assert hasattr(mock_mcp_instance.tools[tool_name], "__wrapped__")
+
+    # Assert correct number of tools are registered
+    assert mock_mcp_instance.tool.call_count == len(expected_default_tools)
 
 
 def test_alation_context_tool_logic(
@@ -273,7 +299,9 @@ def test_alation_context_tool_logic(
 
     result = tool_func(question=question_input)
 
-    mock_sdk_instance.get_context.assert_called_once_with(question_input, None)
+    mock_sdk_instance.get_context.assert_called_once_with(
+        question_input, None, chat_id=None
+    )
     assert result == expected_sdk_result
 
     mock_sdk_instance.get_context.reset_mock()
@@ -286,7 +314,7 @@ def test_alation_context_tool_logic(
     result_sig = tool_func(question=question_input, signature=signature_input)
 
     mock_sdk_instance.get_context.assert_called_once_with(
-        question_input, signature_input
+        question_input, signature_input, chat_id=None
     )
     assert result_sig == expected_sdk_result_sig
 
@@ -334,13 +362,22 @@ def test_create_server_service_account(
 @patch("alation_ai_agent_mcp.server.create_server")
 def test_run_server_cli_no_arguments(mock_create_server):
     with patch("alation_ai_agent_mcp.server.parse_arguments") as mock_parse_args:
-        mock_parse_args.return_value = ("stdio", None, None, None, None, None, None)
+        mock_parse_args.return_value = (
+            "stdio",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
 
         server.run_server()
 
         mock_create_server.assert_called_once()
         mock_create_server.assert_called_with(
-            "stdio", None, None, None, None, None, None
+            "stdio", None, None, None, None, None, None, None
         )
 
 
@@ -349,6 +386,7 @@ def test_run_server_cli_with_arguments(mock_create_server):
     with patch("alation_ai_agent_mcp.server.parse_arguments") as mock_parse_args:
         mock_parse_args.return_value = (
             "stdio",
+            None,
             None,
             "tool1,tool2",
             "tool3",
@@ -361,5 +399,5 @@ def test_run_server_cli_with_arguments(mock_create_server):
 
         mock_create_server.assert_called_once()
         mock_create_server.assert_called_with(
-            "stdio", None, "tool1,tool2", "tool3", None, None, None
+            "stdio", None, None, "tool1,tool2", "tool3", None, None, None
         )

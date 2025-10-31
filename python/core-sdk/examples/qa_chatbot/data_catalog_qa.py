@@ -31,7 +31,6 @@ from typing import Dict, Any, List
 import openai
 from alation_ai_agent_sdk import (
     AlationAIAgentSDK,
-    UserAccountAuthParams,
     ServiceAccountAuthParams,
 )
 from alation_ai_agent_sdk.api import AlationAPIError
@@ -62,7 +61,7 @@ class DataCatalogQA:
         self.client = openai.OpenAI(api_key=openai_api_key)
 
         # Load auth method from env
-        auth_method = os.getenv("ALATION_AUTH_METHOD", "user_account")
+        auth_method = os.getenv("ALATION_AUTH_METHOD", "service_account")
 
         # Initialize Alation SDK
         self.sdk = self.initialize_sdk(auth_method)
@@ -72,31 +71,7 @@ class DataCatalogQA:
 
     def initialize_sdk(self, auth_method: str) -> AlationAIAgentSDK:
         """Initialize the Alation SDK based on the authentication method."""
-        if auth_method == "user_account":
-            user_id_str = os.getenv("ALATION_USER_ID")
-            refresh_token = os.getenv("ALATION_REFRESH_TOKEN")
-
-            if not all([user_id_str, refresh_token]):
-                raise ValueError(
-                    "Missing required environment variables for user account authentication. Please set ALATION_USER_ID and ALATION_REFRESH_TOKEN."
-                )
-
-            try:
-                user_id = int(user_id_str)
-            except ValueError:
-                raise ValueError(
-                    f"ALATION_USER_ID must be an integer, got: {user_id_str}"
-                )
-
-            return AlationAIAgentSDK(
-                base_url=self.base_url,
-                auth_method=auth_method,
-                auth_params=UserAccountAuthParams(
-                    user_id=user_id, refresh_token=refresh_token
-                ),
-            )
-
-        elif auth_method == "service_account":
+        if auth_method == "service_account":
             client_id = os.getenv("ALATION_CLIENT_ID")
             client_secret = os.getenv("ALATION_CLIENT_SECRET")
 

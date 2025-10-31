@@ -1,6 +1,7 @@
 from typing import (
     Any,
     Dict,
+    Generator,
     Optional,
     Union,
 )
@@ -24,6 +25,11 @@ from .tools import (
     GetDataDictionaryInstructionsTool,
     SignatureCreationTool,
     AnalyzeCatalogQuestionTool,
+    CatalogContextSearchAgentTool,
+    QueryFlowAgentTool,
+    SqlQueryAgentTool,
+    GetDataSourcesTool,
+    CustomAgentTool,
 )
 from .lineage import (
     LineageToolResponse,
@@ -41,28 +47,47 @@ from .lineage import (
 
 
 class AlationTools:
+    # Tools
     AGGREGATED_CONTEXT = "aggregated_context"
+    ANALYZE_CATALOG_QUESTION = "analyze_catalog_question"
     BULK_RETRIEVAL = "bulk_retrieval"
     CHECK_JOB_STATUS = "check_job_status"
-    DATA_PRODUCT = "data_product"
     DATA_QUALITY = "data_quality"
-    LINEAGE = "lineage"
-    UPDATE_METADATA = "update_metadata"
     GENERATE_DATA_PRODUCT = "generate_data_product"
     GET_CUSTOM_FIELDS_DEFINITIONS = "get_custom_fields_definitions"
     GET_DATA_DICTIONARY_INSTRUCTIONS = "get_data_dictionary_instructions"
+    GET_DATA_PRODUCT = "data_product"
+    GET_DATA_SOURCES = "get_data_sources"
+    LINEAGE = "lineage"
     SIGNATURE_CREATION = "signature_creation"
-    ANALYZE_CATALOG_QUESTION = "analyze_catalog_question"
+    UPDATE_METADATA = "update_metadata"
+    # Agents
+    CATALOG_CONTEXT_SEARCH_AGENT = "catalog_context_search_agent"
+    CUSTOM_AGENT = "custom_agent"
+    QUERY_FLOW_AGENT = "query_flow_agent"
+    SQL_QUERY_AGENT = "sql_query_agent"
+
+
+class AgentSDKOptions:
+    def __init__(
+        self,
+        skip_instance_info: Optional[bool] = False,
+        enable_streaming: Optional[bool] = False,
+        decode_nested_json: Optional[bool] = True,
+        # TBD: option for only preserving content from part instead of whole response
+    ):
+        self.skip_instance_info = skip_instance_info
+        self.enable_streaming = enable_streaming
+        self.decode_nested_json = decode_nested_json
+        # TBD: decide on stripping extra metadata from streamed response for non-streaming cases?
+        # TBD: another parameter for whether to allow tools that output html
 
 
 class AlationAIAgentSDK:
     """
     SDK for interacting with Alation AI Agent capabilities.
 
-    Can be initialized using one of two authentication methods:
-    1. User Account Authentication:
-       sdk = AlationAIAgentSDK(base_url="https://company.alationcloud.com", auth_method="user_account", auth_params=(123, "your_refresh_token"))
-    2. Service Account Authentication:
+    Can be initialized using Service Account authentication.
        sdk = AlationAIAgentSDK(base_url="https://company.alationcloud.com", auth_method="service_account", auth_params=("your_client_id", "your_client_secret"))
     """
 
@@ -71,19 +96,24 @@ class AlationAIAgentSDK:
         base_url: str,
         auth_method: str,
         auth_params: AuthParams,
+        enabled_tools: Optional[set[str]] = None,
         disabled_tools: Optional[set[str]] = None,
         enabled_beta_tools: Optional[set[str]] = None,
         dist_version: Optional[str] = None,
-        skip_instance_info: Optional[bool] = False,
+        sdk_options: Optional[AgentSDKOptions] = None,
     ):
+        if sdk_options is None:
+            sdk_options = AgentSDKOptions()
         if not base_url or not isinstance(base_url, str):
             raise ValueError("base_url must be a non-empty string.")
 
         if not auth_method or not isinstance(auth_method, str):
             raise ValueError("auth_method must be a non-empty string.")
 
+        self.enabled_tools = enabled_tools or set()
         self.disabled_tools = disabled_tools or set()
         self.enabled_beta_tools = enabled_beta_tools or set()
+        self.options = sdk_options
 
         # Delegate validation of auth_params to AlationAPI
         self.api = AlationAPI(
@@ -91,7 +121,9 @@ class AlationAIAgentSDK:
             auth_method=auth_method,
             auth_params=auth_params,
             dist_version=dist_version,
-            skip_instance_info=skip_instance_info,
+            skip_instance_info=sdk_options.skip_instance_info,
+            enable_streaming=sdk_options.enable_streaming,
+            decode_nested_json=sdk_options.decode_nested_json,
         )
         self.context_tool = AlationContextTool(self.api)
         self.bulk_retrieval_tool = AlationBulkRetrievalTool(self.api)
@@ -111,27 +143,38 @@ class AlationAIAgentSDK:
         )
         self.signature_creation_tool = SignatureCreationTool(self.api)
         self.analyze_catalog_question_tool = AnalyzeCatalogQuestionTool(self.api)
+        self.catalog_context_search_agent_tool = CatalogContextSearchAgentTool(self.api)
+        self.query_flow_agent_tool = QueryFlowAgentTool(self.api)
+        self.sql_query_agent_tool = SqlQueryAgentTool(self.api)
+        self.get_data_sources_tool = GetDataSourcesTool(self.api)
+        self.custom_agent_tool = CustomAgentTool(self.api)
 
     BETA_TOOLS = {AlationTools.LINEAGE}
 
     def get_context(
-        self, question: str, signature: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        self, question: str, signature: Optional[Dict[str, Any]] = None, chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Fetch context from Alation's catalog for a given question and signature.
+
+        Args:
+            question (str): Natural language question about the data catalog
+            signature (optional, Dict[str, Any]): A signature defining object types, fields, and filters.
+            chat_id (optional, str): Chat session identifier
 
         Returns either:
         - JSON context result (dict)
         - Error object with keys: message, reason, resolution_hint, response_body
         """
-        return self.context_tool.run(question=question, signature=signature)
+        return self.context_tool.run(question=question, signature=signature, chat_id=chat_id)
 
-    def get_bulk_objects(self, signature: Dict[str, Any]) -> Dict[str, Any]:
+    def get_bulk_objects(self, signature: Dict[str, Any], chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Fetch bulk objects from Alation's catalog based on signature specifications.
 
         Args:
             signature (Dict[str, Any]): A signature defining object types, fields, and filters.
+            chat_id (optional, str): Chat session identifier
 
         Returns:
             Dict[str, Any]: Contains the catalog objects matching the signature criteria.
@@ -147,7 +190,7 @@ class AlationAIAgentSDK:
                 }
             }
         """
-        return self.bulk_retrieval_tool.run(signature=signature)
+        return self.bulk_retrieval_tool.run(signature=signature, chat_id=chat_id)
 
     def get_data_products(
         self, product_id: Optional[str] = None, query: Optional[str] = None
@@ -330,13 +373,16 @@ class AlationAIAgentSDK:
         """
         return self.generate_data_product_tool.run()
 
-    def get_custom_fields_definitions(self) -> Dict[str, Any]:
+    def get_custom_fields_definitions(self, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Retrieve all custom field definitions from the Alation instance.
 
+        Args:
+            chat_id (optional, str): Chat session identifier
+
         Custom fields are user-defined metadata fields. This method requires admin permissions.
         """
-        return self.get_custom_fields_definitions_tool.run()
+        return self.get_custom_fields_definitions_tool.run(chat_id=chat_id)
 
     def get_data_dictionary_instructions(self) -> str:
         """
@@ -347,10 +393,13 @@ class AlationAIAgentSDK:
         """
         return self.get_data_dictionary_instructions_tool.run()
 
-    def get_signature_creation_instructions(self) -> str:
+    def get_signature_creation_instructions(self, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Returns comprehensive instructions for creating the signature parameter for alation_context
         and bulk_retrieval tools.
+
+        Args:
+            chat_id (optional, str): Chat session identifier
 
         Returns:
         Comprehensive signature creation instructions including:
@@ -361,9 +410,9 @@ class AlationAIAgentSDK:
             - Decision workflow
             - Validation rules
         """
-        return self.signature_creation_tool.run()
+        return self.signature_creation_tool.run(chat_id=chat_id)
 
-    def analyze_catalog_question(self, question: str) -> str:
+    def analyze_catalog_question(self, question: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Analyze a catalog question and return workflow guidance.
 
@@ -372,73 +421,217 @@ class AlationAIAgentSDK:
 
         Args:
             question (str): Natural language question about the data catalog
+            chat_id (optional, str): Chat session identifier
 
         Returns:
             str: Formatted workflow instructions including
         """
-        return self.analyze_catalog_question_tool.run(question=question)
+        return self.analyze_catalog_question_tool.run(question=question, chat_id=chat_id)
+
+    def catalog_context_search_agent(self, message: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+        """
+        Catalog Context Search Agent for searching catalog objects with enhanced context.
+
+        Args:
+            message (str): Natural language description of what you're searching for
+            chat_id (optional, str): Chat session identifier
+
+        Returns:
+            Dict[str, Any]: Contextually-aware search results with enhanced metadata and relationships
+        """
+        return self.catalog_context_search_agent_tool.run(message=message, chat_id=chat_id)
+
+    def query_flow_agent(self, message: str, marketplace_id: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+        """
+        Query Flow Agent for SQL query workflow management.
+
+        Args:
+            message (str): Description of your query workflow needs
+            marketplace_id (str): The ID of the marketplace to work with
+            chat_id (optional, str): Chat session identifier
+
+        Returns:
+            Dict[str, Any]: Query workflow guidance, optimization suggestions, and execution plans
+        """
+        return self.query_flow_agent_tool.run(
+            message=message, marketplace_id=marketplace_id, chat_id=chat_id
+        )
+
+    def sql_query_agent(self, message: str, data_product_id: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+        """
+        SQL Query Agent for SQL query generation and analysis.
+
+        Args:
+            message (str): Description of the data you need or SQL task
+            data_product_id (str): The ID of the data product to work with
+            chat_id (optional, str): Chat session identifier
+
+        Returns:
+            Dict[str, Any]: SQL queries, query analysis, optimization suggestions, and execution guidance
+        """
+        return self.sql_query_agent_tool.run(
+            message=message, data_product_id=data_product_id, chat_id=chat_id
+        )
+
+    def get_data_sources(self, limit: int = 100, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+        """
+        Retrieve available data sources from the catalog.
+
+        Args:
+            limit (int, optional): Maximum number of data sources to return (default: 100)
+            chat_id (optional, str): Chat session identifier
+
+        Returns:
+            Dict[str, Any]: List of available data sources with their metadata and connection information
+        """
+        return self.get_data_sources_tool.run(limit=limit, chat_id=chat_id)
+
+    def execute_custom_agent(
+        self, agent_config_id: str, payload: Dict[str, Any], chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+        """
+        Execute a custom agent configuration by its UUID.
+
+        Args:
+            agent_config_id (str): The UUID of the agent configuration to use
+            payload (Dict[str, Any]): The payload to send to the agent. Must conform
+                to the agent's specific input JSON schema
+            chat_id (optional, str): Chat session identifier
+
+        Returns:
+            Dict[str, Any]: Agent response based on the specific agent's capabilities
+
+        Example:
+            execute_custom_agent(
+                agent_config_id="550e8400-e29b-41d4-a716-446655440000",
+                payload={"message": "Analyze this data"}
+            )
+        """
+        return self.custom_agent_tool.run(
+            agent_config_id=agent_config_id, payload=payload, chat_id=chat_id
+        )
+
     def get_tools(self):
         from .utils import is_tool_enabled
 
         tools = []
         if is_tool_enabled(
             AlationTools.AGGREGATED_CONTEXT,
+            self.enabled_tools,
             self.disabled_tools,
             self.enabled_beta_tools,
         ):
             tools.append(self.context_tool)
         if is_tool_enabled(
-            AlationTools.BULK_RETRIEVAL, self.disabled_tools, self.enabled_beta_tools
+            AlationTools.BULK_RETRIEVAL,
+            self.enabled_tools,
+            self.disabled_tools,
+            self.enabled_beta_tools,
         ):
             tools.append(self.bulk_retrieval_tool)
         if is_tool_enabled(
-            AlationTools.DATA_PRODUCT, self.disabled_tools, self.enabled_beta_tools
+            AlationTools.GET_DATA_PRODUCT,
+            self.enabled_tools,
+            self.disabled_tools,
+            self.enabled_beta_tools,
         ):
             tools.append(self.data_product_tool)
         if is_tool_enabled(
-            AlationTools.UPDATE_METADATA, self.disabled_tools, self.enabled_beta_tools
+            AlationTools.UPDATE_METADATA,
+            self.enabled_tools,
+            self.disabled_tools,
+            self.enabled_beta_tools,
         ):
             tools.append(self.update_catalog_asset_metadata_tool)
         if is_tool_enabled(
-            AlationTools.CHECK_JOB_STATUS, self.disabled_tools, self.enabled_beta_tools
+            AlationTools.CHECK_JOB_STATUS,
+            self.enabled_tools,
+            self.disabled_tools,
+            self.enabled_beta_tools,
         ):
             tools.append(self.check_job_status_tool)
         if is_tool_enabled(
-            AlationTools.LINEAGE, self.disabled_tools, self.enabled_beta_tools
+            AlationTools.LINEAGE,
+            self.enabled_tools,
+            self.disabled_tools,
+            self.enabled_beta_tools,
         ):
             tools.append(self.lineage_tool)
         if is_tool_enabled(
-            AlationTools.DATA_QUALITY, self.disabled_tools, self.enabled_beta_tools
+            AlationTools.DATA_QUALITY,
+            self.enabled_tools,
+            self.disabled_tools,
+            self.enabled_beta_tools,
         ):
             tools.append(self.check_data_quality_tool)
         if is_tool_enabled(
             AlationTools.GENERATE_DATA_PRODUCT,
+            self.enabled_tools,
             self.disabled_tools,
             self.enabled_beta_tools,
         ):
             tools.append(self.generate_data_product_tool)
         if is_tool_enabled(
             AlationTools.GET_CUSTOM_FIELDS_DEFINITIONS,
+            self.enabled_tools,
             self.disabled_tools,
             self.enabled_beta_tools,
         ):
             tools.append(self.get_custom_fields_definitions_tool)
         if is_tool_enabled(
             AlationTools.GET_DATA_DICTIONARY_INSTRUCTIONS,
+            self.enabled_tools,
             self.disabled_tools,
             self.enabled_beta_tools,
         ):
             tools.append(self.get_data_dictionary_instructions_tool)
         if is_tool_enabled(
             AlationTools.SIGNATURE_CREATION,
+            self.enabled_tools,
             self.disabled_tools,
             self.enabled_beta_tools,
         ):
             tools.append(self.signature_creation_tool)
         if is_tool_enabled(
             AlationTools.ANALYZE_CATALOG_QUESTION,
+            self.enabled_tools,
             self.disabled_tools,
             self.enabled_beta_tools,
         ):
             tools.append(self.analyze_catalog_question_tool)
+        if is_tool_enabled(
+            AlationTools.CATALOG_CONTEXT_SEARCH_AGENT,
+            self.enabled_tools,
+            self.disabled_tools,
+            self.enabled_beta_tools,
+        ):
+            tools.append(self.catalog_context_search_agent_tool)
+        if is_tool_enabled(
+            AlationTools.GET_DATA_SOURCES,
+            self.enabled_tools,
+            self.disabled_tools,
+            self.enabled_beta_tools,
+        ):
+            tools.append(self.get_data_sources_tool)
+        if is_tool_enabled(
+            AlationTools.QUERY_FLOW_AGENT,
+            self.enabled_tools,
+            self.disabled_tools,
+            self.enabled_beta_tools,
+        ):
+            tools.append(self.query_flow_agent_tool)
+        if is_tool_enabled(
+            AlationTools.SQL_QUERY_AGENT,
+            self.enabled_tools,
+            self.disabled_tools,
+            self.enabled_beta_tools,
+        ):
+            tools.append(self.sql_query_agent_tool)
+        if is_tool_enabled(
+            AlationTools.CUSTOM_AGENT,
+            self.enabled_tools,
+            self.disabled_tools,
+            self.enabled_beta_tools,
+        ):
+            tools.append(self.custom_agent_tool)
         return tools

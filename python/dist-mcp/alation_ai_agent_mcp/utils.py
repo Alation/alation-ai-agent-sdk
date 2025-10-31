@@ -86,6 +86,12 @@ def parse_arguments() -> Tuple[
         required=False,
     )
     parser.add_argument(
+        "--enabled-tools",
+        type=str,
+        help="Comma-separated list of tools to enable",
+        required=False,
+    )
+    parser.add_argument(
         "--disabled-tools",
         type=str,
         help="Comma-separated list of tools to disable",
@@ -124,6 +130,7 @@ def parse_arguments() -> Tuple[
     return (
         args.transport,
         args.base_url,
+        args.enabled_tools,
         args.disabled_tools,
         args.enabled_beta_tools,
         args.host,
@@ -167,6 +174,7 @@ def log_initialization_info(
 
 
 def get_tool_configuration(
+    enabled_tools_str: Optional[str] = None,
     disabled_tools_str: Optional[str] = None,
     enabled_beta_tools_str: Optional[str] = None,
 ) -> tuple[list[str], list[str]]:
@@ -180,6 +188,11 @@ def get_tool_configuration(
     Returns:
         tuple: (tools_disabled, beta_tools_enabled)
     """
+    tools_enabled = csv_str_to_tool_list(
+        enabled_tools_str
+        if enabled_tools_str is not None
+        else os.getenv("ALATION_ENABLED_TOOLS")
+    )
     tools_disabled = csv_str_to_tool_list(
         disabled_tools_str
         if disabled_tools_str is not None
@@ -191,11 +204,12 @@ def get_tool_configuration(
         else os.getenv("ALATION_ENABLED_BETA_TOOLS")
     )
 
-    return tools_disabled, beta_tools_enabled
+    return tools_enabled, tools_disabled, beta_tools_enabled
 
 
 def prepare_server_config(
     base_url: Optional[str] = None,
+    enabled_tools_str: Optional[str] = None,
     disabled_tools_str: Optional[str] = None,
     enabled_beta_tools_str: Optional[str] = None,
 ) -> tuple[str, list[str], list[str]]:
@@ -214,8 +228,8 @@ def prepare_server_config(
     base_url = get_base_url(base_url)
 
     # Get tool configuration
-    tools_disabled, beta_tools_enabled = get_tool_configuration(
-        disabled_tools_str, enabled_beta_tools_str
+    tools_enabled, tools_disabled, beta_tools_enabled = get_tool_configuration(
+        enabled_tools_str, disabled_tools_str, enabled_beta_tools_str
     )
 
-    return base_url, tools_disabled, beta_tools_enabled
+    return base_url, tools_enabled, tools_disabled, beta_tools_enabled
