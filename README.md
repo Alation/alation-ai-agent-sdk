@@ -108,7 +108,7 @@ Small caveat: MCP clients and platforms are rapidly evolving. Not all of them su
 
 #### Start Here
 
-One issue the remote MCP server solves is listing tools dynamically. This dyanmic portion is doing a lot of work for us. For instance, it can filter out tools the current user cannot use or it can list brand new tools the SDK doesn't even know about.
+One issue the remote MCP server solves is listing tools dynamically. This dynamic portion is doing a lot of work for us. For instance, it can filter out tools the current user cannot use or it can list brand new tools the SDK doesn't even know about.
 
 And since the tools are resolved lazily instead of statically, it means the API contracts for those tools can also be dynamic. This avoids client server version mismatches which could otherwise break static integrations.
 
