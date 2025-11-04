@@ -120,7 +120,7 @@ In the beginning of the Agent SDK we had only one tool: Alation Context. It offe
 
 We've sought to address these issues by moving from a collection of these tools (`alation_context`, `bulk_retrieval`) into an agent that performs a series of checks and heuristics to dynamically create a `signature` when needed to take advantage of your custom fields. That is our new `catalog_search_context_agent`.
 
-This should translate into fewer instructions you need to convince these tools to place nice with each other. And at the same time increase the accuracy of calls.
+This should translate into fewer instructions you need to convince these tools to play nice with each other. And at the same time increase the accuracy of calls.
 
 ### Streaming and Chat ID Support
 
