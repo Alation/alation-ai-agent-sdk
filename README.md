@@ -104,7 +104,7 @@ The Alation Agent Studio gives you first class support for creating and leveragi
 
 We've heard from a number of customers that want the flexibility of MCP servers without the responsibility of having to install or upgrade the SDK. With our remote MCP server you don't have to do any of that. After a one time MCP focused authorization setup, it can be as simple as adding a remote MCP server to your favorite MCP client like: `https://<your_instance>/ai/mcp`
 
-Small caveat: MCP clients and platforms are rapidly evolving. Not all of them support authorization flows the same way nor path parameters etc. If you're running into blockers, please file an Issue so we can investigate and come up with a plan.
+Note: MCP clients and platforms are rapidly evolving. Not all of them support authorization flows the same way nor path parameters etc. If you're running into blockers, please file an Issue so we can investigate and come up with a plan. We do not support dynamic client registration so please use an MCP client that allows you to pass in a `client_id` and `client_secret`.
 
 #### Start Here
 

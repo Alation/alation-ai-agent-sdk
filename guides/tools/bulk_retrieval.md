@@ -46,19 +46,16 @@ response = sdk.bulk_retrieval(signature=bulk_signature)
 The SDK's `bulk_retrieval` tool supports customizing response content using signatures. This powerful feature allows you to specify which fields to include and how to filter the catalog results. For instance:
 
 ```python
-# Define a signature for searching only tables that optionally
-# include joins and filters if relevant to the user question
+# Define a signature for searching only tables. Return joins and filters.
 signature = {
     "table": {
-        "fields_required": ["name", "title", "description"],
-        "fields_optional": ["common_joins", "common_filters"]
+        "fields_required": ["name", "title", "description", "common_joins", "common_filters"],
     }
 }
 
 # Use the signature with your query
-response = sdk.get_context(
-    "What are our sales tables?",
-    signature
+response = sdk.bulk_retrieval_tool(
+    signature=signature
 )
 ```
 
