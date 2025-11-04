@@ -114,7 +114,7 @@ And since the tools are resolved lazily instead of statically, it means the API 
 
 We will continue to support the SDK and issue new versions regularly, but if you're after a less brittle more robust integration, you should consider integrating directly with the remote MCP server as a starting place.
 
- ### Catalog Search Context Agent
+### Catalog Search Context Agent
 
 In the begining of the Agent SDK we had only one tool: Alation Context. It offered a powerful way to dynamically select the right objects and their properties to best address a particular question. It's powerful `signature` parameter made it suitable for cases even without an user question (Bulk Retrieval). At the same time we saw a fair bit of friction with LLM generated `signature` parameters being invalid or just outright wrong. And a surprising amount of usage involved no `signature` at all which frequently resulted in poor results.
 
