@@ -49,20 +49,22 @@ The MCP integration provides an MCP-compatible server that exposes Alation's con
 ### Installation
 
 ```bash
-# Install core SDK
-pip install alation-ai-agent-sdk
+pip install uv
+
+# Install the core SDK
+uv pip install alation-ai-agent-sdk==1.0.0rc1
 
 # Install LangChain integration
-pip install alation-ai-agent-langchain
+uv pip install alation-ai-agent-langchain==1.0.0rc1
 
-# Install MCP integration
-pip install alation-ai-agent-mcp
+# Install the MCP integration
+uv pip install alation-ai-agent-mcp==1.0.0rc1
+
 ```
 
 ## Usage
 
 The library needs to be configured with your Alation instance credentials. You should use `ServiceAccountAuthParams`.
-
 
 ### Service Account Authentication (Recommended)
 ```python
@@ -81,6 +83,56 @@ alation_api = AlationAPI(
 ```
 
 If you cannot obtain service account credentials (admin only), see the [User Account Authentication Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md#user-account-authentication) for instructions.
+
+## New Major Version 1.x.x
+
+We're excited to announce the `1.0.0rc1` version of the Alation AI Agent SDK is available.
+
+IMPORTANT: In a breaking change `user_account` is no longer supported as an authorization mode. We recommend you migrate to `service_account` or `bearer_token` modes.
+
+The new major version comes with several notable changes that should make the transition worth it.
+- Alation Agent Studio Integration
+- Remote MCP Server
+- Catalog Search Context Agent
+- Streaming and Chat ID Support
+
+### Alation Agent Studio Integration
+
+The Alation Agent Studio gives you first class support for creating and leveraging the agents your business needs. Whether you're improving catalog curation or building data-centric query agents, the Agent Studio makes it easy to create agents, hone them, and deploy them across your enterprise. It includes a number of expert tools that are ready to be used or composed together as building blocks for more complex scenarios. And any precision agents you build are available within the SDK or MCP server as tools (See `custom_agent`).
+
+### Remote MCP Server
+
+We've heard from a number of customers that want the flexibility of MCP servers without the responsibility of having to install or upgrade the SDK. With our remote MCP server you don't have to do any of that. After a one time MCP focused authorization setup, it can be as simple as adding a remote MCP server to your favorite MCP client like: `https://<your_instance>/ai/mcp`
+
+Small caveat: MCP clients and platforms are rapidly evolving. Not all of them support authorization flows the same way nor path parameters etc. If you're running into blockers, please file an Issue so we can investigate and come up with a plan.
+
+#### Start Here
+
+One issue the remote MCP server solves is listing tools dynamically. This dyanmic portion is doing a lot of work for us. For instance, it can filter out tools the current user cannot use or it can list brand new tools the SDK doesn't even know about.
+
+And since the tools are resolved lazily instead of statically, it means the API contracts for those tools can also be dynamic. This avoids client server version mismatches which could otherwise break static integrations.
+
+We will continue to support the SDK and issue new versions regularly, but if you're after a less brittle more robust integration, you should consider integrating directly with the remote MCP server as a starting place.
+
+ ### Catalog Search Context Agent
+
+In the begining of the Agent SDK we had only one tool: Alation Context. It offered a powerful way to dynamically select the right objects and their properties to best address a particular question. It's powerful `signature` parameter made it suitable for cases even without an user question (Bulk Retrieval). At the same time we saw a fair bit of friction with LLM generated `signature` parameters being invalid or just outright wrong. And a surprising amount of usage involved no `signature` at all which frequently resulted in poor results.
+
+We've sought to address these issues by moving from a collection of these tools (`alation_context`, `bulk_retrieval`) into an agent that performs a series of checks and heuristics to dynamically create a `signature` when needed to take advantage of your custom fields. That is our new `catalog_search_context_agent`.
+
+This should translate into fewer instructions you need to convince these tools to place nice with each other. And at the same time increase the accurracy of calls.
+
+### Streaming and Chat ID Support
+
+#### Streaming
+
+All tools now support a streaming option. Primarily this benefits our local MCP server in http mode. If your MCP clients support streaming you should now see some of the internal processing of tools and agents to give you more transparency into what is happening under the hood.
+
+By default the SDK has streaming disabled but it can be enabled if you have a use case for it. To enable it pass a `sdk_options=AgentSDKOptions(enable_streaming=True)` argument to the `AlationAIAgentSDK` constructor. When streaming you'll need to loop over the result or yield from it to correctly handle the underlying generator.
+
+#### Chat ID
+
+Most of our tools and agents accept the `chat_id` parameter when invoked. Including this will associate that tool call with any other prior calls referencing the same `chat_id`. Any `chat_id` compatible tool will include a `chat_id` in the response.
 
 ## Supported Tools
 
@@ -101,30 +153,6 @@ If you cannot obtain service account credentials (admin only), see the [User Acc
 - [custom_agent](guides/agents/custom_agent.md)
 - [query_flow_agent](guides/agents/query_flow_agent.md)
 - [sql_query_agent](guides/agents/sql_query_agent.md)
-
-## Shape the SDK to your needs
-
-The SDK's `alation-context` and `bulk_retrieval` tools support customizing response content using signatures. This powerful feature allows you to specify which fields to include and how to filter the catalog results. For instance:
-
-```python
-# Define a signature for searching only tables that optionally
-# include joins and filters if relevant to the user question
-signature = {
-    "table": {
-        "fields_required": ["name", "title", "description"],
-        "fields_optional": ["common_joins", "common_filters"]
-    }
-}
-
-# Use the signature with your query
-response = sdk.get_context(
-    "What are our sales tables?",
-    signature
-)
-```
-
-For more information about signatures, refer to
-<a href="https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature" target="blank"> Using Signatures </a>
 
 ## Guides and Example Agents
 
