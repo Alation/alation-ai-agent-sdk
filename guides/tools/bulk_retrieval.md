@@ -43,7 +43,7 @@ response = sdk.bulk_retrieval(signature=bulk_signature)
 
 ## Shape the SDK to your needs
 
-The SDK's `bulk_retrieval` tool support customizing response content using signatures. This powerful feature allows you to specify which fields to include and how to filter the catalog results. For instance:
+The SDK's `bulk_retrieval` tool supports customizing response content using signatures. This powerful feature allows you to specify which fields to include and how to filter the catalog results. For instance:
 
 ```python
 # Define a signature for searching only tables that optionally
