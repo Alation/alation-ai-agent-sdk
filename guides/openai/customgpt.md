@@ -260,7 +260,7 @@ Please file a Customer Support ticket to create the OAuth client application on 
 
 ## Step 4: Conﬁgure the Action in the Custom GPT 
 
-If you're Configuring OAuth use the following steps.
+If you're configuring OAuth use the following steps.
 
  1.  Return to the custom GPT you’re conﬁguring.
  2.  Scroll to the bottom of the editor and click **Create new action**. This opens the **Add actions** editor.
