@@ -213,7 +213,7 @@ An OAuth integration requires configuration within your CustomGPT and on Alation
 
 Alation needs a few important pieces of information to configure the OAuth Client application.
 - `Base URL` - Your Alation instance URL.
-- `Callback URL` - What ChatGPT epects to be invoked once a user has authenticated. You can find this if you scroll down to the bottom of the GPT Builder interface when you're on the Configure tab. It is immediately below Actions.
+- `Callback URL` - What ChatGPT expects to be invoked once a user has authenticated. You can find this if you scroll down to the bottom of the GPT Builder interface when you're on the Configure tab. It is immediately below Actions.
 
 Please file a Customer Support ticket to create the OAuth client application on the Alation side with those values. Alation will respond with the Client ID and Client Secret for your CustomGPT. Consider storing them in a secrets manager. Once Alation has provided your client values you can resume setting up your CustomGPT in [Step 4](#step-4-conﬁgure-the-action-in-the-custom-gpt).
 
