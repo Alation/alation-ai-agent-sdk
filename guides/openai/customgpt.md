@@ -2,7 +2,7 @@
 
 ## Warning! <!-- omit from toc -->
 
-If you have an OpenAI account with access to Deep Research we **strongly recommend** connecting to Alation via a Custom Connector instead of following the directions below. That way a single integration gets you access to all available tools plus any agents you've created in Agent Studio. Dynamically linking tools via MCP is the more robust approach that requires less maintanence keeping individual actions synched.
+If you have an OpenAI account with access to Deep Research we **strongly recommend** connecting to Alation via a Custom Connector instead of following the directions below. That way a single integration gets you access to all available tools plus any agents you've created in Agent Studio. Dynamically linking tools via MCP is the more robust approach that requires less maintenance keeping individual actions synched.
 
 ## Overview <!-- omit from toc -->
 
