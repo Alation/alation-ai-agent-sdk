@@ -206,7 +206,7 @@ def test_get_data_products_query_multiple_results(
         "search-internally/mock_marketplace",
         response_json={
             "search_id": "14a64875-d6d4-45c6-943d-d31793834c45",
-            "results":  [
+            "results": [
                 {
                     "product": {
                         "product_id": "product_123",
@@ -233,7 +233,7 @@ def test_get_data_products_query_multiple_results(
                         },
                     }
                 },
-            ]
+            ],
         },
         status_code=200,
     )
@@ -263,7 +263,7 @@ def test_get_data_products_query_single_result(
         "search-internally/mock_marketplace",
         response_json={
             "search_id": "14a64875-d6d4-45c6-943d-d31793834c45",
-            "results":  [
+            "results": [
                 {
                     "product": {
                         "product_id": "product_123",
@@ -277,7 +277,7 @@ def test_get_data_products_query_single_result(
                         },
                     }
                 },
-            ]
+            ],
         },
         status_code=200,
     )

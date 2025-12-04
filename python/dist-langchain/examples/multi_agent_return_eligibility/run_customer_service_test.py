@@ -7,7 +7,7 @@ return eligibility. It runs through multiple test cases to validate different sc
 
 import json
 
-from schemas import CustomerState, CUSTOMER_PROFILE_SIGNATURE
+from schemas import CustomerState
 from agents.user_identification import (
     create_identification_agent,
     extract_customer_info,
@@ -62,12 +62,12 @@ Please identify the customer using the process you've been instructed to follow.
 
     # Extract customer info - handle new result format
     try:
-        if hasattr(result, 'get') and 'messages' in result:
+        if hasattr(result, "get") and "messages" in result:
             # Extract the final assistant message
-            messages = result.get('messages', [])
+            messages = result.get("messages", [])
             if messages:
                 final_message = messages[-1]
-                if hasattr(final_message, 'content'):
+                if hasattr(final_message, "content"):
                     output = final_message.content
                 else:
                     output = str(final_message)

@@ -87,9 +87,7 @@ def get_alation_data_products_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
         product_id: Optional[str] = None,
         query: Optional[str] = None,
     ):
-        return data_products_tool.run(
-            product_id=product_id, query=query
-        )
+        return data_products_tool.run(product_id=product_id, query=query)
 
     return StructuredTool.from_function(
         name=data_products_tool.name,
@@ -290,6 +288,7 @@ def get_catalog_context_search_agent_tool(sdk: AlationAIAgentSDK) -> StructuredT
         args_schema=None,
     )
 
+
 def get_custom_agent_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     custom_agent_tool = sdk.custom_agent_tool
 
@@ -325,8 +324,12 @@ def get_data_sources_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
 def get_query_flow_agent_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     query_flow_agent_tool = sdk.query_flow_agent_tool
 
-    def run_with_message(message: str, marketplace_id: str, chat_id: Optional[str] = None):
-        return query_flow_agent_tool.run(message=message, marketplace_id=marketplace_id, chat_id=chat_id)
+    def run_with_message(
+        message: str, marketplace_id: str, chat_id: Optional[str] = None
+    ):
+        return query_flow_agent_tool.run(
+            message=message, marketplace_id=marketplace_id, chat_id=chat_id
+        )
 
     return StructuredTool.from_function(
         name=query_flow_agent_tool.name,

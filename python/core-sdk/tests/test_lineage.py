@@ -465,16 +465,44 @@ def test_alation_lineage_tool_raises_value_errors_during_validation(
 
 def test_filtering_allowed_types_on_incomplete_graph():
     allowed_otypes = {"table"}
-    response = {'graph': [{'otype': 'table', 'neighbors': [{'otype': 'table', 'id': 21854, 'fully_qualified_name': '17.uc_production.fdm_prepare.applications'}, {'otype': 'table', 'id': 21866, 'fully_qualified_name': '17.uc_production.fdm_prepare.underwriting_variables'}], 'id': 64850, 'fully_qualified_name': '17.uc_production.dwh_servicing.payment_funnel'}], 'pagination': {'request_id': '0bdd51f98cf245eb936bf7845bae6e2d', 'cursor': 3, 'batch_size': 2, 'has_more': True}, 'direction': 'upstream'}
+    response = {
+        "graph": [
+            {
+                "otype": "table",
+                "neighbors": [
+                    {
+                        "otype": "table",
+                        "id": 21854,
+                        "fully_qualified_name": "17.uc_production.fdm_prepare.applications",
+                    },
+                    {
+                        "otype": "table",
+                        "id": 21866,
+                        "fully_qualified_name": "17.uc_production.fdm_prepare.underwriting_variables",
+                    },
+                ],
+                "id": 64850,
+                "fully_qualified_name": "17.uc_production.dwh_servicing.payment_funnel",
+            }
+        ],
+        "pagination": {
+            "request_id": "0bdd51f98cf245eb936bf7845bae6e2d",
+            "cursor": 3,
+            "batch_size": 2,
+            "has_more": True,
+        },
+        "direction": "upstream",
+    }
 
-    result = filter_graph(response['graph'], allowed_otypes)
+    result = filter_graph(response["graph"], allowed_otypes)
     assert len(result) == 1
-    assert result[0]['id'] == 64850
-    assert result[0]['otype'] == 'table'
-    assert 'neighbors' in result[0]
-    assert len(result[0]['neighbors']) == 2
-    for neighbor in result[0]['neighbors']:
-        assert neighbor['otype'] == 'table'
+    assert result[0]["id"] == 64850
+    assert result[0]["otype"] == "table"
+    assert "neighbors" in result[0]
+    assert len(result[0]["neighbors"]) == 2
+    for neighbor in result[0]["neighbors"]:
+        assert neighbor["otype"] == "table"
+
 
 @pytest.fixture
 def alation_api(

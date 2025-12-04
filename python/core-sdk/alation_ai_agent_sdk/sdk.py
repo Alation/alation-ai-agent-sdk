@@ -152,7 +152,10 @@ class AlationAIAgentSDK:
     BETA_TOOLS = {AlationTools.LINEAGE}
 
     def get_context(
-        self, question: str, signature: Optional[Dict[str, Any]] = None, chat_id: Optional[str] = None
+        self,
+        question: str,
+        signature: Optional[Dict[str, Any]] = None,
+        chat_id: Optional[str] = None,
     ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Fetch context from Alation's catalog for a given question and signature.
@@ -166,9 +169,13 @@ class AlationAIAgentSDK:
         - JSON context result (dict)
         - Error object with keys: message, reason, resolution_hint, response_body
         """
-        return self.context_tool.run(question=question, signature=signature, chat_id=chat_id)
+        return self.context_tool.run(
+            question=question, signature=signature, chat_id=chat_id
+        )
 
-    def get_bulk_objects(self, signature: Dict[str, Any], chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+    def get_bulk_objects(
+        self, signature: Dict[str, Any], chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Fetch bulk objects from Alation's catalog based on signature specifications.
 
@@ -373,7 +380,9 @@ class AlationAIAgentSDK:
         """
         return self.generate_data_product_tool.run()
 
-    def get_custom_fields_definitions(self, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+    def get_custom_fields_definitions(
+        self, chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Retrieve all custom field definitions from the Alation instance.
 
@@ -393,7 +402,9 @@ class AlationAIAgentSDK:
         """
         return self.get_data_dictionary_instructions_tool.run()
 
-    def get_signature_creation_instructions(self, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+    def get_signature_creation_instructions(
+        self, chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Returns comprehensive instructions for creating the signature parameter for alation_context
         and bulk_retrieval tools.
@@ -412,7 +423,9 @@ class AlationAIAgentSDK:
         """
         return self.signature_creation_tool.run(chat_id=chat_id)
 
-    def analyze_catalog_question(self, question: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+    def analyze_catalog_question(
+        self, question: str, chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Analyze a catalog question and return workflow guidance.
 
@@ -426,9 +439,13 @@ class AlationAIAgentSDK:
         Returns:
             str: Formatted workflow instructions including
         """
-        return self.analyze_catalog_question_tool.run(question=question, chat_id=chat_id)
+        return self.analyze_catalog_question_tool.run(
+            question=question, chat_id=chat_id
+        )
 
-    def catalog_context_search_agent(self, message: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+    def catalog_context_search_agent(
+        self, message: str, chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Catalog Context Search Agent for searching catalog objects with enhanced context.
 
@@ -439,9 +456,13 @@ class AlationAIAgentSDK:
         Returns:
             Dict[str, Any]: Contextually-aware search results with enhanced metadata and relationships
         """
-        return self.catalog_context_search_agent_tool.run(message=message, chat_id=chat_id)
+        return self.catalog_context_search_agent_tool.run(
+            message=message, chat_id=chat_id
+        )
 
-    def query_flow_agent(self, message: str, marketplace_id: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+    def query_flow_agent(
+        self, message: str, marketplace_id: str, chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Query Flow Agent for SQL query workflow management.
 
@@ -457,7 +478,9 @@ class AlationAIAgentSDK:
             message=message, marketplace_id=marketplace_id, chat_id=chat_id
         )
 
-    def sql_query_agent(self, message: str, data_product_id: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+    def sql_query_agent(
+        self, message: str, data_product_id: str, chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         SQL Query Agent for SQL query generation and analysis.
 
@@ -473,7 +496,9 @@ class AlationAIAgentSDK:
             message=message, data_product_id=data_product_id, chat_id=chat_id
         )
 
-    def get_data_sources(self, limit: int = 100, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+    def get_data_sources(
+        self, limit: int = 100, chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Retrieve available data sources from the catalog.
 
@@ -487,7 +512,10 @@ class AlationAIAgentSDK:
         return self.get_data_sources_tool.run(limit=limit, chat_id=chat_id)
 
     def execute_custom_agent(
-        self, agent_config_id: str, payload: Dict[str, Any], chat_id: Optional[str] = None
+        self,
+        agent_config_id: str,
+        payload: Dict[str, Any],
+        chat_id: Optional[str] = None,
     ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Execute a custom agent configuration by its UUID.

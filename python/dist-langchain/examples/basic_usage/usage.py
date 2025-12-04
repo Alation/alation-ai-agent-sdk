@@ -57,7 +57,11 @@ tools = get_langchain_tools(sdk)
 llm = ChatOpenAI(model="gpt-4o", temperature=0, openai_api_key=openai_api_key)
 
 # Create agent using create_agent - returns a directly invokable CompiledStateGraph
-agent = create_agent(model=llm, tools=tools, system_prompt="You are a helpful assistant using Alation's metadata catalog.")
+agent = create_agent(
+    model=llm,
+    tools=tools,
+    system_prompt="You are a helpful assistant using Alation's metadata catalog.",
+)
 
 # Example 1: Without signature
 print("\n=== Example 1: Without Signature ===")
