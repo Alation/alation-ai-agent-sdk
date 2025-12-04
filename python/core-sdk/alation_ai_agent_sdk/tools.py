@@ -689,7 +689,9 @@ class GetCustomFieldsDefinitionsTool:
         """
 
     @track_tool_execution()
-    def run(self, chat_id: Optional[str] = None) ->Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+    def run(
+        self, chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Retrieve all custom field definitions from the Alation instance.
 
@@ -839,7 +841,9 @@ class SignatureCreationTool:
         """
 
     @track_tool_execution()
-    def run(self, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+    def run(
+        self, chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.get_signature_creation_instructions_stream(chat_id=chat_id)
             return ref if self.api.enable_streaming else next(ref)
@@ -882,7 +886,9 @@ class AnalyzeCatalogQuestionTool:
         """
 
     @track_tool_execution()
-    def run(self, *, question: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+    def run(
+        self, *, question: str, chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.analyze_catalog_question_stream(
                 question=question,
@@ -920,7 +926,9 @@ class CatalogContextSearchAgentTool:
         """
 
     @track_tool_execution()
-    def run(self, *, message: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+    def run(
+        self, *, message: str, chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.catalog_context_search_agent_stream(
                 message=message,
@@ -959,7 +967,9 @@ class QueryFlowAgentTool:
         """
 
     @track_tool_execution()
-    def run(self, *, message: str, marketplace_id: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+    def run(
+        self, *, message: str, marketplace_id: str, chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.query_flow_agent_stream(
                 message=message,
@@ -999,7 +1009,9 @@ class SqlQueryAgentTool:
         """
 
     @track_tool_execution()
-    def run(self, *, message: str, data_product_id: str, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+    def run(
+        self, *, message: str, data_product_id: str, chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.sql_query_agent_stream(
                 message=message,
@@ -1037,7 +1049,9 @@ class GetDataSourcesTool:
         """
 
     @track_tool_execution()
-    def run(self, *, limit: int = 100, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+    def run(
+        self, *, limit: int = 100, chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.get_data_sources_tool_stream(limit=limit, chat_id=chat_id)
             return ref if self.api.enable_streaming else next(ref)

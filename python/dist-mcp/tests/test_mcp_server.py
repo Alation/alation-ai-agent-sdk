@@ -187,7 +187,9 @@ def test_create_server_disabled_tool_and_enabled_beta_tool(
 
     # Assert all expected tools are registered
     for tool_name in expected_tools:
-        assert tool_name in mock_mcp_instance.tools, f"Tool '{tool_name}' should be registered"
+        assert tool_name in mock_mcp_instance.tools, (
+            f"Tool '{tool_name}' should be registered"
+        )
 
     # Assert correct number of tools are registered
     assert mock_mcp_instance.tool.call_count == len(expected_tools)
@@ -229,7 +231,9 @@ def test_create_server_disabled_tool_and_enabled_beta_tool_via_environment(
 
     # Assert all expected tools are registered
     for tool_name in expected_tools:
-        assert tool_name in mock_mcp_instance.tools, f"Tool '{tool_name}' should be registered"
+        assert tool_name in mock_mcp_instance.tools, (
+            f"Tool '{tool_name}' should be registered"
+        )
 
     # Assert correct number of tools are registered
     assert mock_mcp_instance.tool.call_count == len(expected_tools)
@@ -264,7 +268,9 @@ def test_tool_registration(
 
     # Assert all expected default tools are registered
     for tool_name in expected_default_tools:
-        assert tool_name in mock_mcp_instance.tools, f"Tool '{tool_name}' should be registered"
+        assert tool_name in mock_mcp_instance.tools, (
+            f"Tool '{tool_name}' should be registered"
+        )
         assert isinstance(mock_mcp_instance.tools[tool_name], MagicMock)
         assert hasattr(mock_mcp_instance.tools[tool_name], "__wrapped__")
 

@@ -753,13 +753,17 @@ class AlationAPI:
         """
         if self.enable_streaming:
             # Streaming mode, yield events as they arrive
-            yield from self._iter_sse_response(response, log_raw_stream_events=log_raw_stream_events)
+            yield from self._iter_sse_response(
+                response, log_raw_stream_events=log_raw_stream_events
+            )
         else:
             # Non-streaming mode: collect all events and yield once.
             # WARNING: There are an awful lot of tokens returned here that aren't particularly applicable.
             # TBD: Maybe clean these up to only return the payload instead of the whole message etc.
             last_event = None
-            for event in self._iter_sse_response(response, log_raw_stream_events=log_raw_stream_events):
+            for event in self._iter_sse_response(
+                response, log_raw_stream_events=log_raw_stream_events
+            ):
                 last_event = event
             yield last_event
 
@@ -790,7 +794,9 @@ class AlationAPI:
                     logger.warning(
                         f"At or nearing usage limits: {json.dumps(response_meta)}"
                     )
-                yield from self._sse_stream_or_last_event(response, log_raw_stream_events=log_raw_stream_events)
+                yield from self._sse_stream_or_last_event(
+                    response, log_raw_stream_events=log_raw_stream_events
+                )
         except requests.exceptions.ReadTimeout as e:
             logger.error(f"Read timed out while using {tool_name}: {e}")
             self._handle_request_error(
@@ -922,7 +928,9 @@ class AlationAPI:
                 )
                 response.raise_for_status()
                 response_data = response.json()
-                if response_data and (data_products := response_data.get("results", [])):
+                if response_data and (
+                    data_products := response_data.get("results", [])
+                ):
                     instructions = (
                         f"Found {len(data_products)} data product{'s' if len(data_products) > 1 else ''} matching your query. "
                         "The following contains summary information (name, id, description, url) for each product. "

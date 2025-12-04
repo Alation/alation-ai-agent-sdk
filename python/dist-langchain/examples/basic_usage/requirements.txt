@@ -1,4 +1,4 @@
-alation-ai-agent-langchain>=1.0.0rc1
+alation-ai-agent-langchain>=1.0.0rc2
 requests~=2.32.0
 langchain>=1.0.3
 langchain-core>=1.0.2

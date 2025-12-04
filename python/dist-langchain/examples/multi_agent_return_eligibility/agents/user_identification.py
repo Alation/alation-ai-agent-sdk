@@ -101,12 +101,12 @@ Please identify the customer using the process you've been instructed to follow.
     # Extract customer information from the agent's output
     try:
         # Get the final message content
-        if hasattr(result, 'get') and 'messages' in result:
+        if hasattr(result, "get") and "messages" in result:
             # Extract the final assistant message
-            messages = result.get('messages', [])
+            messages = result.get("messages", [])
             if messages:
                 final_message = messages[-1]
-                if hasattr(final_message, 'content'):
+                if hasattr(final_message, "content"):
                     output = final_message.content
                 else:
                     output = str(final_message)

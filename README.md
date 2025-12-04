@@ -52,13 +52,13 @@ The MCP integration provides an MCP-compatible server that exposes Alation's con
 pip install uv
 
 # Install the core SDK
-uv pip install alation-ai-agent-sdk==1.0.0rc1
+uv pip install alation-ai-agent-sdk==1.0.0rc2
 
 # Install LangChain integration
-uv pip install alation-ai-agent-langchain==1.0.0rc1
+uv pip install alation-ai-agent-langchain==1.0.0rc2
 
 # Install the MCP integration
-uv pip install alation-ai-agent-mcp==1.0.0rc1
+uv pip install alation-ai-agent-mcp==1.0.0rc2
 
 ```
 

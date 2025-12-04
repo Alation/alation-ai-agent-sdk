@@ -91,7 +91,9 @@ def mock_requests_post(monkeypatch):
                 return mock_post_responses["context/"](*args, **kwargs)
         elif "alation_context_tool/stream" in url:
             if "alation_context_tool/stream" in mock_post_responses:
-                return mock_post_responses["alation_context_tool/stream"](*args, **kwargs)
+                return mock_post_responses["alation_context_tool/stream"](
+                    *args, **kwargs
+                )
         elif "ai_agent/tool/event" in url:
             if "ai_agent/tool/event" in mock_post_responses:
                 return mock_post_responses["ai_agent/tool/event"](*args, **kwargs)
@@ -281,7 +283,9 @@ def test_token_reuse_and_refresh(
         "full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"}
     )
     mock_requests_get("context/", response_json=CONTEXT_RESPONSE_SUCCESS)
-    mock_requests_post("alation_context_tool/stream", response_json=CONTEXT_RESPONSE_SUCCESS)
+    mock_requests_post(
+        "alation_context_tool/stream", response_json=CONTEXT_RESPONSE_SUCCESS
+    )
     mock_requests_post("ai_agent/tool/event", response_json={"status": "success"})
 
     sdk = AlationAIAgentSDK(
