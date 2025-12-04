@@ -86,6 +86,18 @@ If you cannot obtain service account credentials (admin only), see the [User Acc
 
 ## New Major Version 1.x.x
 
+#### Dec 5, 2025 Update
+`1.0.0rc2` version of the Alation AI Agent SDK is now available.
+
+It deprecates the Context Tool in favor of the more capable Catalog Context Search Agent. On the practical side, Catalog Context Search Agent shares same contract so any migrations should be straightforward.
+
+We've committed to keep the now deprecated Context Tool as part of the SDK for the next **three months for transition**. This means you should expect to see it **removed in Feb 2026**.
+
+The main rationale for removing the Context Tool originates from having two tools which do very similar things. When both are exposed to an LLM, the model often picks the less capable one leading to worse outcomes. By reducing the number of tools that overlap conceptually, we're avoiding the wrong tool selection.
+
+The Catalog Context Search Agent will do all the things the Context Tool did AND more like dynamically construct the `signature` parameter which was a major bottleneck when using the Context Tool.
+
+#### Nov 4, 2025 Update
 We're excited to announce the `1.0.0rc1` version of the Alation AI Agent SDK is available.
 
 IMPORTANT: In a breaking change `user_account` is no longer supported as an authorization mode. We recommend you migrate to `service_account` or `bearer_token` modes.

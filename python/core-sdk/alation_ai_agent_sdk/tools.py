@@ -158,6 +158,9 @@ class AlationContextTool:
         signature: Optional[Dict[str, Any]] = None,
         chat_id: Optional[str] = None,
     ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+        logger.warning(
+            "The AlationContextTool is deprecated and will be removed in a future release. Migrate your code and prompts to use CatalogContextSearchAgentTool instead."
+        )
         try:
             ref = self.api.alation_context_stream(
                 question=question,
