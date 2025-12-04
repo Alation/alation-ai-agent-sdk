@@ -1,23 +1,26 @@
 # Connect a Custom GPT to Your Alation Catalog via the Aggregated Context API <!-- omit from toc -->
 
-## Overview <!-- omit from toc -->
-If you're using OpenAI's ChatGPT, you can configure a custom GPT to access and query your Alation data catalog via the Aggregated Context API (Beta). This setup enables natural language interaction with your organization's catalog assets, making the catalog’s information more accessible through the GPT interface.
+## Warning! <!-- omit from toc -->
 
-In practical terms, this means you can quickly configure a custom GPT to experiment with the Aggregated Context API (Beta) and help users derive immediate value from it.  
+If you have an OpenAI account with access to Deep Research we **strongly recommend** connecting to Alation via a Custom Connector instead of following the directions below. That way a single integration gets you access to all available tools plus any agents you've created in Agent Studio. Dynamically linking tools via MCP is the more robust approach that requires less maintenance keeping individual actions synched.
+
+## Overview <!-- omit from toc -->
+
+If you're using OpenAI's ChatGPT, you can configure a custom GPT to access and query your Alation data catalog via the Aggregated Context API. This setup enables natural language interaction with your organization's catalog assets, making the catalog’s information more accessible through the GPT interface.
+
+In practical terms, this means you can quickly configure a custom GPT to experiment with the Aggregated Context API and help users derive immediate value from it.
 For example, users can ask questions like:  
 - “Which tables can I query to get information about regional sales?”  
 - “How is Customer Lifetime Value (CLV) measured?”  
 
 The GPT will return relevant context directly from your Alation catalog, enabling AI-powered discovery and decision-making.
 
-> **Note:**  
-> Since the Aggregated Context API is beta, certain aspects of this configuration may not be fully production-ready. However, we encourage you to explore it as a way to identify and validate AI-driven use cases for your Alation catalog.
-
 ### In this guide
 - [Prerequisites](#prerequisites)
 - [Step 1: Create a Custom GPT](#step-1-create-a-custom-gpt)
 - [Step 2: Engineer a Prompt for Your Custom GPT](#step-2-engineer-a-prompt-for-your-custom-gpt)
-- [Step 3: Create an Authentication Token](#step-3-create-an-authentication-token)
+- [Step 3: Setting up Authentication](#step-3-setting-up-authentication)
+  - [Configuring OAuth](#configuring-oauth)
   - [Create an API Access Token](#create-an-api-access-token)
   - [Create an OAuth Client and Generate a Bearer Token](#create-an-oauth-client-and-generate-a-bearer-token)
 - [Step 4: Conﬁgure the Action in the Custom GPT](#step-4-conﬁgure-the-action-in-the-custom-gpt)
@@ -30,14 +33,13 @@ The GPT will return relevant context directly from your Alation catalog, enablin
 ---
 
 ## Prerequisites
-- An **Alation Cloud Service** instance with the use of the Aggregated Context API (beta) enabled via instance configuration.  
-  > *Contact Alation Support to enable the Aggregated Context API if you’re part of the Aggregated Context API private preview program. If not, you can register for the program on the [AI Agent SDK page](https://www.alation.com/product/ai-agent-sdk/) on the Alation website.*
-- An active account in **Alation**.  
-- An active account in **ChatGPT** with ability to create custom GPTs.  
-- You’ve familiarized yourself with documentation about the Aggregated Context API:  
-  - [*Guide to the Aggregated Context API (Beta)*](https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta)  
+- An **Alation Cloud Service** instance with the use of the Aggregated Context API.
+- An active account in **Alation**.
+- An active account in **ChatGPT** with ability to create custom GPTs.
+- You’ve familiarized yourself with documentation about the Aggregated Context API:
+  - [*Guide to the Aggregated Context API*](https://developer.alation.com/dev/docs/guide-to-aggregated-context-api-beta)
   - [*API Reference*](https://developer.alation.com/dev/reference/getaggregatedcontext)
-  - [*Guide to Using Signatures with the Aggregated Context API*](https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature)  
+  - [*Guide to Using Signatures with the Aggregated Context API*](https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature)
 
 ---
 
@@ -190,15 +192,30 @@ You are an **AI Analyst assistant for the Alation Data Catalog**. Your role is t
  - Code blocks → technical output 
 ````
 
-## Step 3: Create an Authentication Token 
- To connect your custom GPT to the Alation API, you’ll need an authentication token. 
- There are two ways to obtain one: 
+## Step 3: Setting up Authentication
+To connect your custom GPT to the Alation API, you’ll need a way to authenticate with Alation. GPTs support two types of authentication: OAuth or API Key.
+
+We recommend `OAuth` as it requires substantially less periodic maintenance. e.g. Rotate once every 5 months instead of once a day or every few days. It requires more upfront setup but it quickly pays for itself in daily time savings.
+
+  - [Configuring OAuth](#configuring-oauth)
+
+If you're not interested in using OAuth there are two ways to obtain an API Key:
  - [Create an API Access Token](#create-an-api-access-token) 
  - [Create an OAuth Client and Generate a Bearer Token](#create-an-oauth-client-and-generate-a-bearer-token) 
 
- The main differences are in authentication type and token duration: 
+ The main differences between the API Key tokens are in authentication type and token duration:
  - API access tokens authenticate you as a user and expire after 24 hours. 
  - Bearer tokens via OAuth authenticate as a service account and can be conﬁgured to last up to 72 hours, giving users more time before needing to reauthenticate. 
+
+### Configuring OAuth
+
+An OAuth integration requires configuration within your CustomGPT and on Alation's side. Both sides depend on the other.
+
+Alation needs a few important pieces of information to configure the OAuth Client application.
+- `Base URL` - Your Alation instance URL.
+- `Callback URL` - What ChatGPT expects to be invoked once a user has authenticated. You can find this if you scroll down to the bottom of the GPT Builder interface when you're on the Configure tab. It is immediately below Actions.
+
+Please file a Customer Support ticket to create the OAuth client application on the Alation side with those values. Alation will respond with the Client ID and Client Secret for your CustomGPT. Consider storing them in a secrets manager. Once Alation has provided your client values you can resume setting up your CustomGPT in [Step 4](#step-4-conﬁgure-the-action-in-the-custom-gpt).
 
 ### Create an API Access Token 
  1.  Log in to your Alation catalog. 
@@ -208,8 +225,8 @@ You are an **AI Analyst assistant for the Alation Data Catalog**. Your role is t
  4.  Use the steps in [Create an API Token via the UI](https://developer.alation.com/dev/docs/authentication-into-alation-apis#create-an-api-access-token-via-the-ui) in Alation’s API docs to get an access token for the Alation public API. 
  5.  Make a note of the access token to use it for authenticating from your custom GPT. 
 
- > **Important:**   
- Alation API access tokens have a default lifetime of **24** hours. In this beta release of the Aggregated Context API, token management must be handled manually: you’ll need to update the token in the GPT conﬁguration once it expires.   
+ > **Important:**
+ Alation API access tokens have a default lifetime of **24** hours. Token management must be handled manually: you’ll need to update the token in the GPT conﬁguration once it expires.
  >
  > If the GPT attempts a request with an expired token, the API will return a  403 Forbidden  error, and users will not receive a response.   
  > 
@@ -220,7 +237,7 @@ You are an **AI Analyst assistant for the Alation Data Catalog**. Your role is t
  > **Note:**   
  Two-legged OAuth is a way for systems to securely connect and share data without needing a user to log in. It's usually used for automated or system-to-system communication, like one app pulling data from another app “behind the scenes”. 
 
- The steps to create an OAuth client require the role of Server Admin.   
+ The steps to create an OAuth client require the role of Server Admin.
  
  To create an OAuth client and a bearer token: 
  1.  Log in to your Alation catalog as a Server Admin. 
@@ -231,17 +248,36 @@ You are an **AI Analyst assistant for the Alation Data Catalog**. Your role is t
     - `<client_id>`:  replace with the client ID of your OAuth  client app   
     - `<client_secret>`:  replace with the client secret of  your OAuth client app 
 ```shell
- curl  --request  POST  \ 
- --url  https://<base_URL>//oauth/v2/token/  \ 
- --header  'accept: application/json'  \ 
- --header  'content-type: application/x-www-form-urlencoded'  \ 
- --data  grant_type=client_credentials  \ 
- --data  client_id=<client_id>  \ 
- --data  client_secret=<client_secret> 
+ curl  --request  POST  \
+ --url  https://<base_URL>/oauth/v2/token/  \
+ --header  'accept: application/json'  \
+ --header  'content-type: application/x-www-form-urlencoded'  \
+ --data  grant_type=client_credentials  \
+ --data  client_id=<client_id>  \
+ --data  client_secret=<client_secret>
 ```
  5.  Make a note of the bearer token returned in the response. You’ll use it to authenticate your custom GPT. 
 
 ## Step 4: Conﬁgure the Action in the Custom GPT 
+
+If you're configuring OAuth use the following steps.
+
+ 1.  Return to the custom GPT you’re conﬁguring.
+ 2.  Scroll to the bottom of the editor and click **Create new action**. This opens the **Add actions** editor.
+ 3.  In the **Authentication** ﬁeld, click the gear icon.
+ 4.  In the pop-up that appears, select the **OAuth** radio button. ![oauth-options](./images/oauth-modal.png)
+ 5.  In the **Client ID** ﬁeld, paste the Client ID Alation provided you (or from your secrets manager).
+ 6.  In the **Client Secret** ﬁeld, paste the Client Secret Alation provided you.
+ 7.  In the **Authorization URL** field, paste in your Alation instance URL then append a path of `/oauth/v1/authorize/` to it. It should look like `https://your-instance.alationcloud.com/oauth/v1/authorize/` when you are done.
+ 8.  In the **Token URL** field, paste in your Alation instance URL then append a path of `/oauth/v1/token/` to it. It should look like `https://your-instance.alationcloud.com/oauth/v1/token/` when you are done.
+ 9.  In the **Scope** field, use `openid`
+ 10.  Leave the **Token Exchange Method** unchanged at `Default (POST request)`
+ 11.  Click **Save** to return to the Action editor.
+ 12.  [Continue configuring](#adding-the-context-api-schema) the action.
+
+
+If you're using an API Key of either token type use these steps instead.
+
  1.  Return to the custom GPT you’re conﬁguring. 
  2.  Scroll to the bottom of the editor and click **Create new action**. This opens the **Add actions** editor. 
  3.  In the **Authentication** ﬁeld, click the gear icon. 
@@ -253,7 +289,11 @@ You are an **AI Analyst assistant for the Alation Data Catalog**. Your role is t
     - If using an OAuth client app: Select *Bearer*.    
     ![authentication-apikey-bearer](./images/api-auth-bearer.png)
  7.  Click **Save** to return to the Action editor. 
- 8.  In the **Schema** ﬁeld, paste the content below.    
+
+
+#### Adding the Context API Schema
+
+ In the **Schema** ﬁeld, paste the content below.
 
 ```yaml
 info:
@@ -593,10 +633,10 @@ Start interacting with your newly created GPT:
 
  > **Important**: 
  >
- > In this beta release of the Context API, API access tokens must be updated manually. 
- Ensure you have a process in place to refresh and reconﬁgure the token when it expires.   
+ > If you're using API Key with the Context API, the access tokens must be updated manually.
+ Ensure you have a process in place to refresh and reconﬁgure the token when it expires. Alternatively, consider [Configuring OAuth](#configuring-oauth) to reduce this burden.
  >
- > The shared GPT will access the Alation instance using the provided authentication method. For shared GPTs, we advise using service account bearer tokens.
+ > The shared GPT will access the Alation instance using the provided authentication method. For shared GPTs, we advise using OAuth or service account bearer tokens.
 
  ## Step 7: Advanced Usage with Signatures
  You can include one or more signatures in your prompt to narrow the context returned by the Aggregated Context API. Using signatures is recommended for more precise and relevant results, especially in advanced configurations.   
