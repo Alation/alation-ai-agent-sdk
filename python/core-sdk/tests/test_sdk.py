@@ -89,6 +89,14 @@ def mock_requests_post(monkeypatch):
         elif "context/" in url:
             if "context/" in mock_post_responses:
                 return mock_post_responses["context/"](*args, **kwargs)
+        elif "alation_context_tool/stream" in url:
+            if "alation_context_tool/stream" in mock_post_responses:
+                return mock_post_responses["alation_context_tool/stream"](
+                    *args, **kwargs
+                )
+        elif "ai_agent/tool/event" in url:
+            if "ai_agent/tool/event" in mock_post_responses:
+                return mock_post_responses["ai_agent/tool/event"](*args, **kwargs)
         elif url in mock_post_responses:
             return mock_post_responses[url](*args, **kwargs)
 
@@ -275,6 +283,10 @@ def test_token_reuse_and_refresh(
         "full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"}
     )
     mock_requests_get("context/", response_json=CONTEXT_RESPONSE_SUCCESS)
+    mock_requests_post(
+        "alation_context_tool/stream", response_json=CONTEXT_RESPONSE_SUCCESS
+    )
+    mock_requests_post("ai_agent/tool/event", response_json={"status": "success"})
 
     sdk = AlationAIAgentSDK(
         base_url=MOCK_BASE_URL,
@@ -295,9 +307,14 @@ def test_token_reuse_and_refresh(
             "_generate_new_token",
             wraps=sdk.api._generate_new_token,
         ) as spy_generate_token,
+        patch("alation_ai_agent_sdk.tools.logger.warning") as mock_logger_warning,
     ):
         sdk.get_context("first question")  # Valid token reused
         sdk.get_context("second question")  # Token refreshed
+
+        mock_logger_warning.assert_called_with(
+            "The AlationContextTool is deprecated and will be removed in a future release. Migrate your code and prompts to use CatalogContextSearchAgentTool instead."
+        )
 
         assert mock_token_valid.call_count == expected_token_valid_calls
         assert spy_generate_token.call_count == 1

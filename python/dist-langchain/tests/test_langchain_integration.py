@@ -401,12 +401,18 @@ def test_analyze_catalog_question_tool_wrapper():
     Test that the Analyze Catalog Question tool wrapper works correctly.
     """
     mock_sdk = get_sdk_mock()
-    mock_sdk.analyze_catalog_question_tool.run.return_value = {"analysis": "test result"}
+    mock_sdk.analyze_catalog_question_tool.run.return_value = {
+        "analysis": "test result"
+    }
 
     tools_list = get_langchain_tools(mock_sdk)
-    analyze_tool = next((t for t in tools_list if t.name == "analyze_catalog_question"), None)
+    analyze_tool = next(
+        (t for t in tools_list if t.name == "analyze_catalog_question"), None
+    )
 
-    assert analyze_tool is not None, "Analyze Catalog Question tool should be in the tools list"
+    assert analyze_tool is not None, (
+        "Analyze Catalog Question tool should be in the tools list"
+    )
     assert analyze_tool.name == "analyze_catalog_question"
     assert analyze_tool.description == "Analyze catalog question and orchestrate"
 
@@ -423,19 +429,28 @@ def test_bulk_retrieval_tool_wrapper():
     Test that the Bulk Retrieval tool wrapper works correctly.
     """
     mock_sdk = get_sdk_mock()
-    mock_sdk.bulk_retrieval_tool.run.return_value = {"objects": [{"id": 1, "name": "table1"}]}
+    mock_sdk.bulk_retrieval_tool.run.return_value = {
+        "objects": [{"id": 1, "name": "table1"}]
+    }
 
     tools_list = get_langchain_tools(mock_sdk)
-    bulk_tool = next((t for t in tools_list if t.name == "AlationBulkRetrievalToolFromSDK"), None)
+    bulk_tool = next(
+        (t for t in tools_list if t.name == "AlationBulkRetrievalToolFromSDK"), None
+    )
 
     assert bulk_tool is not None, "Bulk Retrieval tool should be in the tools list"
     assert bulk_tool.name == "AlationBulkRetrievalToolFromSDK"
-    assert bulk_tool.description == "Provides bulk retrieval from Alation. Sourced from SDK's bulk_retrieval."
+    assert (
+        bulk_tool.description
+        == "Provides bulk retrieval from Alation. Sourced from SDK's bulk_retrieval."
+    )
 
     # Test the tool function
     test_signature = {"table": {"fields_required": ["name", "url"], "limit": 10}}
     result = bulk_tool.func(signature=test_signature)
-    mock_sdk.bulk_retrieval_tool.run.assert_called_once_with(signature=test_signature, chat_id=None)
+    mock_sdk.bulk_retrieval_tool.run.assert_called_once_with(
+        signature=test_signature, chat_id=None
+    )
     assert result == {"objects": [{"id": 1, "name": "table1"}]}
 
 
@@ -444,12 +459,18 @@ def test_catalog_context_search_agent_tool_wrapper():
     Test that the Catalog Context Search Agent tool wrapper works correctly.
     """
     mock_sdk = get_sdk_mock()
-    mock_sdk.catalog_context_search_agent_tool.run.return_value = {"results": ["result1", "result2"]}
+    mock_sdk.catalog_context_search_agent_tool.run.return_value = {
+        "results": ["result1", "result2"]
+    }
 
     tools_list = get_langchain_tools(mock_sdk)
-    catalog_tool = next((t for t in tools_list if t.name == "catalog_context_search_agent"), None)
+    catalog_tool = next(
+        (t for t in tools_list if t.name == "catalog_context_search_agent"), None
+    )
 
-    assert catalog_tool is not None, "Catalog Context Search Agent tool should be in the tools list"
+    assert catalog_tool is not None, (
+        "Catalog Context Search Agent tool should be in the tools list"
+    )
     assert catalog_tool.name == "catalog_context_search_agent"
     assert catalog_tool.description == "Catalog Context Search Agent"
 
@@ -469,7 +490,9 @@ def test_check_job_status_tool_wrapper():
     mock_sdk.check_job_status_tool.run.return_value = {"status": "completed"}
 
     tools_list = get_langchain_tools(mock_sdk)
-    job_tool = next((t for t in tools_list if t.name == "CheckJobStatusToolFromSDK"), None)
+    job_tool = next(
+        (t for t in tools_list if t.name == "CheckJobStatusToolFromSDK"), None
+    )
 
     assert job_tool is not None, "Check Job Status tool should be in the tools list"
     assert job_tool.name == "CheckJobStatusToolFromSDK"
@@ -489,11 +512,15 @@ def test_check_data_quality_tool_wrapper():
     mock_sdk.check_data_quality_tool.run.return_value = {"quality_score": 85}
 
     tools_list = get_langchain_tools(mock_sdk)
-    dq_tool = next((t for t in tools_list if t.name == "CheckDataQualityToolFromSDK"), None)
+    dq_tool = next(
+        (t for t in tools_list if t.name == "CheckDataQualityToolFromSDK"), None
+    )
 
     assert dq_tool is not None, "Check Data Quality tool should be in the tools list"
     assert dq_tool.name == "CheckDataQualityToolFromSDK"
-    assert dq_tool.description == "Checks data quality via SDK's check_data_quality_tool."
+    assert (
+        dq_tool.description == "Checks data quality via SDK's check_data_quality_tool."
+    )
 
     # Test the tool function
     result = dq_tool.func(table_ids=[1, 2, 3], ds_id=10)
@@ -515,14 +542,23 @@ def test_generate_data_product_tool_wrapper():
     Test that the Generate Data Product tool wrapper works correctly.
     """
     mock_sdk = get_sdk_mock()
-    mock_sdk.generate_data_product_tool.run.return_value = {"schema": "generated schema"}
+    mock_sdk.generate_data_product_tool.run.return_value = {
+        "schema": "generated schema"
+    }
 
     tools_list = get_langchain_tools(mock_sdk)
-    gen_tool = next((t for t in tools_list if t.name == "GenerateDataProductToolFromSDK"), None)
+    gen_tool = next(
+        (t for t in tools_list if t.name == "GenerateDataProductToolFromSDK"), None
+    )
 
-    assert gen_tool is not None, "Generate Data Product tool should be in the tools list"
+    assert gen_tool is not None, (
+        "Generate Data Product tool should be in the tools list"
+    )
     assert gen_tool.name == "GenerateDataProductToolFromSDK"
-    assert gen_tool.description == "Generates data product schemas from SDK's generate_data_product_tool."
+    assert (
+        gen_tool.description
+        == "Generates data product schemas from SDK's generate_data_product_tool."
+    )
 
     # Test the tool function
     result = gen_tool.func()
@@ -535,18 +571,26 @@ def test_custom_field_definitions_tool_wrapper():
     Test that the Custom Field Definitions tool wrapper works correctly.
     """
     mock_sdk = get_sdk_mock()
-    mock_sdk.get_custom_fields_definitions_tool.run.return_value = {"fields": [{"name": "field1"}]}
+    mock_sdk.get_custom_fields_definitions_tool.run.return_value = {
+        "fields": [{"name": "field1"}]
+    }
 
     tools_list = get_langchain_tools(mock_sdk)
-    fields_tool = next((t for t in tools_list if t.name == "get_custom_fields_definitions"), None)
+    fields_tool = next(
+        (t for t in tools_list if t.name == "get_custom_fields_definitions"), None
+    )
 
-    assert fields_tool is not None, "Custom Field Definitions tool should be in the tools list"
+    assert fields_tool is not None, (
+        "Custom Field Definitions tool should be in the tools list"
+    )
     assert fields_tool.name == "get_custom_fields_definitions"
     assert fields_tool.description == "Gets custom field definitions"
 
     # Test the tool function
     result = fields_tool.func()
-    mock_sdk.get_custom_fields_definitions_tool.run.assert_called_once_with(chat_id=None)
+    mock_sdk.get_custom_fields_definitions_tool.run.assert_called_once_with(
+        chat_id=None
+    )
     assert result == {"fields": [{"name": "field1"}]}
 
 
@@ -555,12 +599,18 @@ def test_data_dictionary_instructions_tool_wrapper():
     Test that the Data Dictionary Instructions tool wrapper works correctly.
     """
     mock_sdk = get_sdk_mock()
-    mock_sdk.get_data_dictionary_instructions_tool.run.return_value = {"instructions": "test instructions"}
+    mock_sdk.get_data_dictionary_instructions_tool.run.return_value = {
+        "instructions": "test instructions"
+    }
 
     tools_list = get_langchain_tools(mock_sdk)
-    dd_tool = next((t for t in tools_list if t.name == "get_data_dictionary_instructions"), None)
+    dd_tool = next(
+        (t for t in tools_list if t.name == "get_data_dictionary_instructions"), None
+    )
 
-    assert dd_tool is not None, "Data Dictionary Instructions tool should be in the tools list"
+    assert dd_tool is not None, (
+        "Data Dictionary Instructions tool should be in the tools list"
+    )
     assert dd_tool.name == "get_data_dictionary_instructions"
     assert dd_tool.description == "Gets data dictionary instructions"
 
@@ -575,14 +625,21 @@ def test_data_products_tool_wrapper():
     Test that the Data Products tool wrapper works correctly.
     """
     mock_sdk = get_sdk_mock()
-    mock_sdk.data_product_tool.run.return_value = {"products": [{"id": "dp1", "name": "Product1"}]}
+    mock_sdk.data_product_tool.run.return_value = {
+        "products": [{"id": "dp1", "name": "Product1"}]
+    }
 
     tools_list = get_langchain_tools(mock_sdk)
-    dp_tool = next((t for t in tools_list if t.name == "AlationDataProductsToolFromSDK"), None)
+    dp_tool = next(
+        (t for t in tools_list if t.name == "AlationDataProductsToolFromSDK"), None
+    )
 
     assert dp_tool is not None, "Data Products tool should be in the tools list"
     assert dp_tool.name == "AlationDataProductsToolFromSDK"
-    assert dp_tool.description == "Provides data products from Alation. Sourced from SDK's data_product_tool."
+    assert (
+        dp_tool.description
+        == "Provides data products from Alation. Sourced from SDK's data_product_tool."
+    )
 
     # Test the tool function
     result = dp_tool.func(product_id="dp1")
@@ -595,7 +652,9 @@ def test_data_sources_tool_wrapper():
     Test that the Data Sources tool wrapper works correctly.
     """
     mock_sdk = get_sdk_mock()
-    mock_sdk.get_data_sources_tool.run.return_value = {"sources": [{"id": 1, "name": "DB1"}]}
+    mock_sdk.get_data_sources_tool.run.return_value = {
+        "sources": [{"id": 1, "name": "DB1"}]
+    }
 
     tools_list = get_langchain_tools(mock_sdk)
     ds_tool = next((t for t in tools_list if t.name == "get_data_sources"), None)
@@ -622,7 +681,9 @@ def test_lineage_tool_wrapper():
     mock_sdk.lineage_tool.run.return_value = {"lineage": "test lineage data"}
 
     tools_list = get_langchain_tools(mock_sdk)
-    lineage_tool = next((t for t in tools_list if t.name == "GetLineageToolFromSDK"), None)
+    lineage_tool = next(
+        (t for t in tools_list if t.name == "GetLineageToolFromSDK"), None
+    )
 
     assert lineage_tool is not None, "Lineage tool should be in the tools list"
     assert lineage_tool.name == "GetLineageToolFromSDK"
@@ -630,6 +691,7 @@ def test_lineage_tool_wrapper():
 
     # Test the tool function
     from alation_ai_agent_sdk.lineage import LineageRootNode
+
     root_node = LineageRootNode(otype="table", oid=123)
     result = lineage_tool.func(root_node=root_node, direction="downstream")
 
@@ -670,7 +732,9 @@ def test_signature_creation_tool_wrapper():
     mock_sdk.signature_creation_tool.run.return_value = {"signature": "test signature"}
 
     tools_list = get_langchain_tools(mock_sdk)
-    sig_tool = next((t for t in tools_list if t.name == "get_signature_creation_instructions"), None)
+    sig_tool = next(
+        (t for t in tools_list if t.name == "get_signature_creation_instructions"), None
+    )
 
     assert sig_tool is not None, "Signature Creation tool should be in the tools list"
     assert sig_tool.name == "get_signature_creation_instructions"
@@ -712,11 +776,19 @@ def test_update_catalog_asset_metadata_tool_wrapper():
     mock_sdk.update_catalog_asset_metadata_tool.run.return_value = {"updated": True}
 
     tools_list = get_langchain_tools(mock_sdk)
-    update_tool = next((t for t in tools_list if t.name == "UpdateCatalogAssetMetadataToolFromSDK"), None)
+    update_tool = next(
+        (t for t in tools_list if t.name == "UpdateCatalogAssetMetadataToolFromSDK"),
+        None,
+    )
 
-    assert update_tool is not None, "Update Catalog Asset Metadata tool should be in the tools list"
+    assert update_tool is not None, (
+        "Update Catalog Asset Metadata tool should be in the tools list"
+    )
     assert update_tool.name == "UpdateCatalogAssetMetadataToolFromSDK"
-    assert update_tool.description == "Updates catalog asset metadata via SDK's update_catalog_asset_metadata_tool."
+    assert (
+        update_tool.description
+        == "Updates catalog asset metadata via SDK's update_catalog_asset_metadata_tool."
+    )
 
     # Test the tool function
     custom_field_values = {"field1": "value1", "field2": "value2"}

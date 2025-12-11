@@ -49,13 +49,24 @@ class AlationTokenVerifier(TokenVerifier):
     # TODO: this logic works for opaque token, but if JWT is enabled, we need to use the /introspect flow
     # See if you can pass base_url value dynamically either from the JWT payload or header
 
-    def __init__(self, base_url: str, userinfo_path: str = "/integration/v1/userinfo/"):
+    def __init__(
+        self,
+        base_url: str,
+        token_verification: str = "opaque",
+        userinfo_path: str = "/integration/v1/userinfo/",
+        jwt_introspect_path: str = "/oauth/v2/introspect/",
+    ) -> None:
         self.base_url = base_url
+        self.token_verification = token_verification
         self.userinfo_path = userinfo_path
+        self.jwt_introspect_path = jwt_introspect_path
 
     async def verify_token(self, token: str) -> AccessToken | None:
         """Verify OAuth token with Alation userinfo endpoint."""
         userinfo_url = f"{self.base_url}{self.userinfo_path}"
+        # TBD: Figure out how support multiple token_verification flows
+        # - get client id and secret for introspection flow where possible
+        # introspect_url = f"{self.base_url}{self.jwt_introspect_path}"
         headers = {"Authorization": f"Bearer {token}"}
         async with httpx.AsyncClient(timeout=5.0) as client:
             try:

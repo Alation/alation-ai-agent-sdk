@@ -195,12 +195,12 @@ def customer_context_node(state: CustomerState) -> CustomerState:
 
     # Process the agent result - extract output from new result format
     try:
-        if hasattr(result, 'get') and 'messages' in result:
+        if hasattr(result, "get") and "messages" in result:
             # Extract the final assistant message
-            messages = result.get('messages', [])
+            messages = result.get("messages", [])
             if messages:
                 final_message = messages[-1]
-                if hasattr(final_message, 'content'):
+                if hasattr(final_message, "content"):
                     output = final_message.content
                 else:
                     output = str(final_message)
