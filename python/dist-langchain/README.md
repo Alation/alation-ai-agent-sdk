@@ -12,10 +12,10 @@ The Langchain integration enables:
 
 ## New Major Version 1.x.x
 
-#### Dec 5, 2025 Update
+#### Dec 10, 2025 Update
 `1.0.0rc2` version of the Alation AI Agent SDK is now available.
 
-It deprecates the Context Tool in favor of the more capable Catalog Context Search Agent. On the practical side, Catalog Context Search Agent shares same contract so any migrations should be straightforward.
+It deprecates the Context Tool in favor of the more capable Catalog Context Search Agent. On the practical side, Catalog Context Search Agent shares the same contract so any migrations should be straightforward.
 
 We've committed to keep the now deprecated Context Tool as part of the SDK for the next **three months for transition**. This means you should expect to see it **removed in Feb 2026**.
 
@@ -23,6 +23,19 @@ The main rationale for removing the Context Tool originates from having two tool
 
 The Catalog Context Search Agent will do all the things the Context Tool did AND more like dynamically construct the `signature` parameter which was a major bottleneck when using the Context Tool.
 
+Our local MCP server was changed for the same reason and no longer includes Context Tool, Analyze Catalog Question, Signature Create, or Bulk Retrieval by default. The Catalog Context Search Agent will invoke these internally as needed without requiring them in scope.
+
+If you have prompts that expect any of those specific tools, you'll need to tell the MCP server which tools you wish to have enabled (overriding the default set). This can be done as a command line argument or as an environment variable.
+
+Reminder: If you have a narrow use case, only enable the tools that are needed for that particular case.
+
+```bash
+# As command line arguments to the MCP server command
+--enabled-tools=alation_context,analyze_catalog_question,bulk_retrieval,generate_data_product,get_custom_fields_definitions,get_data_dictionary_instructions,data_product,get_signature_creation_instructions,catalog_context_search_agent,query_flow_agent,sql_query_agent
+
+# Or as an environment variable
+export ALATION_ENABLED_TOOLS='alation_context,analyze_catalog_question,bulk_retrieval,generate_data_product,get_custom_fields_definitions,get_data_dictionary_instructions,data_product,get_signature_creation_instructions,catalog_context_search_agent,query_flow_agent,sql_query_agent'
+```
 #### Nov 4, 2025 Update
 We're excited to announce the `1.0.0rc1` version of the Alation AI Agent SDK is available.
 

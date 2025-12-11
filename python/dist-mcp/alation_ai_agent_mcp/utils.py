@@ -121,6 +121,14 @@ def parse_arguments() -> Tuple[
         help="External URL for the MCP server (for OAuth resource_server_url). Can also be set via MCP_EXTERNAL_URL env var. If not provided, defaults to http://host:port",
         required=False,
     )
+    parser.add_argument(
+        "--token-verification",
+        type=str,
+        default="opaque",
+        choices=["jwt", "opaque"],
+        help="Token verification method (default: opaque)",
+        required=False
+    )
     # Uses parse_known_args() to prevent exit(2) when there are unknown arguments
     args = parser.parse_known_args()[0]
 
@@ -136,6 +144,7 @@ def parse_arguments() -> Tuple[
         args.host,
         args.port,
         external_url,
+        args.token_verification,
     )
 
 

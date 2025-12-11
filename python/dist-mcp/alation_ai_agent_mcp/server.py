@@ -40,6 +40,7 @@ from .utils import (
 def create_fastmcp_server(
     base_url: str,
     transport_mode: str = "stdio",
+    token_verification: str = "opaque",
     host: str = "localhost",
     port: int = 8000,
     external_url: Optional[str] = None,
@@ -53,6 +54,7 @@ def create_fastmcp_server(
     Args:
         base_url: Alation instance base URL
         transport_mode: Either "stdio" or "http"
+        jwt_enabled: Whether JWT token verification is enabled by the server (only for HTTP mode)
         host: Host for HTTP server (only used in HTTP mode)
         port: Port for HTTP server (only used in HTTP mode)
         external_url: External URL for OAuth resource_server_url (use for production hosted MCP server)
@@ -77,7 +79,7 @@ def create_fastmcp_server(
             name="Alation MCP Server",
             stateless_http=True,
             auth=auth,
-            token_verifier=AlationTokenVerifier(base_url),
+            token_verifier=AlationTokenVerifier(base_url, token_verification=token_verification),
         )
 
     else:
@@ -93,6 +95,7 @@ def create_server(
     host: str = "localhost",
     port: int = 8000,
     external_url: Optional[str] = None,
+    token_verification: Optional[str] = "opaque",
 ) -> FastMCP:
     """
     Create and configure an MCP server for the specified transport mode.
@@ -115,7 +118,7 @@ def create_server(
     )
 
     # Create FastMCP server based on transport mode
-    mcp = create_fastmcp_server(base_url, transport, host, port, external_url)
+    mcp = create_fastmcp_server(base_url, transport, token_verification, host, port, external_url)
 
     if transport == "stdio":
         # STDIO mode: Create shared SDK instance with environment-based auth
@@ -172,6 +175,7 @@ def run_server() -> None:
         host,
         port,
         external_url,
+        token_verification,
     ) = parse_arguments()
 
     mcp = create_server(
@@ -183,6 +187,7 @@ def run_server() -> None:
         host,
         port,
         external_url,
+        token_verification,
     )
 
     if transport == "stdio":

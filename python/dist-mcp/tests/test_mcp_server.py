@@ -72,7 +72,7 @@ def manage_disabled_tools_and_enabled_beta_tools_environment(monkeypatch):
     This is used to test the server creation with specific tool configurations.
     """
     monkeypatch.setenv(
-        "ALATION_DISABLED_TOOLS", ",".join([AlationTools.AGGREGATED_CONTEXT])
+        "ALATION_DISABLED_TOOLS", ",".join([AlationTools.GET_DATA_PRODUCT])
     )
     monkeypatch.setenv("ALATION_ENABLED_BETA_TOOLS", ",".join([AlationTools.LINEAGE]))
     yield
@@ -159,7 +159,7 @@ def test_create_server_disabled_tool_and_enabled_beta_tool(
 
     mcp_result = server.create_server(
         "stdio",
-        disabled_tools_str=AlationTools.AGGREGATED_CONTEXT,
+        disabled_tools_str=AlationTools.GET_DATA_PRODUCT,
         enabled_beta_tools_str=AlationTools.LINEAGE,
     )
 
@@ -168,22 +168,19 @@ def test_create_server_disabled_tool_and_enabled_beta_tool(
 
     # Expected tools: All default tools except alation_context (disabled), plus get_lineage (beta enabled)
     expected_tools = {
-        "bulk_retrieval",  # BULK_RETRIEVAL
-        "get_data_products",  # GET_DATA_PRODUCT
         "generate_data_product",  # GENERATE_DATA_PRODUCT
         "get_data_sources_tool",
         "get_custom_fields_definitions",  # GET_CUSTOM_FIELDS_DEFINITIONS
         "get_data_dictionary_instructions",  # GET_DATA_DICTIONARY_INSTRUCTIONS
-        "get_signature_creation_instructions",  # SIGNATURE_CREATION
-        "analyze_catalog_question",  # ANALYZE_CATALOG_QUESTION
         "catalog_context_search_agent",  # CATALOG_CONTEXT_SEARCH_AGENT
         "query_flow_agent",  # QUERY_FLOW_AGENT
         "sql_query_agent",  # SQL_QUERY_AGENT
         "get_lineage",  # LINEAGE (beta tool)
     }
 
-    # Assert that alation_context is NOT registered (disabled)
-    assert "alation_context" not in mock_mcp_instance.tools
+    # Assert that get_data_products is NOT registered (disabled)
+    assert "get_data_products" not in mock_mcp_instance.tools
+    assert "data_product" not in mock_mcp_instance.tools
 
     # Assert all expected tools are registered
     for tool_name in expected_tools:
@@ -210,24 +207,20 @@ def test_create_server_disabled_tool_and_enabled_beta_tool_via_environment(
     mock_mcp_class.assert_called_once_with(name="Alation MCP Server")
     assert mcp_result is mock_mcp_instance
 
-    # Expected tools: All default tools except alation_context (disabled), plus get_lineage (beta enabled)
+    # Expected tools: All default tools except get_data_products (disabled), plus get_lineage (beta enabled)
     expected_tools = {
-        "bulk_retrieval",  # BULK_RETRIEVAL
-        "get_data_products",  # GET_DATA_PRODUCT
         "generate_data_product",  # GENERATE_DATA_PRODUCT
         "get_data_sources_tool",
         "get_custom_fields_definitions",  # GET_CUSTOM_FIELDS_DEFINITIONS
         "get_data_dictionary_instructions",  # GET_DATA_DICTIONARY_INSTRUCTIONS
-        "get_signature_creation_instructions",  # SIGNATURE_CREATION
-        "analyze_catalog_question",  # ANALYZE_CATALOG_QUESTION
         "catalog_context_search_agent",  # CATALOG_CONTEXT_SEARCH_AGENT
         "query_flow_agent",  # QUERY_FLOW_AGENT
         "sql_query_agent",  # SQL_QUERY_AGENT
         "get_lineage",  # LINEAGE (beta tool)
     }
 
-    # Assert that alation_context is NOT registered (disabled)
-    assert "alation_context" not in mock_mcp_instance.tools
+    # Assert that get_data_products is NOT registered (disabled)
+    assert "get_data_products" not in mock_mcp_instance.tools
 
     # Assert all expected tools are registered
     for tool_name in expected_tools:
@@ -252,15 +245,11 @@ def test_tool_registration(
 
     # Expected default tools (no disabled tools, no beta tools enabled)
     expected_default_tools = {
-        "alation_context",  # AGGREGATED_CONTEXT
-        "bulk_retrieval",  # BULK_RETRIEVAL
         "get_data_products",  # GET_DATA_PRODUCT
         "get_data_sources_tool",
         "generate_data_product",  # GENERATE_DATA_PRODUCT
         "get_custom_fields_definitions",  # GET_CUSTOM_FIELDS_DEFINITIONS
         "get_data_dictionary_instructions",  # GET_DATA_DICTIONARY_INSTRUCTIONS
-        "get_signature_creation_instructions",  # SIGNATURE_CREATION
-        "analyze_catalog_question",  # ANALYZE_CATALOG_QUESTION
         "catalog_context_search_agent",  # CATALOG_CONTEXT_SEARCH_AGENT
         "query_flow_agent",  # QUERY_FLOW_AGENT
         "sql_query_agent",  # SQL_QUERY_AGENT
@@ -276,53 +265,6 @@ def test_tool_registration(
 
     # Assert correct number of tools are registered
     assert mock_mcp_instance.tool.call_count == len(expected_default_tools)
-
-
-def test_alation_context_tool_logic(
-    manage_environment_variables, mock_alation_sdk, mock_fastmcp
-):
-    """
-    Test the logic within the registered alation_context tool function itself.
-    """
-    mock_sdk_class, mock_sdk_instance = mock_alation_sdk
-    mock_mcp_class, mock_mcp_instance = mock_fastmcp
-
-    server.create_server("stdio")
-
-    # The tool name is now determined by get_tool_metadata() from the actual tool class
-    tool_name = "alation_context"  # AlationContextTool._get_name()
-    registered_tool_mock = mock_mcp_instance.tools.get(tool_name)
-    assert registered_tool_mock is not None, (
-        f"Tool '{tool_name}' was not registered on the mock MCP."
-    )
-    tool_func = registered_tool_mock.__wrapped__
-    assert callable(tool_func), "Registered tool is not callable"
-
-    # Test case 1: Call with only question
-    question_input = "What is the definition of 'Data Catalog'?"
-    expected_sdk_result = {"data": "mock context data for question"}
-    mock_sdk_instance.get_context.return_value = expected_sdk_result
-
-    result = tool_func(question=question_input)
-
-    mock_sdk_instance.get_context.assert_called_once_with(
-        question_input, None, chat_id=None
-    )
-    assert result == expected_sdk_result
-
-    mock_sdk_instance.get_context.reset_mock()
-
-    # Test case 2: Call with question and signature
-    signature_input = {"object_id": 123, "object_type": "table"}
-    expected_sdk_result_sig = {"data": "mock context data with signature"}
-    mock_sdk_instance.get_context.return_value = expected_sdk_result_sig
-
-    result_sig = tool_func(question=question_input, signature=signature_input)
-
-    mock_sdk_instance.get_context.assert_called_once_with(
-        question_input, signature_input, chat_id=None
-    )
-    assert result_sig == expected_sdk_result_sig
 
 
 @patch("alation_ai_agent_mcp.server.create_server")
@@ -377,13 +319,14 @@ def test_run_server_cli_no_arguments(mock_create_server):
             None,
             None,
             None,
+            None,
         )
 
         server.run_server()
 
         mock_create_server.assert_called_once()
         mock_create_server.assert_called_with(
-            "stdio", None, None, None, None, None, None, None
+            "stdio", None, None, None, None, None, None, None, None
         )
 
 
@@ -399,11 +342,12 @@ def test_run_server_cli_with_arguments(mock_create_server):
             None,
             None,
             None,
+            None,
         )
 
         server.run_server()
 
         mock_create_server.assert_called_once()
         mock_create_server.assert_called_with(
-            "stdio", None, None, "tool1,tool2", "tool3", None, None, None
+            "stdio", None, None, "tool1,tool2", "tool3", None, None, None, None
         )

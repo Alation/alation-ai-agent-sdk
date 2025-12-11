@@ -117,25 +117,24 @@ def register_tools(
       That is no longer the case as we're clocking in at 28 tools (including agents as tools).
     """
     if len(config_enabled) == 0:
+        logger.info('No tools explicitly enabled; using default tools')
         config_enabled = set(
             [
                 # TBD: These tools could be restructured to not overlap such.
                 # Tools
-                AlationTools.AGGREGATED_CONTEXT,
-                AlationTools.ANALYZE_CATALOG_QUESTION,
-                AlationTools.BULK_RETRIEVAL,
                 AlationTools.GENERATE_DATA_PRODUCT,
                 AlationTools.GET_CUSTOM_FIELDS_DEFINITIONS,
                 AlationTools.GET_DATA_DICTIONARY_INSTRUCTIONS,
                 AlationTools.GET_DATA_PRODUCT,
                 AlationTools.GET_DATA_SOURCES,
-                AlationTools.SIGNATURE_CREATION,
                 # Agents as Tools
                 AlationTools.CATALOG_CONTEXT_SEARCH_AGENT,
                 AlationTools.QUERY_FLOW_AGENT,
                 AlationTools.SQL_QUERY_AGENT,
             ]
         )
+    else:
+        logger.info(f'Explicitly enabled tools: {config_enabled}')
 
     if is_tool_enabled(
         AlationTools.AGGREGATED_CONTEXT,
