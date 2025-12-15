@@ -8,8 +8,16 @@ This guide explains how to connect Claude to Alation's hosted Model Context Prot
 
 - [Prerequisites](#prerequisites)
 - [Plan-Specific Configuration](#plan-specific-configuration)
+  - [Team and Enterprise Plans](#team-and-enterprise-plans)
+  - [Pro and Max Plans](#pro-and-max-plans)
 - [Step 1: Register an OAuth Client in Alation](#step-1-register-an-oauth-client-in-alation)
+  - [Option A: Using the Alation Web UI (Coming Soon)](#option-a-using-the-alation-web-ui-coming-soon)
+  - [Option B: Using the Alation Integration APIs](#option-b-using-the-alation-integration-apis)
 - [Step 2: Add MCP Server in Claude](#step-2-add-mcp-server-in-claude)
+  - [1. Access Connector Settings](#1-access-connector-settings)
+  - [2. Add Custom Connector](#2-add-custom-connector)
+  - [3. Configure Connection Details](#3-configure-connection-details)
+  - [4. Save Configuration](#4-save-configuration)
 - [Step 3: Authenticate and Authorize](#step-3-authenticate-and-authorize)
 - [Step 4: Enable and use different tools in chat](#step-4-enable-and-use-different-tools-in-chat)
 
@@ -17,9 +25,10 @@ This guide explains how to connect Claude to Alation's hosted Model Context Prot
 
 ## Prerequisites
 
+**Server Admin** access to your Alation instance (required for OAuth client creation)
 **Claude Pro, Max, Team, or Enterprise subscription** (required for MCP integration)
 
->learn more at [Building Custom Connectors via Remote MCP Servers](https://support.claude.com/en/articles/11503834-building-custom-connectors-via-remote-mcp-servers)
+> learn more at [Building Custom Connectors via Remote MCP Servers](https://support.claude.com/en/articles/11503834-building-custom-connectors-via-remote-mcp-servers)
 
 ---
 
@@ -48,61 +57,44 @@ For individual Pro or Max subscriptions:
 
 ## Step 1: Register an OAuth Client in Alation
 
-You'll need to register Claude as an OAuth client application in your Alation instance. Please make sure the JWT token flag is enabled on the tenant:
+> **Note:**
+> This setup requires a Server Admin access to the Alation instance.
+
+### Option A: Using the Alation Web UI (Coming Soon)
+
+UI support to create an OAuth Client is coming soon.
+
+### Option B: Using the Alation Integration APIs
+
+1. Retrieve an API access token
+   a. Log in to your Alation catalog.
+   b. Click on the User icon in the top right-hand corner and in the menu that opens, select **Proﬁle Settings**.
+   ![profile-settings](../openai/images/profile-settings.png)
+   c. Click on the **Authentication** tab of the settings.
+   d. Use the steps in [Create an API Token via the UI](https://developer.alation.com/dev/docs/authentication-into-alation-apis#create-an-api-access-token-via-the-ui) in Alation’s API docs to get an access token for the Alation public API.
+   e. Make a note of the access token to use it for authenticating from your custom GPT.
+
+2. Run the following curl command to create an oauth client for Claude. Replace the `BASE_URL` and `API_TOKEN` with the correct values.
 
    ```bash
-   alation_conf alation.feature_flags.enable_jwt_in_v1_oauth_stack -s True
+   curl --location '<BASE_URL>/integration/core/v1/oauth/clients/' \
+   --header 'token: <API_TOKEN>' \
+   --header 'Content-Type: application/json' \
+   --data '{
+     "name": "mcp-server-claude",
+     "client_type": "confidential",
+     "redirect_uris": [
+         "https://your-tenant.alationcloud.com/oauth/callback",
+         "https://claude.ai/api/mcp/auth_callback",
+         "https://claude.com/api/mcp/auth_callback"
+     ],
+     "refresh_token_expiry": 259200,
+     "access_token_expiry": 3600,
+     "pkce_required": true
+   }'
    ```
 
-### Option A: Using the Alation Web UI (Placeholder for now, fill in here later once we actually have UI for this)
-
-Once we have UI, we can remove Option B below.
-
-### Option B: Using the Alation Django Shell (Please contact Alation Engineers for this step)
-
-If the Web UI is not available, you can create the OAuth client via Django shell:
-
-1. Access your Alation tenant's pod (via kubectl or SSH)
-
-2. Open Django shell:
-
-   ```bash
-   alation_django_shell
-   ```
-
-3. Run the following Python code:
-
-   ```python
-   import secrets
-   from api_authentication.models import Application
-   client_id = secrets.token_urlsafe(32)
-   client_secret = secrets.token_urlsafe(32)
-   app = Application.objects.create(
-      name="alation-ai-hosted-mcp-server",
-      client_id=client_id,
-      client_secret=client_secret,
-      client_type="confidential",
-      redirect_uris=[
-            "https://your-tenant.alationcloud.com/oauth/callback",
-            "https://claude.ai/api/mcp/auth_callback",
-            "https://claude.com/api/mcp/auth_callback"
-            ],
-      refresh_token_expiry=15552000,
-      access_token_expiry=86400,
-      is_active=True,
-      pkce_required=True,
-      jwt_required=True,
-      internal_application=False
-   )
-   print(f"client_id: {client_id}")
-   print(f"client_secret: {client_secret}")
-   ```
-
-   > **Note**: You may see an error message like `Error decrypting value, details: Unknown prefix: None. Only cryiv_enc_str:::, crypt_enc_str::: and scy_enc_str::: are supported., returning the value as is.` This error is safe to ignore - the OAuth client will still be created successfully.
-
-4. Safely store the printed `client_id` and `client_secret`
-
-5. Exit Django shell
+3. Safely store the returned `client_id` and `client_secret`
 
 ---
 
@@ -126,12 +118,12 @@ The path to connector settings depends on your Claude plan:
 
 Fill in the connector configuration:
 
-| Field | Value | Description |
-|-------|-------|-------------|
-| **Connector Name** | `Your Connector Name` | Display name for this integration |
-| **Remote MCP server URL** | `<https://YOUR_INSTANCE.alationcloud.com/ai/mcp/>` | Your Alation MCP server URL |
-| **Client ID** | `your-client-id-from-step-1` | From OAuth client registration |
-| **Client Secret** | `your-client-secret-from-step-1` | From OAuth client registration |
+| Field                     | Value                                              | Description                       |
+| ------------------------- | -------------------------------------------------- | --------------------------------- |
+| **Connector Name**        | `Your Connector Name`                              | Display name for this integration |
+| **Remote MCP server URL** | `<https://YOUR_INSTANCE.alationcloud.com/ai/mcp/>` | Your Alation MCP server URL       |
+| **Client ID**             | `your-client-id-from-step-1`                       | From OAuth client registration    |
+| **Client Secret**         | `your-client-secret-from-step-1`                   | From OAuth client registration    |
 
 ### 4. Save Configuration
 
