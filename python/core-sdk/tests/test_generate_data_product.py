@@ -1,181 +1,147 @@
 import pytest
-import time
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 from alation_ai_agent_sdk.tools import GenerateDataProductTool
 from alation_ai_agent_sdk.api import AlationAPIError
-from alation_ai_agent_sdk.data_product import get_schema_content
 
 
-def test_generate_data_product_tool_initialization():
-    """Test that the GenerateDataProductTool requires an API instance."""
-    mock_api = Mock()
-    mock_api.base_url = "https://test.alation.com"
-    tool = GenerateDataProductTool(mock_api)
-    assert tool.name == "generate_data_product"
-    assert "Alation Data Product" in tool.description
-    assert tool.api == mock_api
+@pytest.fixture
+def mock_api():
+    """Creates a mock AlationAPI for testing."""
+    api = Mock()
+    api.enable_streaming = False
+    api.base_url = "https://test.alation.com"
+    return api
 
 
-def test_generate_data_product_tool_run():
+@pytest.fixture
+def generate_data_product_tool(mock_api):
+    """Creates a GenerateDataProductTool with mock API."""
+    return GenerateDataProductTool(mock_api)
+
+
+def test_generate_data_product_tool_initialization(generate_data_product_tool, mock_api):
+    """Test that the GenerateDataProductTool initializes correctly."""
+    assert generate_data_product_tool.name == "generate_data_product"
+    assert "Alation Data Product" in generate_data_product_tool.description
+    assert generate_data_product_tool.api == mock_api
+
+
+def test_generate_data_product_tool_run(generate_data_product_tool, mock_api):
     """Test that the tool returns the complete instruction set."""
-    mock_api = Mock()
-    mock_api.base_url = "https://test.alation.com"
+    # Mock response from backend with complete instructions
+    mock_response = """
+You are a highly specialized AI assistant for Alation. Your mission is to CONVERT user-provided information into a valid Alation Data Product YAML file.
 
-    # Mock successful schema fetch
-    mock_schema_content = "type: object\ntitle: Test Schema"
-    with patch("requests.get") as mock_get:
-        mock_response = Mock()
-        mock_response.text = mock_schema_content
-        mock_response.raise_for_status.return_value = None
-        mock_get.return_value = mock_response
-
-        tool = GenerateDataProductTool(mock_api)
-        result = tool.run()
-
-        # Verify the result is a string
-        assert isinstance(result, str)
-
-        # Verify key components are present in the instructions
-        assert "Alation Data Product" in result
-        assert "deliverySystems" in result
-        assert "productId" in result
-
-        # Verify the dynamic schema was fetched
-        mock_get.assert_called_once_with(
-            "https://test.alation.com/static/swagger/specs/data_products/product_schema.yaml",
-            timeout=10,
-        )
-
-
-def test_generate_data_product_tool_run_with_fetch_failure():
-    """Test that the tool raises an error when fetch fails (no fallback)."""
-    mock_api = Mock()
-    mock_api.base_url = "https://test.alation.com"
-
-    # Mock failed schema fetch
-    with patch("requests.get", side_effect=Exception("Network error")):
-        tool = GenerateDataProductTool(mock_api)
-
-        # Should raise AlationAPIError when fetch fails
-        with pytest.raises(AlationAPIError) as exc_info:
-            tool.run()
-
-        assert "Failed to fetch data product schema" in str(exc_info.value)
-        assert exc_info.value.reason == "Schema Fetch Failed"
-
-
-def test_generate_data_product_tool_fetch_schema_success():
-    """Test successful schema fetching from instance."""
-    mock_api = Mock()
-    mock_api.base_url = "https://test.alation.com"
-
-    mock_schema_content = """
-type: object  
-title: Dynamic Schema
+**--- THE SCHEMA ---**
+type: object
+title: Data Product Schema
 properties:
   product:
     type: object
+    properties:
+      productId:
+        type: string
+      version:
+        type: string
+      deliverySystems:
+        type: object
+
+**--- THE EXAMPLE ---**
+product:
+  productId: "marketing.db.customer_360_view"
+  version: "1.0"
+  deliverySystems:
+    snowflake_prod:
+      type: sql
 """
 
-    with patch("requests.get") as mock_get:
-        mock_response = Mock()
-        mock_response.text = mock_schema_content
-        mock_response.raise_for_status.return_value = None
-        mock_get.return_value = mock_response
+    # Mock the streaming method to return a generator
+    def mock_generator():
+        yield mock_response
 
-        tool = GenerateDataProductTool(mock_api)
+    mock_api.generate_data_product_stream.return_value = mock_generator()
 
-        result = get_schema_content(tool)
+    result = generate_data_product_tool.run()
 
-        assert result == mock_schema_content
-        mock_get.assert_called_once_with(
-            "https://test.alation.com/static/swagger/specs/data_products/product_schema.yaml",
-            timeout=10,
-        )
+    # Verify API was called
+    mock_api.generate_data_product_stream.assert_called_once_with(chat_id=None)
+
+    # Verify the result is a string
+    assert isinstance(result, str)
+
+    # Verify key components are present in the instructions
+    assert "Alation Data Product" in result or "Data Product" in result
+    assert "deliverySystems" in result
+    assert "productId" in result
 
 
-def test_generate_data_product_tool_content_validation():
+def test_generate_data_product_tool_run_api_error(generate_data_product_tool, mock_api):
+    """Test handling of API errors."""
+    # Mock API error
+    api_error = AlationAPIError(
+        message="Failed to fetch data product schema",
+        status_code=500,
+        reason="Schema Fetch Failed",
+        resolution_hint="Ensure your Alation instance is accessible",
+    )
+    mock_api.generate_data_product_stream.side_effect = api_error
+
+    result = generate_data_product_tool.run()
+
+    # Verify API was called
+    mock_api.generate_data_product_stream.assert_called_once_with(chat_id=None)
+
+    # Verify error is returned
+    assert "error" in result
+    assert result["error"]["message"] == "Failed to fetch data product schema"
+    assert result["error"]["reason"] == "Schema Fetch Failed"
+
+
+def test_generate_data_product_tool_content_validation(generate_data_product_tool, mock_api):
     """Test that the generated content follows expected patterns."""
-    mock_api = Mock()
-    mock_api.base_url = "https://test.alation.com"
+    # Mock response with expected patterns
+    mock_response = """
+You are a highly specialized AI assistant for Alation.
 
-    # Mock schema fetch to return a basic schema
-    with patch("requests.get") as mock_get:
-        mock_response = Mock()
-        mock_response.text = "type: object\ntitle: Test Schema\nproperties:\n  product:\n    type: object"
-        mock_response.raise_for_status.return_value = None
-        mock_get.return_value = mock_response
+**CORE DIRECTIVES:**
+1. ZERO HALLUCINATION & INVENTION
+2. STRICT SCHEMA ADHERENCE
+3. DATA CLEANING & FORMATTING
 
-        tool = GenerateDataProductTool(mock_api)
-        result = tool.run()
+**THE SCHEMA:**
+type: object
+properties:
+  product:
+    type: object
+    properties:
+      productId:
+        type: string
+      contactEmail:
+        type: string
 
-        # Verify critical instructions are present
-        required_phrases = [
-            "HALLUCINATION",
-            "EXAMPLE",
-            "THE SCHEMA",
-            "`productId`",
-            "`contactEmail`",
-        ]
+**THE EXAMPLE:**
+product:
+  productId: "test.product"
+  version: "1.0"
+"""
 
-        for phrase in required_phrases:
-            assert phrase in result, f"Missing required phrase: {phrase}"
+    # Mock the streaming method to return a generator
+    def mock_generator():
+        yield mock_response
 
-        # Verify schema content is included
-        assert "Test Schema" in result
+    mock_api.generate_data_product_stream.return_value = mock_generator()
 
+    result = generate_data_product_tool.run()
 
-def test_cache_is_used_on_subsequent_calls():
-    """
-    Tests that the schema is fetched from the network only once and then served
-    from the cache on subsequent calls.
-    """
-    mock_api = Mock()
-    mock_api.base_url = "https://test.alation.com"
+    # Verify API was called
+    mock_api.generate_data_product_stream.assert_called_once_with(chat_id=None)
 
-    with patch("requests.get") as mock_get:
-        mock_response = Mock()
-        mock_response.text = "type: object\ntitle: Test Schema\nproperties:\n  product:\n    type: object"
-        mock_response.raise_for_status.return_value = None
-        mock_get.return_value = mock_response
+    # Verify the result is a string
+    assert isinstance(result, str)
 
-        tool = GenerateDataProductTool(mock_api)
-
-        # First call should trigger the network request
-        tool.run()
-
-        # Second call should use the cache
-        tool.run()
-
-        # Verify that requests.get was only called once
-        mock_get.assert_called_once()
-
-
-def test_cache_expires_after_ttl():
-    """
-    Tests that the schema cache expires after the TTL and is re-fetched.
-    """
-    mock_api = Mock()
-    mock_api.base_url = "https://test.alation.com"
-
-    with patch("requests.get") as mock_get:
-        mock_response = Mock()
-        mock_response.text = "type: object\ntitle: Test Schema\nproperties:\n  product:\n    type: object"
-        mock_response.raise_for_status.return_value = None
-        mock_get.return_value = mock_response
-
-        tool = GenerateDataProductTool(mock_api)
-        # very short TTL for testing
-        tool.CACHE_TTL_SECONDS = 0.1
-
-        # First call should trigger a network request and populate the cache
-        tool.run()
-
-        # Wait for the cache to expire
-        time.sleep(0.2)
-
-        # Second call should trigger another network request
-        tool.run()
-
-        # Verify that requests.get was called twice
-        assert mock_get.call_count == 2
+    # Verify critical instructions are present
+    assert "HALLUCINATION" in result
+    assert "EXAMPLE" in result or "THE EXAMPLE" in result
+    assert "THE SCHEMA" in result or "SCHEMA" in result
+    assert "productId" in result
+    assert "contactEmail" in result

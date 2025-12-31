@@ -320,7 +320,9 @@ def test_build_filtered_graph():
 @pytest.fixture
 def mock_api():
     """Creates a mock AlationAPI for testing."""
-    return Mock()
+    api = Mock()
+    api.enable_streaming = False
+    return api
 
 
 @pytest.fixture
@@ -329,21 +331,47 @@ def get_lineage_tool(mock_api):
     return AlationLineageTool(mock_api)
 
 
-def test_alation_lineage_tool_should_invoke_make_lineage_kwargs(get_lineage_tool):
-    with patch(
-        "alation_ai_agent_sdk.tools.make_lineage_kwargs"
-    ) as mock_make_lineage_kwargs:
-        get_lineage_tool.run(
-            root_node={
+def test_alation_lineage_tool_calls_streaming_api(get_lineage_tool, mock_api):
+    """Test that the tool calls the streaming API method."""
+    # Mock response from backend
+    mock_response = {
+        "graph": [
+            {
                 "id": 1,
                 "otype": "table",
-            },
-            direction="downstream",
-        )
-        mock_make_lineage_kwargs.assert_called_once()
+                "fully_qualified_name": "db.schema.table1",
+                "neighbors": []
+            }
+        ],
+        "direction": "downstream",
+        "pagination": None
+    }
+
+    # Mock the streaming method to return a generator
+    def mock_generator():
+        yield mock_response
+
+    mock_api.alation_lineage_stream.return_value = mock_generator()
+
+    result = get_lineage_tool.run(
+        root_node={
+            "id": 1,
+            "otype": "table",
+        },
+        direction="downstream",
+    )
+
+    # Verify API was called
+    mock_api.alation_lineage_stream.assert_called_once()
+
+    # Verify result
+    assert "graph" in result
+    assert "direction" in result
+    assert result["direction"] == "downstream"
 
 
 def test_alation_lineage_tool_returns_api_errors(get_lineage_tool, mock_api):
+    """Test that API errors are properly handled and returned."""
     # Mock API error
     api_error = AlationAPIError(
         message="Bad Request",
@@ -351,14 +379,18 @@ def test_alation_lineage_tool_returns_api_errors(get_lineage_tool, mock_api):
         reason="Bad Request",
         resolution_hint="Check API parameters",
     )
-    mock_api.get_bulk_lineage.side_effect = api_error
+    mock_api.alation_lineage_stream.side_effect = api_error
+
     result = get_lineage_tool.run(
         root_node={"id": 1, "otype": "table"},
         direction="downstream",
         limit=100,
         batch_size=100,
     )
-    mock_api.get_bulk_lineage.assert_called_once()
+
+    # Verify API was called
+    mock_api.alation_lineage_stream.assert_called_once()
+
     # Verify error handling
     assert "error" in result
     assert result["error"]["message"] == "Bad Request"
