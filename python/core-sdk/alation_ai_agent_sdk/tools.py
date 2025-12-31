@@ -24,22 +24,6 @@ from alation_ai_agent_sdk.lineage import (
     LineagePagination,
     LineageRootNode,
     LineageOTypeFilterType,
-    LineageToolResponse,
-    make_lineage_kwargs,
-)
-
-from alation_ai_agent_sdk.data_product import (
-    get_example_content,
-    get_prompt_instructions,
-    get_schema_content,
-)
-
-from alation_ai_agent_sdk.data_dict import build_optimized_instructions
-
-from alation_ai_agent_sdk.fields import (
-    filter_field_properties,
-    get_built_in_fields_structured,
-    get_built_in_usage_guide,
 )
 from alation_ai_agent_sdk.event import track_tool_execution
 
@@ -374,28 +358,26 @@ class AlationLineageTool:
         allowed_otypes: Optional[LineageOTypeFilterType] = None,
         time_from: Optional[LineageTimestampType] = None,
         time_to: Optional[LineageTimestampType] = None,
-    ) -> LineageToolResponse:
-        lineage_kwargs = make_lineage_kwargs(
-            root_node=root_node,
-            processing_mode=processing_mode,
-            show_temporal_objects=show_temporal_objects,
-            design_time=design_time,
-            max_depth=max_depth,
-            excluded_schema_ids=excluded_schema_ids,
-            allowed_otypes=allowed_otypes,
-            time_from=time_from,
-            time_to=time_to,
-        )
-
+        chat_id: Optional[str] = None,
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
-            return self.api.get_bulk_lineage(
-                root_nodes=[root_node],
+            ref = self.api.alation_lineage_stream(
+                root_node=root_node,
                 direction=direction,
                 limit=limit,
                 batch_size=batch_size,
                 pagination=pagination,
-                **lineage_kwargs,
+                processing_mode=processing_mode,
+                show_temporal_objects=show_temporal_objects,
+                design_time=design_time,
+                max_depth=max_depth,
+                excluded_schema_ids=excluded_schema_ids,
+                allowed_otypes=allowed_otypes,
+                time_from=time_from,
+                time_to=time_to,
+                chat_id=chat_id,
             )
+            return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
             return {"error": e.to_dict()}
 
@@ -507,25 +489,13 @@ class GenerateDataProductTool:
         self.name = self._get_name()
         self.description = self._get_description()
 
-        # Cache the schema to avoid repeated requests, store as a tuple: (schema_content, timestamp)
-        self._cached_schema: Optional[tuple[str, float]] = None
-
-        # Cache lifetime in seconds (e.g., 1 hour)
-        self.CACHE_TTL_SECONDS = 3600
-
-    def clear_cache(self):
-        """Manually clears the cached data product schema."""
-        self._cached_schema = None
-        logger.info("Data product schema cache has been cleared.")
-
     @staticmethod
     def _get_name() -> str:
         return "generate_data_product"
 
     @staticmethod
     def _get_description() -> str:
-        return """
-        Returns a complete set of instructions, including the current Alation Data Product schema and a valid example, for creating an Alation Data Product. Use this to prepare the AI for a data product creation task.
+        return """Returns a complete set of instructions, including the current Alation Data Product schema and a valid example, for creating an Alation Data Product. Use this to prepare the AI for a data product creation task.
 
         This tool provides:
         - The current Alation Data Product schema specification (fetched dynamically from your instance)
@@ -540,23 +510,30 @@ class GenerateDataProductTool:
         - Understand the current schema requirements
         - Get examples of properly formatted data products
 
-        No parameters required - returns the complete instruction set with the latest schema from your Alation instance.
+        Parameters:
+        - chat_id (optional): Chat session identifier
+
+        Returns:
+        Complete instruction set with the latest schema from your Alation instance.
         """
 
     @track_tool_execution()
-    def run(self) -> str:
+    def run(self, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Assembles and returns the complete instructional prompt for creating
         an Alation Data Product using the current schema from the instance.
-        """
-        schema_content = get_schema_content(self)
-        example_content = get_example_content()
-        prompt_instructions = get_prompt_instructions()
 
-        final_instructions = prompt_instructions.format(
-            schema=schema_content, example=example_content
-        )
-        return final_instructions
+        Parameters:
+            chat_id (optional): Chat session identifier
+
+        Returns:
+            Complete instruction set for creating Alation Data Products
+        """
+        try:
+            ref = self.api.generate_data_product_stream(chat_id=chat_id)
+            return ref if self.api.enable_streaming else next(ref)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
 
 
 class CheckDataQualityTool:
@@ -707,19 +684,6 @@ class GetCustomFieldsDefinitionsTool:
         except AlationAPIError as e:
             return {"error": e.to_dict()}
 
-    def _get_built_in_fields_response(self) -> Dict[str, Any]:
-        """
-        Return built-in field definitions for non-admin users using shared fields functions.
-
-        Returns:
-            Dict containing built-in fields and usage guidance for non-admin users
-        """
-        return {
-            "custom_fields": get_built_in_fields_structured(),
-            "message": "Admin permissions required for custom fields. Showing built-in fields only.",
-            "usage_guide": get_built_in_usage_guide(),
-        }
-
 
 class GetDataDictionaryInstructionsTool:
     """
@@ -740,8 +704,7 @@ class GetDataDictionaryInstructionsTool:
 
     @staticmethod
     def _get_description() -> str:
-        return """
-        Generates comprehensive instructions for creating Alation Data Dictionary CSV files.
+        return """Generates comprehensive instructions for creating Alation Data Dictionary CSV files.
 
         Automatically fetches current custom field definitions and provides:
         - Complete CSV format specifications with required headers
@@ -773,36 +736,22 @@ class GetDataDictionaryInstructionsTool:
         """
 
     @track_tool_execution()
-    def run(self) -> str:
+    def run(self, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Generate comprehensive data dictionary CSV formatting instructions.
 
         Automatically fetches current custom field definitions and provides complete
         formatting rules, validation schemas, and examples.
 
+        Parameters:
+            chat_id (optional): Chat session identifier
+
         Returns:
-            str: Complete instruction set for creating data dictionary CSV files
+            Complete instruction set for creating data dictionary CSV files
         """
         try:
-            # Always fetch fresh custom fields
-            custom_fields = []
-            try:
-                custom_fields_response = self.api.get_custom_fields()
-                custom_fields = filter_field_properties(custom_fields_response)
-            except AlationAPIError as e:
-                # Non-admin users will get 403 - provide instructions without custom fields
-                if e.status_code == 403:
-                    logger.info(
-                        "Non-admin user detected, providing built-in fields only"
-                    )
-                    custom_fields = []
-                else:
-                    raise
-
-            # Generate the comprehensive instructions
-            instructions = build_optimized_instructions(custom_fields)
-            return instructions
-
+            ref = self.api.get_data_dictionary_instructions_stream(chat_id=chat_id)
+            return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
             return {"error": e.to_dict()}
 

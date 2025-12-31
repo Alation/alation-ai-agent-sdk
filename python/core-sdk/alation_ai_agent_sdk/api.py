@@ -1441,6 +1441,96 @@ class AlationAPI:
             timeouts=None,
         )
 
+    def get_data_dictionary_instructions_stream(
+        self,
+        chat_id: Optional[str] = None,
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Generate comprehensive instructions for creating Alation Data Dictionary CSV files.
+        """
+        url = f"{self.base_url}/ai/api/v1/chats/tool/default/get_data_dictionary_instructions_tool/stream"
+        if chat_id is not None:
+            url += f"?chat_id={chat_id}"
+        yield from self._safe_sse_post_request(
+            tool_name="get_data_dictionary_instructions",
+            url=url,
+            payload={},
+            timeouts=None,
+        )
+
+    def generate_data_product_stream(
+        self,
+        chat_id: Optional[str] = None,
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Returns a complete set of instructions for creating an Alation Data Product.
+        """
+        url = f"{self.base_url}/ai/api/v1/chats/tool/default/generate_data_product_tool/stream"
+        if chat_id is not None:
+            url += f"?chat_id={chat_id}"
+        yield from self._safe_sse_post_request(
+            tool_name="generate_data_product",
+            url=url,
+            payload={},
+            timeouts=None,
+        )
+
+    def alation_lineage_stream(
+        self,
+        root_node: LineageRootNode,
+        direction: LineageDirectionType,
+        limit: Optional[int] = 1000,
+        batch_size: Optional[LineageBatchSizeType] = 1000,
+        pagination: Optional[LineagePagination] = None,
+        processing_mode: Optional[LineageGraphProcessingType] = None,
+        show_temporal_objects: Optional[bool] = False,
+        design_time: Optional[LineageDesignTimeType] = None,
+        max_depth: Optional[int] = 10,
+        excluded_schema_ids: Optional[LineageExcludedSchemaIdsType] = None,
+        allowed_otypes: Optional[LineageOTypeFilterType] = None,
+        time_from: Optional[LineageTimestampType] = None,
+        time_to: Optional[LineageTimestampType] = None,
+        chat_id: Optional[str] = None,
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Retrieves lineage relationships for data catalog objects from backend.
+        """
+        payload = {
+            "root_node": root_node,
+            "direction": direction,
+            "limit": limit,
+            "batch_size": batch_size,
+        }
+
+        if pagination is not None:
+            payload["pagination"] = pagination
+        if processing_mode is not None:
+            payload["processing_mode"] = processing_mode
+        if show_temporal_objects is not None:
+            payload["show_temporal_objects"] = show_temporal_objects
+        if design_time is not None:
+            payload["design_time"] = design_time
+        if max_depth is not None:
+            payload["max_depth"] = max_depth
+        if excluded_schema_ids is not None:
+            payload["excluded_schema_ids"] = excluded_schema_ids
+        if allowed_otypes is not None:
+            payload["allowed_otypes"] = allowed_otypes
+        if time_from is not None:
+            payload["time_from"] = time_from
+        if time_to is not None:
+            payload["time_to"] = time_to
+
+        url = f"{self.base_url}/ai/api/v1/chats/tool/default/get_lineage_tool/stream"
+        if chat_id is not None:
+            url += f"?chat_id={chat_id}"
+        yield from self._safe_sse_post_request(
+            tool_name="alation_lineage",
+            url=url,
+            payload=payload,
+            timeouts=None,
+        )
+
     def post_tool_event(
         self,
         event: dict,
