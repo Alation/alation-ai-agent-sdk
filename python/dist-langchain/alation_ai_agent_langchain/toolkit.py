@@ -11,7 +11,6 @@ from .tool import (
     get_analyze_catalog_question_tool,
     get_catalog_context_search_agent_tool,
     get_check_data_quality_tool,
-    get_check_job_status_tool,
     get_custom_agent_tool,
     get_custom_fields_definitions_tool,
     get_data_dictionary_instructions_tool,
@@ -21,7 +20,6 @@ from .tool import (
     get_query_flow_agent_tool,
     get_signature_creation_tool,
     get_sql_query_agent_tool,
-    get_update_catalog_asset_metadata_tool,
 )
 
 
@@ -55,13 +53,6 @@ def get_tools(sdk: AlationAIAgentSDK):
         sdk.enabled_beta_tools,
     ):
         tools.append(get_catalog_context_search_agent_tool(sdk))
-    if is_tool_enabled(
-        AlationTools.CHECK_JOB_STATUS,
-        sdk.enabled_tools,
-        sdk.disabled_tools,
-        sdk.enabled_beta_tools,
-    ):
-        tools.append(get_check_job_status_tool(sdk))
     if is_tool_enabled(
         AlationTools.CUSTOM_AGENT,
         sdk.enabled_tools,
@@ -139,12 +130,5 @@ def get_tools(sdk: AlationAIAgentSDK):
         sdk.enabled_beta_tools,
     ):
         tools.append(get_sql_query_agent_tool(sdk))
-    if is_tool_enabled(
-        AlationTools.UPDATE_METADATA,
-        sdk.enabled_tools,
-        sdk.disabled_tools,
-        sdk.enabled_beta_tools,
-    ):
-        tools.append(get_update_catalog_asset_metadata_tool(sdk))
 
     return tools

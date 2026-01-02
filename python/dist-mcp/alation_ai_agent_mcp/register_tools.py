@@ -31,8 +31,6 @@ from alation_ai_agent_sdk.tools import (
     AlationContextTool,
     AlationBulkRetrievalTool,
     AlationGetDataProductTool,
-    UpdateCatalogAssetMetadataTool,
-    CheckJobStatusTool,
     AlationLineageTool,
     CheckDataQualityTool,
     GenerateDataProductTool,
@@ -184,34 +182,6 @@ def register_tools(
         ):
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.get_data_products(product_id, query)
-            return result
-
-    if is_tool_enabled(
-        AlationTools.UPDATE_METADATA,
-        config_enabled,
-        config_disabled,
-        config_enabled_beta,
-    ):
-        metadata = get_tool_metadata(UpdateCatalogAssetMetadataTool)
-
-        @mcp.tool(name=metadata["name"], description=metadata["description"])
-        def update_catalog_asset_metadata(custom_field_values: list):
-            alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.update_catalog_asset_metadata(custom_field_values)
-            return result
-
-    if is_tool_enabled(
-        AlationTools.CHECK_JOB_STATUS,
-        config_enabled,
-        config_disabled,
-        config_enabled_beta,
-    ):
-        metadata = get_tool_metadata(CheckJobStatusTool)
-
-        @mcp.tool(name=metadata["name"], description=metadata["description"])
-        def check_job_status(job_id: int):
-            alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.check_job_status(job_id)
             return result
 
     if is_tool_enabled(

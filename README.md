@@ -86,6 +86,13 @@ If you cannot obtain service account credentials (admin only), see the [User Acc
 
 ## New Major Version 1.x.x
 
+#### Jan 2, 2026 Update
+
+**Breaking Changes:**
+- **Removed tools**: `update_catalog_asset_metadata` and `check_job_status` have been removed from the SDK
+
+If you need this functionality, use the Alation REST API directly. The underlying API endpoints (`/integration/v2/custom_field_value/async/` and `/api/v1/bulk_metadata/job/`) remain available. See [Alation Developer Portal](https://developer.alation.com/) for details.
+
 #### Dec 10, 2025 Update
 `1.0.0rc2` version of the Alation AI Agent SDK is now available.
 
@@ -164,14 +171,12 @@ Most of our tools and agents accept the `chat_id` parameter when invoked. Includ
 
 - [alation_context](guides/tools/alation_context.md)
 - [bulk_retrieval](guides/tools/bulk_retrieval.md)
-- [check_job_status](guides/tools/check_job_status.md)
 - [data_quality_tool](guides/tools/data_quality_tool.md)
 - [get_custom_fields_definitions](guides/tools/get_custom_fields_definitions.md)
 - [get_data_products](guides/tools/get_data_products.md)
 - [get_data_sources_tool](guides/tools/get_data_sources_tool.md)
 - [get_signature_creation_instructions](guides/tools/get_signature_creation_instructions.md)
 - [lineage](guides/tools/lineage.md)
-- [update_catalog_asset_metadata](guides/tools/update_catalog_asset_metadata.md)
 
 ## Supported Agents
 

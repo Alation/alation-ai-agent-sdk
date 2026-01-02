@@ -383,54 +383,6 @@ def test_lineage_beta_tools_disabled_by_default(
     assert AlationTools.LINEAGE not in sdk.enabled_beta_tools
 
 
-def test_check_job_status_tool_explicitly_disabled(
-    mock_requests_get,
-    mock_requests_post,
-):
-    mock_requests_post(
-        "createAPIAccessToken", response_json=REFRESH_TOKEN_RESPONSE_SUCCESS
-    )
-    mock_requests_post("oauth/v2/token", response_json=JWT_RESPONSE_SUCCESS)
-    mock_requests_get("license", response_json={"is_cloud": True})
-    mock_requests_get(
-        "full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"}
-    )
-
-    sdk = AlationAIAgentSDK(
-        base_url=MOCK_BASE_URL,
-        auth_method=AUTH_METHOD_SERVICE_ACCOUNT,
-        auth_params=ServiceAccountAuthParams(MOCK_CLIENT_ID, MOCK_CLIENT_SECRET),
-        disabled_tools={AlationTools.CHECK_JOB_STATUS},
-    )
-    assert AlationTools.CHECK_JOB_STATUS in sdk.disabled_tools
-    assert sdk.check_job_status not in sdk.get_tools()
-
-
-def test_check_job_status_session_auth_restriction(mock_requests_get):
-    """Test that check_job_status is properly restricted for session authentication."""
-    mock_requests_get("license", response_json={"is_cloud": True})
-    mock_requests_get(
-        "full_version", response_json={"ALATION_RELEASE_NAME": "2025.1.2"}
-    )
-
-    sdk = AlationAIAgentSDK(
-        base_url=MOCK_BASE_URL,
-        auth_method=AUTH_METHOD_SESSION,
-        auth_params=SessionAuthParams(MOCK_SESSION_COOKIE),
-    )
-
-    # The SDK should be initialized successfully
-    assert sdk.api.auth_method == AUTH_METHOD_SESSION
-
-    # But calling check_job_status should raise an error
-    with pytest.raises(AlationAPIError) as exc_info:
-        sdk.check_job_status(job_id=123)
-
-    error = exc_info.value
-    assert "Session authentication is not supported for check_job_status" in str(error)
-    assert error.reason == "Unsupported Authentication Method"
-
-
 @patch("alation_ai_agent_sdk.api.requests.get")
 def test_user_agent_header_populated_in_api_calls(
     mock_requests_get_patch, mock_requests_post, mock_requests_get

@@ -12,7 +12,6 @@ from typing import (
 from alation_ai_agent_sdk.api import (
     AlationAPI,
     AlationAPIError,
-    CatalogAssetMetadataPayloadItem,
 )
 from alation_ai_agent_sdk.lineage import (
     LineageBatchSizeType,
@@ -380,107 +379,6 @@ class AlationLineageTool:
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
             return {"error": e.to_dict()}
-
-
-class UpdateCatalogAssetMetadataTool:
-    def __init__(self, api: AlationAPI):
-        self.api = api
-        self.name = self._get_name()
-        self.description = self._get_description()
-
-    @staticmethod
-    def _get_name() -> str:
-        return "update_catalog_asset_metadata"
-
-    @staticmethod
-    def _get_description() -> str:
-        return """
-            Updates metadata for Alation catalog assets by modifying existing objects.
-
-            Supported object types:
-            - 'glossary_term': Individual glossary terms (corresponds to document objects)
-            - 'glossary_v3': Glossary collections (corresponds to doc-folder objects, i.e., Document Hubs)
-
-            NOTE: If you receive object types as 'document' or 'doc-folder', you must map them as follows:
-            - 'document' → 'glossary_term'
-            - 'doc-folder' → 'glossary_v3'
-
-            Available fields:
-            - field_id 3: Title (plain text)
-            - field_id 4: Description (supports rich text/HTML formatting)
-
-            Use this tool to:
-            - Update titles and descriptions for existing glossary content
-            - Modify glossary terms or glossary collections (glossary_v3)
-            - Supports both single and bulk operations
-
-            Don't use this tool for:
-            - Creating new objects
-            - Reading/retrieving asset data (use context tool instead)
-            - Updating other field types
-
-            Parameters:
-            - custom_field_values (list): List of objects, each containing:
-                * oid (string): Asset's unique identifier  
-                * otype (string): Asset type - 'glossary_term' or 'glossary_v3'
-                * field_id (int): Field to update - 3 for title, 4 for description
-                * value (string): New value to set
-
-            Example usage:
-                Single asset:
-                [{"oid": "123", "otype": "glossary_term", "field_id": 3, "value": "New Title"}]
-                
-                Multiple assets:
-                [{"oid": 219, "otype": "glossary_v3", "field_id": 4, "value": "Sample Description"},
-                {"oid": 220, "otype": "glossary_term", "field_id": 3, "value": "Another Title"}]
-            
-            Returns:
-            - Success: {"job_id": <int>} - Updates processed asynchronously
-            - Error: {"title": "Invalid Payload", "errors": [...]}
-            
-            Track progress via:
-            - UI: https://<company>.alationcloud.com/monitor/completed_tasks/
-            - TOOL: Use get_job_status tool with the returned job_id
-            """
-
-    @track_tool_execution()
-    def run(
-        self, *, custom_field_values: list[CatalogAssetMetadataPayloadItem]
-    ) -> dict:
-        return self.api.update_catalog_asset_metadata(custom_field_values)
-
-
-class CheckJobStatusTool:
-    def __init__(self, api: AlationAPI):
-        self.api = api
-        self.name = self._get_name()
-        self.description = self._get_description()
-
-    @staticmethod
-    def _get_name() -> str:
-        return "check_job_status"
-
-    @staticmethod
-    def _get_description() -> str:
-        return """
-        Check the status of a bulk metadata job in Alation by job ID.
-
-        Parameters:
-        - job_id (required, integer): The integer job identifier returned by a previous bulk operation.
-
-        Use this tool to:
-        - Track the progress and result of a bulk metadata job (such as catalog asset metadata updates).
-
-        Example:
-            check_job_status(123)
-
-        Response Behavior:
-        Returns the job status and details as a JSON object.
-        """
-
-    @track_tool_execution()
-    def run(self, *, job_id: int) -> dict:
-        return self.api.check_job_status(job_id)
 
 
 class GenerateDataProductTool:
