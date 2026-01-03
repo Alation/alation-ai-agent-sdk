@@ -47,8 +47,6 @@ The Alation MCP Server exposes the following tools (available in both modes):
 - **`alation_context`** - Retrieve contextual information from Alation's catalog using natural language
 - **`alation_bulk_retrieval`** - Retrieve multiple catalog objects
 - **`get_data_products`** - Access data products information
-- **`update_catalog_asset_metadata`** - Update catalog asset metadata
-- **`check_job_status`** - Monitor job execution status
 - **`get_lineage`** - Retrieve data lineage information
 - **`check_data_quality`** - Assess data quality metrics
 - **`generate_data_product`** - Create new data products

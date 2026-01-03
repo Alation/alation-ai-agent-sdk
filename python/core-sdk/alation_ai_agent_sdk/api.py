@@ -13,7 +13,6 @@ from .types import (
     BearerTokenAuthParams,
     SessionAuthParams,
     AuthParams,
-    CatalogAssetMetadataPayloadItem,
 )
 from .utils import SDK_VERSION
 from .errors import AlationAPIError, AlationErrorClassifier
@@ -37,54 +36,6 @@ AUTH_METHOD_BEARER_TOKEN = "bearer_token"
 AUTH_METHOD_SESSION = "session"
 
 logger = logging.getLogger(__name__)
-
-
-class CatalogAssetMetadataPayloadBuilder:
-    """
-    Builder class for constructing and validating payloads for update_catalog_asset_metadata.
-    Ensures all required fields are present and valid for each object in the payload.
-    """
-
-    REQUIRED_FIELDS = {"oid", "otype", "field_id", "value"}
-    ALLOWED_OTYPES = {"glossary_v3", "glossary_term"}
-    FIELD_ID_TYPE_MAP = {
-        3: str,  # TEXT
-        4: str,  # RICH_TEXT
-    }
-
-    @classmethod
-    def validate(cls, obj: CatalogAssetMetadataPayloadItem) -> None:
-        missing = cls.REQUIRED_FIELDS - obj.keys()
-        if missing:
-            raise ValueError(f"Missing required fields: {missing}")
-        if obj["otype"] not in cls.ALLOWED_OTYPES:
-            raise ValueError(
-                f"Invalid otype: {obj['otype']}. Allowed: {cls.ALLOWED_OTYPES}"
-            )
-        if obj["field_id"] not in cls.FIELD_ID_TYPE_MAP:
-            raise ValueError(
-                f"Invalid field_id: {obj['field_id']}. Allowed: {list(cls.FIELD_ID_TYPE_MAP.keys())}"
-            )
-        expected_type = cls.FIELD_ID_TYPE_MAP[obj["field_id"]]
-        if not isinstance(obj["value"], expected_type):
-            raise ValueError(
-                f"field_id {obj['field_id']} requires a value of type {expected_type.__name__}"
-            )
-
-    @classmethod
-    def build(
-        cls, items: list[CatalogAssetMetadataPayloadItem]
-    ) -> list[CatalogAssetMetadataPayloadItem]:
-        if not isinstance(items, list):
-            raise ValueError("Payload must be a list of objects")
-        validated = []
-        for i, obj in enumerate(items):
-            try:
-                cls.validate(obj)
-            except Exception as e:
-                raise ValueError(f"Validation failed for item {i}: {e}")
-            validated.append(obj)
-        return validated
 
 
 DEFAULT_CONNECT_TIMEOUT_IN_SECONDS = 60
@@ -1097,67 +1048,6 @@ class AlationAPI:
                 f"getting lineage for: {json.dumps(lineage_request_dict)}",
                 timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS,
             )
-
-    def update_catalog_asset_metadata(
-        self, custom_field_values: list[CatalogAssetMetadataPayloadItem]
-    ) -> dict:
-        """
-        Updates metadata for one or more Alation catalog assets via custom field values.
-        Validates payload before sending to API.
-        """
-        validated_payload = CatalogAssetMetadataPayloadBuilder.build(
-            custom_field_values
-        )
-        self._with_valid_auth()
-        headers = self._get_request_headers()
-        headers["Content-Type"] = "application/json"
-        url = f"{self.base_url}/integration/v2/custom_field_value/async/"
-        try:
-            response = requests.put(
-                url,
-                headers=headers,
-                json=validated_payload,
-                timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS,
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.RequestException as e:
-            self._handle_request_error(
-                e,
-                "update_catalog_asset_metadata",
-                timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS,
-            )
-
-    def check_job_status(self, job_id: int) -> dict:
-        """
-        Check the status of a bulk metadata job in Alation by job ID.
-
-        Args:
-            job_id (int): The integer job identifier returned by a previous bulk operation.
-
-        Returns:
-            dict: The API response containing job status and details.
-        """
-        # Session auth is not supported for this endpoint (internal restriction)
-        if self.auth_method == AUTH_METHOD_SESSION:
-            raise AlationAPIError(
-                "Session authentication is not supported for check_job_status",
-                reason="Unsupported Authentication Method",
-                resolution_hint="Use user_account, service_account, or bearer_token authentication instead",
-                help_links=["https://developer.alation.com/"],
-            )
-
-        self._with_valid_auth()
-
-        headers = self._get_request_headers()
-        params = {"id": job_id}
-        url = f"{self.base_url}/api/v1/bulk_metadata/job/"
-        try:
-            response = requests.get(url, headers=headers, params=params, timeout=30)
-            response.raise_for_status()
-            return response.json()
-        except requests.RequestException as e:
-            self._handle_request_error(e, "check_job_status")
 
     def check_sql_query_tables(
         self,

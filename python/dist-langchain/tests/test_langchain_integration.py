@@ -57,26 +57,6 @@ def get_sdk_mock():
     mock_sdk.bulk_retrieval_tool.run = MagicMock(
         return_value="Expected bulk retrieval data via SDK run"
     )
-    # Add mock for update_catalog_asset_metadata_tool
-    mock_sdk.update_catalog_asset_metadata_tool = MagicMock()
-    mock_sdk.update_catalog_asset_metadata_tool.name = (
-        "UpdateCatalogAssetMetadataToolFromSDK"
-    )
-    mock_sdk.update_catalog_asset_metadata_tool.description = (
-        "Updates catalog asset metadata via SDK's update_catalog_asset_metadata_tool."
-    )
-    mock_sdk.update_catalog_asset_metadata_tool.run = MagicMock(
-        return_value="Expected update catalog asset metadata via SDK run"
-    )
-    # Add mock for check_job_status_tool
-    mock_sdk.check_job_status_tool = MagicMock()
-    mock_sdk.check_job_status_tool.name = "CheckJobStatusToolFromSDK"
-    mock_sdk.check_job_status_tool.description = (
-        "Checks job status via SDK's check_job_status_tool."
-    )
-    mock_sdk.check_job_status_tool.run = MagicMock(
-        return_value="Expected check job status via SDK run"
-    )
     # Add mock for generate data product
     mock_sdk.generate_data_product_tool = MagicMock()
     mock_sdk.generate_data_product_tool.name = "GenerateDataProductToolFromSDK"
@@ -482,28 +462,6 @@ def test_catalog_context_search_agent_tool_wrapper():
     assert result == {"results": ["result1", "result2"]}
 
 
-def test_check_job_status_tool_wrapper():
-    """
-    Test that the Check Job Status tool wrapper works correctly.
-    """
-    mock_sdk = get_sdk_mock()
-    mock_sdk.check_job_status_tool.run.return_value = {"status": "completed"}
-
-    tools_list = get_langchain_tools(mock_sdk)
-    job_tool = next(
-        (t for t in tools_list if t.name == "CheckJobStatusToolFromSDK"), None
-    )
-
-    assert job_tool is not None, "Check Job Status tool should be in the tools list"
-    assert job_tool.name == "CheckJobStatusToolFromSDK"
-    assert job_tool.description == "Checks job status via SDK's check_job_status_tool."
-
-    # Test the tool function
-    result = job_tool.func(job_id=123)
-    mock_sdk.check_job_status_tool.run.assert_called_once_with(job_id=123)
-    assert result == {"status": "completed"}
-
-
 def test_check_data_quality_tool_wrapper():
     """
     Test that the Check Data Quality tool wrapper works correctly.
@@ -766,34 +724,3 @@ def test_sql_query_agent_tool_wrapper():
         message="SELECT * FROM table", data_product_id="dp-123", chat_id=None
     )
     assert result == {"sql_result": "query executed"}
-
-
-def test_update_catalog_asset_metadata_tool_wrapper():
-    """
-    Test that the Update Catalog Asset Metadata tool wrapper works correctly.
-    """
-    mock_sdk = get_sdk_mock()
-    mock_sdk.update_catalog_asset_metadata_tool.run.return_value = {"updated": True}
-
-    tools_list = get_langchain_tools(mock_sdk)
-    update_tool = next(
-        (t for t in tools_list if t.name == "UpdateCatalogAssetMetadataToolFromSDK"),
-        None,
-    )
-
-    assert update_tool is not None, (
-        "Update Catalog Asset Metadata tool should be in the tools list"
-    )
-    assert update_tool.name == "UpdateCatalogAssetMetadataToolFromSDK"
-    assert (
-        update_tool.description
-        == "Updates catalog asset metadata via SDK's update_catalog_asset_metadata_tool."
-    )
-
-    # Test the tool function
-    custom_field_values = {"field1": "value1", "field2": "value2"}
-    result = update_tool.func(custom_field_values=custom_field_values)
-    mock_sdk.update_catalog_asset_metadata_tool.run.assert_called_once_with(
-        custom_field_values=custom_field_values
-    )
-    assert result == {"updated": True}

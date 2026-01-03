@@ -10,15 +10,12 @@ from alation_ai_agent_sdk.errors import AlationAPIError
 from .api import (
     AlationAPI,
     AuthParams,
-    CatalogAssetMetadataPayloadItem,
 )
 from .tools import (
     AlationContextTool,
     AlationBulkRetrievalTool,
     AlationGetDataProductTool,
     AlationLineageTool,
-    UpdateCatalogAssetMetadataTool,
-    CheckJobStatusTool,
     CheckDataQualityTool,
     GenerateDataProductTool,
     GetCustomFieldsDefinitionsTool,
@@ -51,7 +48,6 @@ class AlationTools:
     AGGREGATED_CONTEXT = "aggregated_context"
     ANALYZE_CATALOG_QUESTION = "analyze_catalog_question"
     BULK_RETRIEVAL = "bulk_retrieval"
-    CHECK_JOB_STATUS = "check_job_status"
     DATA_QUALITY = "data_quality"
     GENERATE_DATA_PRODUCT = "generate_data_product"
     GET_CUSTOM_FIELDS_DEFINITIONS = "get_custom_fields_definitions"
@@ -60,7 +56,6 @@ class AlationTools:
     GET_DATA_SOURCES = "get_data_sources"
     LINEAGE = "lineage"
     SIGNATURE_CREATION = "signature_creation"
-    UPDATE_METADATA = "update_metadata"
     # Agents
     CATALOG_CONTEXT_SEARCH_AGENT = "catalog_context_search_agent"
     CUSTOM_AGENT = "custom_agent"
@@ -128,10 +123,6 @@ class AlationAIAgentSDK:
         self.context_tool = AlationContextTool(self.api)
         self.bulk_retrieval_tool = AlationBulkRetrievalTool(self.api)
         self.data_product_tool = AlationGetDataProductTool(self.api)
-        self.update_catalog_asset_metadata_tool = UpdateCatalogAssetMetadataTool(
-            self.api
-        )
-        self.check_job_status_tool = CheckJobStatusTool(self.api)
         self.generate_data_product_tool = GenerateDataProductTool(self.api)
         self.lineage_tool = AlationLineageTool(self.api)
         self.check_data_quality_tool = CheckDataQualityTool(self.api)
@@ -281,56 +272,6 @@ class AlationAIAgentSDK:
             pagination=pagination,
             **lineage_kwargs,
         )
-
-    def update_catalog_asset_metadata(
-        self, custom_field_values: list[CatalogAssetMetadataPayloadItem]
-    ) -> dict:
-        """
-        Updates metadata for one or more Alation catalog assets.
-
-        Args:
-            custom_field_values (list[CatalogAssetMetadataPayloadItem]): List of payload items for updating catalog asset metadata.
-                Each item must have the following structure:
-
-                CatalogAssetMetadataPayloadItem = TypedDict('CatalogAssetMetadataPayloadItem', {
-                    'otype': Literal['glossary_v3', 'glossary_term'],  # Only these otypes are supported
-                    'oid': int,  # The object ID of the asset to update
-                    'field_id': Literal[3, 4],  # 3 for TEXT, 4 for RICH_TEXT
-                    'value': Any,  # The value to set for the field. Type is validated by field_id -> type mapping.
-                })
-                Example:
-                    {
-                        "oid": 219,
-                        "otype": "glossary_term",
-                        "field_id": 3,
-                        "value": "New Title"
-                    }
-
-        Returns:
-            dict: One of the following:
-                - On success: {"job_id": <int>} (job is queued, use get_job_status to track progress)
-                - On error: {
-                      "title": "Invalid Payload",
-                      "detail": "Please check the API documentation for more details on the spec.",
-                      "errors": [ ... ],
-                      "code": "400000"
-                  }
-        """
-        return self.update_catalog_asset_metadata_tool.run(
-            custom_field_values=custom_field_values
-        )
-
-    def check_job_status(self, job_id: int) -> dict:
-        """
-        Check the status of a bulk metadata job in Alation by job ID.
-
-        Args:
-            job_id (int): The integer job identifier returned by a previous bulk operation.
-
-        Returns:
-            dict: The API response containing job status and details.
-        """
-        return self.check_job_status_tool.run(job_id=job_id)
 
     def check_data_quality(
         self,
@@ -564,20 +505,6 @@ class AlationAIAgentSDK:
             self.enabled_beta_tools,
         ):
             tools.append(self.data_product_tool)
-        if is_tool_enabled(
-            AlationTools.UPDATE_METADATA,
-            self.enabled_tools,
-            self.disabled_tools,
-            self.enabled_beta_tools,
-        ):
-            tools.append(self.update_catalog_asset_metadata_tool)
-        if is_tool_enabled(
-            AlationTools.CHECK_JOB_STATUS,
-            self.enabled_tools,
-            self.disabled_tools,
-            self.enabled_beta_tools,
-        ):
-            tools.append(self.check_job_status_tool)
         if is_tool_enabled(
             AlationTools.LINEAGE,
             self.enabled_tools,
