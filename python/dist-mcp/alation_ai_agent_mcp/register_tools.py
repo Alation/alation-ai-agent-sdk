@@ -362,7 +362,7 @@ def register_tools(
         @mcp.tool(name=metadata["name"], description=metadata["description"])
         def get_data_sources_tool(limit: int = 100, chat_id: Optional[str] = None):
             alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.get_data_sources_tool(limit=limit, chat_id=chat_id)
+            result = alation_sdk.get_data_sources(limit=limit, chat_id=chat_id)
             return result
 
     # SQL and Query Tools
@@ -413,7 +413,7 @@ def register_tools(
             agent_config_id: str, payload: dict, chat_id: Optional[str] = None
         ):
             alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.custom_agent(
+            result = alation_sdk.execute_custom_agent(
                 agent_config_id=agent_config_id, payload=payload, chat_id=chat_id
             )
             return result
