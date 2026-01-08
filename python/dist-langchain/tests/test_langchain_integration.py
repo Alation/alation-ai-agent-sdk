@@ -491,7 +491,6 @@ def test_check_data_quality_tool_wrapper():
         default_schema_name="public",
         output_format="JSON",
         dq_score_threshold=None,
-        chat_id=None,
     )
     assert result == {"quality_score": 85}
 

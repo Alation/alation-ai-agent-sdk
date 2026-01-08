@@ -216,10 +216,9 @@ def register_tools(
             allowed_otypes: LineageOTypeFilterType | None = None,
             time_from: LineageTimestampType | None = None,
             time_to: LineageTimestampType | None = None,
-            chat_id: str | None = None,
         ):
             alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.lineage_tool.run(
+            result = alation_sdk.get_lineage(
                 root_node=root_node,
                 direction=direction,
                 limit=limit,
@@ -233,7 +232,6 @@ def register_tools(
                 allowed_otypes=allowed_otypes,
                 time_from=time_from,
                 time_to=time_to,
-                chat_id=chat_id,
             )
             return result
 
@@ -252,7 +250,6 @@ def register_tools(
             default_schema_name: Optional[str] = None,
             output_format: Optional[str] = None,
             dq_score_threshold: int | None = None,
-            chat_id: Optional[str] = None,
         ) -> dict | str:
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.check_data_quality(
@@ -264,7 +261,6 @@ def register_tools(
                 default_schema_name=default_schema_name,
                 output_format=output_format,
                 dq_score_threshold=dq_score_threshold,
-                chat_id=chat_id,
             )
             return result
 

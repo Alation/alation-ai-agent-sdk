@@ -20,7 +20,7 @@ def test_analyze_catalog_question_tool_initialization(
 ):
     """Test that the AnalyzeCatalogQuestionTool initializes correctly."""
     assert analyze_catalog_question_tool.name == "analyze_catalog_question"
-    assert "WORKFLOW ORCHESTRATOR" in analyze_catalog_question_tool.description
+    assert "PRIMARY ENTRY POINT" in analyze_catalog_question_tool.description
     assert analyze_catalog_question_tool.api == mock_api
 
 

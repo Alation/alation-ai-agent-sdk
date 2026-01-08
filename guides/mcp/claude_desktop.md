@@ -141,7 +141,7 @@ Please use this signature when searching:
   "table": {
     "fields_required": ["name", "description", "columns"],
     "search_filters": {
-      "flag_types": ["Endorsement"]
+      "flags": ["Endorsement"]
     },
     "child_objects": {
       "columns": {
@@ -224,7 +224,7 @@ In this example, you've provided two different signatures for different types of
 {
   "table": {
     "fields_required": ["name", "title", "description", "url"],
-    "search_filters": {"flag_types": ["Endorsement"], "fields": {"ds": [1]}},
+    "search_filters": {"flags": ["Endorsement"], "fields": {"ds": [1]}},
     "limit": 20
   }
 }

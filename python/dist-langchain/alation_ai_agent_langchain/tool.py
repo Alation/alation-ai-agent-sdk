@@ -164,7 +164,6 @@ def get_check_data_quality_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
         default_schema_name: Optional[str] = "public",
         output_format: Optional[str] = "JSON",
         dq_score_threshold: Optional[int] = None,
-        chat_id: Optional[str] = None,
     ):
         return check_data_quality_tool.run(
             table_ids=table_ids,
@@ -175,7 +174,6 @@ def get_check_data_quality_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
             default_schema_name=default_schema_name,
             output_format=output_format,
             dq_score_threshold=dq_score_threshold,
-            chat_id=chat_id,
         )
 
     return StructuredTool.from_function(
