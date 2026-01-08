@@ -215,43 +215,38 @@ class AlationBulkRetrievalTool:
 
     @staticmethod
     def _get_description() -> str:
-        return """
-    CRITICAL: DO NOT CALL THIS TOOL DIRECTLY
-    
-    LOW-LEVEL TOOL: Direct bulk enumeration of catalog objects with filters.
+        return """LOW-LEVEL TOOL: Direct bulk enumeration of catalog objects with filters.
 
-    You MUST call analyze_catalog_question first to determine workflow.
+`catalog_context_search_agent` handles most catalog questions automatically.
+Use `bulk_retrieval` when you need direct access to bulk catalog objects.
 
-    USE THIS DIRECTLY ONLY WHEN:
-    - User explicitly requests "bulk tool" or "bulk_retrieval"
-    - Following instructions from analyze_catalog_question
+You MUST call `analyze_catalog_question` first to determine workflow.
 
-    ## WHAT THIS TOOL DOES
+WHEN TO USE:
+- User explicitly requests "bulk_retrieval" or this specific tool
+- Following instructions from `analyze_catalog_question`
 
-    Fetches complete sets of catalog objects without semantic search.
-    Use for structural enumeration, not concept discovery.
+WHAT THIS TOOL DOES:
+Fetches complete sets of catalog objects without semantic search.
+Use for structural enumeration, not concept discovery.
 
-    Supported: table, column, schema, query
-    Not supported: documentation objects
+Supported: table, column, schema, query
+Not supported: documentation objects
 
-    ## PARAMETERS
+USE CASES:
+✓ "List ALL tables in finance schema"
+✓ "Get all endorsed tables from data source 5"
+✓ "Show tables with PII classification"
 
-    - signature (required, JSON):
-        For complete signature specification, field options, and filter rules,
-        call get_signature_creation_instructions() first.
-    - chat_id (optional): Chat session identifier
+✗ "Find sales-related tables" → use `get_context_by_id` (concept discovery)
+✗ "Tables about customers" → use `get_context_by_id` (semantic search)
 
-    ## USE CASES
-
-    ✓ "List ALL tables in finance schema"
-    ✓ "Get all endorsed tables from data source 5"
-    ✓ "Show tables with PII classification"
-
-    ✗ "Find sales-related tables" → use alation_context (concept discovery)
-    ✗ "Tables about customers" → use alation_context (semantic search)
-
-    See get_signature_creation_instructions() for complete usage guide.
-    """
+PARAMETERS:
+- signature (required, JSON):
+    For complete signature specification, field options, and filter rules,
+    call `get_signature_creation_instructions` first.
+- chat_id (optional): Chat session identifier
+"""
 
     @track_tool_execution()
     def run(
@@ -393,20 +388,27 @@ class GenerateDataProductTool:
 
     @staticmethod
     def _get_description() -> str:
-        return """Returns a complete set of instructions, including the current Alation Data Product schema and a valid example, for creating an Alation Data Product. Use this to prepare the AI for a data product creation task.
+        return """Returns comprehensive instructions for creating Alation Data Products.
 
-        This tool provides:
-        - The current Alation Data Product schema specification (fetched dynamically from your instance)
-        - A validated example following the schema
-        - Detailed instructions for converting user input to valid YAML
+        Provides the current Alation Data Product schema specification, a validated example,
+        and detailed instructions for converting user input to valid YAML with strict rules
+        for handling required vs optional fields and avoiding hallucination.
+
+        WHEN TO USE:
+        - Before creating a new Alation Data Product from user descriptions
+        - To understand the current data product schema requirements
+        - When converting semantic layers or metadata to Alation Data Products
+        - To get examples of properly formatted data product YAML
+
+        WORKFLOW:
+        1. Call this tool to get comprehensive formatting instructions and schema
+        2. Use the instructions to transform your data into properly formatted YAML
+        3. Create the data product using the resulting YAML specification
+
+        KEY FEATURES:
+        - Fetches current schema dynamically from your Alation instance
+        - Provides validated example following the schema
         - Guidelines for handling required vs optional fields
-        - Rules for avoiding hallucination of data not provided by the user
-
-        Use this tool when you need to:
-        - Convert semantic layers to Alation Data Products
-        - Create data product specifications from user descriptions
-        - Understand the current schema requirements
-        - Get examples of properly formatted data products
 
         Parameters:
         - chat_id (optional): Chat session identifier
@@ -446,31 +448,79 @@ class CheckDataQualityTool:
 
     @staticmethod
     def _get_description() -> str:
-        return """
-            Checks data quality for a list of tables or an individual SQL query.
+        return """Checks data quality for a list of tables or an individual SQL query.
 
-            WHEN TO USE:
-            - User directly asks to "check data quality"
-            - User requests to "validate data quality" or "assess quality" of a sql query or table
-            - User asks "is this data reliable/trustworthy?"
-            - User says "run data quality check" or similar explicit request
+    WHEN TO USE:
+    - User directly asks to "check data quality"
+    - User requests to "validate data quality" or "assess quality" of a SQL query or table
+    - User asks "is this data reliable/trustworthy?"
+    - User says "run data quality check" or similar explicit request
 
-            IMPORTANT: Either a table_ids or sql_query parameter is required. If sql_query is provided, either ds_id or db_uri must also be included.
+    IMPORTANT: Either table_ids OR sql_query parameter is required.
+    If sql_query is provided, either ds_id or db_uri must also be included.
 
-            VALID PARAMETER COMBINATIONS:
-            1. table_ids (for checking specific tables)
-            2. sql_query + ds_id (recommended for SQL query validation)
-            3. sql_query + db_uri (recommended for SQL query validation when ds_id is unknown)
+    VALID PARAMETER COMBINATIONS:
+    1. table_ids (for checking specific tables)
+    2. sql_query + ds_id (recommended for SQL query validation)
+    3. sql_query + db_uri (recommended for SQL query validation when ds_id is unknown)
 
-            PARAMETERS:
-            - table_ids: List of table identifiers (max 30) - use alation_context to get table ids first
-            - sql_query: SQL query to analyze for quality issues
-            - ds_id: A data source id from Alation
-            - db_uri: A database URI as an alternative to ds_id. e.g. postgresql://@host:port/dbname
-            - output_format: "json" (default) or "yaml_markdown" for more compact responses
-            - dq_score_threshold: Quality threshold (0-100), tables below this are flagged. Defaults to 70.
+    REQUIRED PARAMETERS:
+    - table_ids: List of table IDs to check (max 30). Use alation_context to get table IDs first.
+      Example: [123, 456, 789]
+    - OR sql_query: SQL query text to analyze for quality issues.
+      Example: "SELECT * FROM schema.table WHERE date > '2024-01-01'"
+    - If using sql_query, also provide:
+      - ds_id: Data source ID from Alation (preferred)
+        Example: 5
+      - OR db_uri: Database URI as alternative to ds_id
+        Example: "postgresql://@hostname:5432/dbname"
 
-            Returns a data quality summary and item level quality statements."""
+    OPTIONAL PARAMETERS:
+    - output_format: Response format, either "json" (default) or "yaml_markdown" for compact output
+      Default: "json" (returns structured JSON)
+      Use "yaml_markdown" for more readable format when dealing with many tables
+    - dq_score_threshold: Quality threshold (0-100), tables below this are flagged
+      Default: 70
+      Lower values are more lenient, higher values are stricter
+    - bypassed_dq_sources: List of data quality source names to skip during checks
+      Example: ["trust_flags", "native_dq"]
+    - default_schema_name: Default schema name for unqualified table names in SQL query
+      Example: "public"
+
+    RESPONSE FORMAT:
+    The response contains a "result" object with quality status and detailed findings:
+    {
+      "result": {
+        "LOW DATA QUALITY": "warning message...",
+        # or "HIGH DATA QUALITY" or "UNKNOWN DATA QUALITY"
+        "Tables failing data quality checks": [
+          "Table {name} has issue 1",
+          "Table {name} has issue 2"
+        ],
+        "Inconclusive data quality checks": [
+          "Table {name} has no data quality score"
+        ]
+      }
+    }
+
+    UNDERSTANDING THE RESPONSE:
+    - Overall status: "LOW DATA QUALITY", "HIGH DATA QUALITY", or "UNKNOWN DATA QUALITY"
+    - Tables failing: List of quality issues found (trust flags, DQ scores, deprecation warnings)
+    - Inconclusive: Tables where quality could not be determined
+    - "One bad apple" principle: If ANY table has quality issues, overall status is LOW
+
+    COMMON EXAMPLES:
+    - Check specific tables:
+      get_data_quality(table_ids=[123, 456])
+
+    - Check SQL query quality:
+      get_data_quality(sql_query="SELECT * FROM orders", ds_id=5)
+
+    - Check with custom threshold:
+      get_data_quality(table_ids=[123], dq_score_threshold=80)
+
+    - Get compact YAML output:
+      get_data_quality(table_ids=[123, 456, 789], output_format="yaml_markdown")"""
 
     @track_tool_execution()
     def run(
@@ -484,9 +534,10 @@ class CheckDataQualityTool:
         default_schema_name: Optional[str] = None,
         output_format: Optional[str] = None,
         dq_score_threshold: Optional[int] = None,
-    ):
+        chat_id: Optional[str] = None,
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
-            return self.api.check_sql_query_tables(
+            ref = self.api.get_data_quality_tool_stream(
                 table_ids=table_ids,
                 sql_query=sql_query,
                 db_uri=db_uri,
@@ -495,7 +546,9 @@ class CheckDataQualityTool:
                 default_schema_name=default_schema_name,
                 output_format=output_format,
                 dq_score_threshold=dq_score_threshold,
+                chat_id=chat_id,
             )
+            return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
             return {"error": e.to_dict()}
 
@@ -512,56 +565,35 @@ class GetCustomFieldsDefinitionsTool:
 
     @staticmethod
     def _get_description() -> str:
-        return """
-        Retrieves all custom field definitions from the Alation instance.
+        return """Get comprehensive custom field definitions for the Alation instance.
 
-        Custom fields are user-defined metadata fields that organizations create to capture 
-        business-specific information beyond Alation's standard fields (title, description, stewards).
+    This tool retrieves custom fields, built-in metadata fields, and built-in search facets
+    with structured metadata and usage guidance. It's designed to help with data dictionary
+    creation, metadata updates, and understanding field capabilities.
 
-        Common examples of custom fields include:
-        - Data Classification (e.g., "Public", "Internal", "Confidential", "Restricted")
-        - Business Owner or Data Owner
-        - Data Retention Period
-        - Business Glossary Terms
-        - Compliance Tags
-        - Source System
-        - Update Frequency
-        - Business Purpose
+    Custom fields are user-defined metadata fields that organizations create to capture
+    business-specific information beyond Alation's standard or built-in fields (title, description, stewards).
 
-        WHEN TO USE:
-        - To understand what custom metadata fields are available in the instance
-        - To validate custom field names and types before bulk updates
-        - Before generating data dictionary files that need to include custom field updates
+    WHEN TO USE:
+    - To understand what custom metadata fields are available in the instance
+    - To validate custom field names and types before bulk updates
+    - Before generating data dictionary files that need to include custom field updates
 
-        IMPORTANT NOTES:
-        - Admin permissions provide access to all custom fields created by the organization
-        - Non-admin users will receive built-in fields only (title, description, steward) with appropriate messaging
-        - Returns both user-created custom fields and some built-in fields
-        - Use the 'allowed_otypes' field to understand which object types each field supports
-        - Field types include: TEXT, RICH_TEXT, PICKER, MULTI_PICKER, OBJECT_SET, DATE, etc.
-        - If users asks for updating custom fields, please do the below step by step
-            1. Please format the objects to show the changes in a csv format with object id, name and changed custom field value.
-            2. Once you showed the csv file, say the user can call generate_data_dictionary_instructions tool to create a data dictionary which could be uploaded to alation UI for bulk updates.
-
-        Parameters:
-        No parameters required - returns all custom field definitions for the instance.
-        chat_id (optional): Chat session identifier.
+    Parameters:
+    No parameters required - returns all custom field definitions for the instance.
+    chat_id (optional): Chat session identifier.
 
 
-        Returns:
-        List of custom field objects with exactly these properties:
-        - id: Unique identifier for the custom field
-        - name_singular: Display name shown in the UI (singular form)
-        - field_type: The type of field (RICH_TEXT, PICKER, MULTI_PICKER, OBJECT_SET, DATE, etc.)
-        - allowed_otypes: List of object types that can be referenced by this field (e.g., ["user", "groupprofile"]). Only applicable to OBJECT_SET fields.
-        - options: Available choices for picker-type fields (null for others)
-        - tooltip_text: Optional description explaining the field's purpose (null if not provided)
-        - allow_multiple: Whether the field accepts multiple values
-        - name_plural: Display name shown in the UI (plural form, empty string if not applicable)
-        
-        Admin users: Returns all custom fields plus built-in fields
-        Non-admin users: Returns only built-in fields (id: 3 (title), 4 (description), 8 (steward))
-        """
+    Returns:
+    List of custom field objects with exactly these properties:
+    - id: Unique identifier for the custom field
+    - name_singular: Display name shown in the UI (singular form)
+    - field_type: The type of field (RICH_TEXT, PICKER, MULTI_PICKER, OBJECT_SET, DATE, etc.)
+    - allowed_otypes: List of object types that can be referenced by this field (e.g., ["user", "groupprofile"]). Only applicable to OBJECT_SET fields.
+    - options: Available choices for picker-type fields (null for others)
+    - tooltip_text: Optional description explaining the field's purpose (null if not provided)
+    - allow_multiple: Whether the field accepts multiple values
+    - name_plural: Display name shown in the UI (plural form, empty string if not applicable)"""
 
     @track_tool_execution()
     def run(
@@ -627,8 +659,6 @@ class GetDataDictionaryInstructionsTool:
         - Documentation objects (glossary_v3, glossary_term) need separate CSV
         - Title field is NOT supported for BI objects (read-only from source system)
 
-        No parameters required - returns complete instruction set with latest schema.
-
         Returns:
         Complete instruction set with formatting rules, validation schemas, and examples
         """
@@ -666,26 +696,27 @@ class SignatureCreationTool:
 
     @staticmethod
     def _get_description() -> str:
-        return """Returns comprehensive instructions for creating the signature parameter for alation_context
-        and bulk_retrieval tools.
+        return """HELPER TOOL: Instructions for building signatures for low-level catalog tools.
 
-        Provides object type guidance, field selection rules, filter application logic,
-        and signature templates for use with alation_context and bulk_retrieval tools.
+This tool provides formatting guidance for the `signature` parameter used by
+`get_context_by_id` and `bulk_retrieval` tools.
 
-        USE THIS TOOL WHEN:
-        - Need guidance on creating proper signatures
-        - Want to understand available object types and fields
-        - Building complex queries with filters
-        - Learning signature format and structure
+NOTE: If you're using `catalog_context_search_agent`, you don't need this tool.
+Signatures are only needed for direct low-level tool access.
 
-        PARAMETERS:
-        chat_id (optional): Chat session identifier
+WHEN TO USE:
+- User explicitly requests signature creation instructions
+- Before calling `get_context_by_id` with a custom signature
+- Before calling `bulk_retrieval` (signature is required)
+- Need guidance on available object types and fields
 
-        RETURNS:
-        - Complete signature creation instructions
-        - Templates and examples
-        - Best practices and validation rules
-        """
+PARAMETERS:
+- chat_id (optional): Chat session identifier
+
+RETURNS:
+Complete signature creation instructions including templates, examples,
+and best practices for validation and filter rules.
+"""
 
     @track_tool_execution()
     def run(
@@ -710,27 +741,27 @@ class AnalyzeCatalogQuestionTool:
 
     @staticmethod
     def _get_description() -> str:
-        return """MANDATORY FIRST STEP - CALL THIS FIRST
-        
-        PRIMARY ENTRY POINT: Analyzes catalog questions and returns workflow guidance.
+        return """WORKFLOW ORCHESTRATOR for controlled catalog data retrieval.
 
-        Call this tool FIRST for all data catalog questions.
+`catalog_context_search_agent` handles most catalog questions automatically and returns
+Alation's processed response. Use `analyze_catalog_question` when you need direct access
+to catalog objects or control over the search workflow.
 
-        Provides step-by-step guidance on how to analyze questions, gather metadata,
-        create optimized signatures, and execute searches effectively.
+WHEN TO USE:
+- User explicitly requests "analyze_catalog_question" or this specific tool
+- You need to chain multiple catalog/tool operations together
+- You want control over which fields, filters, or object types to retrieve
+- Building custom workflows
+- You need direct access to catalog objects rather than a processed response
 
-        USE THIS TOOL WHEN:
-        - Need guidance on how to handle complex Alation search questions
-        - Want to understand the optimal workflow for data catalog queries
-        - Building sophisticated search capabilities
-        - Learning how to orchestrate multiple tools effectively
+PARAMETERS:
+- question (required): The catalog question to analyze
+- chat_id (optional): Chat session identifier
 
-        RETURNS:
-        - Complete 5-step workflow instructions
-        - Decision trees for tool selection
-        - Question analysis guidance
-        - Best practices for search orchestration
-        """
+RETURNS:
+Step-by-step workflow instructions, tool selection guidance, and signature building tips
+for using `get_context_by_id` or `bulk_retrieval` tools.
+"""
 
     @track_tool_execution()
     def run(
@@ -758,19 +789,30 @@ class CatalogContextSearchAgentTool:
 
     @staticmethod
     def _get_description() -> str:
-        return """
-        Catalog Context Search Agent for searching catalog objects with enhanced context.
+        return """PRIMARY ENTRY POINT: Search and discover data assets in the Alation catalog.
 
-        This agent provides contextual search capabilities across the Alation catalog,
-        understanding relationships and providing enriched results.
+    Call this agent for ANY catalog search question. It automatically determines the optimal
+    search strategy — semantic (search + filters) or bulk enumeration (filters only)—and handles
+    complex queries without requiring manual tool orchestration.
 
-        Parameters:
-        - message (required, str): Natural language description of what you're searching for
-        - chat_id (optional, str): Chat session identifier
+    USE CASES:
+    ✓ "Find sales-related tables" (semantic)
+    ✓ "List all tables in finance schema" (bulk enumeration)
+    ✓ "Tables with PII classification" (bulk enumeration)
+    ✓ "Documentation about revenue" (semantic)
+    ✓ "Endorsed tables from data source X" (bulk enumeration)
+    ✓ "Columns containing customer data" (semantic)
 
-        Returns:
-        Contextually-aware search results with enhanced metadata and relationships.
-        """
+    SUPPORTED OBJECT TYPES:
+    tables, columns, schemas, queries, BI reports, documentation
+
+    PARAMETERS:
+    - message (required): Natural language description of what you're searching for
+    - chat_id (optional): Chat session identifier for context-aware searches
+
+    RETURNS:
+    Contextually-aware search results with enriched metadata and relationships.
+    """
 
     @track_tool_execution()
     def run(
@@ -882,10 +924,24 @@ class GetDataSourcesTool:
 
     @staticmethod
     def _get_description() -> str:
-        return """
-        Retrieve available data sources from the catalog.
+        return """Retrieve all available data sources from the Alation catalog.
 
-        This tool lists data sources that are available in the Alation catalog.
+        This tool retrieves a list of all data sources available in the catalog.
+        Each data source includes its ID, title, and URL.
+
+        Example output:
+            [
+                {
+                    "id": 15,
+                    "title": "DQ INSIGHTS",
+                    "url": "/data/15/"
+                },
+                {
+                    "id": 20,
+                    "title": "Sales Database",
+                    "url": "/data/20/"
+                }
+            ]
 
         Parameters:
         - limit (optional, int): Maximum number of data sources to return (default: 100)
