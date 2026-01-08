@@ -29,8 +29,6 @@ from .tools import (
     CustomAgentTool,
 )
 from .lineage import (
-    LineageToolResponse,
-    make_lineage_kwargs,
     LineageRootNode,
     LineageDirectionType,
     LineageDesignTimeType,
@@ -210,69 +208,6 @@ class AlationAIAgentSDK:
         """
         return self.data_product_tool.run(product_id=product_id, query=query)
 
-    def get_lineage(
-        self,
-        root_node: LineageRootNode,
-        direction: LineageDirectionType,
-        limit: Optional[int] = 1000,
-        batch_size: Optional[LineageBatchSizeType] = 1000,
-        pagination: Optional[LineagePagination] = None,
-        processing_mode: Optional[LineageGraphProcessingType] = None,
-        show_temporal_objects: Optional[bool] = False,
-        design_time: Optional[LineageDesignTimeType] = None,
-        max_depth: Optional[int] = 10,
-        excluded_schema_ids: Optional[LineageExcludedSchemaIdsType] = None,
-        allowed_otypes: Optional[LineageOTypeFilterType] = None,
-        time_from: Optional[LineageTimestampType] = None,
-        time_to: Optional[LineageTimestampType] = None,
-    ) -> LineageToolResponse:
-        """
-        Fetch lineage information from Alation's catalog for a given object / root node.
-
-        Args:
-            root_node (LineageRootNode): The root node to start lineage from.
-            direction (LineageDirectionType): The direction of lineage to fetch, either "upstream" or "downstream".
-            limit (int, optional): The maximum number of nodes to return. Defaults to 1000.
-            batch_size (int, optional): The size of each batch for chunked processing. Defaults to 1000.
-            pagination (LineagePagination, optional): Pagination parameters only used with chunked processing.
-            processing_mode (LineageGraphProcessingType, optional): The processing mode for lineage graph. Strongly recommended to use 'complete' for full lineage graphs.
-            show_temporal_objects (bool, optional): Whether to include temporary objects in the lineage. Defaults to False.
-            design_time (LineageDesignTimeType, optional): The design time option to filter lineage. Defaults to LineageDesignTimeOptions.EITHER_DESIGN_OR_RUN_TIME.
-            max_depth (int, optional): The maximum depth to traverse in the lineage graph. Defaults to 10.
-            excluded_schema_ids (LineageExcludedSchemaIdsType, optional): A list of excluded schema IDs to filter lineage nodes. Defaults to None.
-            allowed_otypes (LineageOTypeFilterType, optional): A list of allowed object types to filter lineage nodes. Defaults to None.
-            time_from (LineageTimestampType, optional): The start time for temporal lineage filtering. Defaults to None.
-            time_to (LineageTimestampType, optional): The end time for temporal lineage filtering. Defaults to None.
-
-        Returns:
-            Dict[str, Dict[str, any]]]: A dictionary containing the lineage `graph` and `pagination` information.
-
-        Raises:
-            ValueError: When argument combinations are invalid, such as:
-                pagination in complete processing mode,
-                allowed_otypes in chunked processing mode
-            AlationAPIError: On network, API, or response errors.
-        """
-        lineage_kwargs = make_lineage_kwargs(
-            root_node=root_node,
-            processing_mode=processing_mode,
-            show_temporal_objects=show_temporal_objects,
-            design_time=design_time,
-            max_depth=max_depth,
-            excluded_schema_ids=excluded_schema_ids,
-            allowed_otypes=allowed_otypes,
-            time_from=time_from,
-            time_to=time_to,
-        )
-        return self.api.get_bulk_lineage(
-            root_nodes=[root_node],
-            direction=direction,
-            limit=limit,
-            batch_size=batch_size,
-            pagination=pagination,
-            **lineage_kwargs,
-        )
-
     def check_data_quality(
         self,
         table_ids: Optional[list] = None,
@@ -283,7 +218,8 @@ class AlationAIAgentSDK:
         default_schema_name: Optional[str] = None,
         output_format: Optional[str] = None,
         dq_score_threshold: Optional[int] = None,
-    ) -> Union[Dict[str, Any], str]:
+        chat_id: Optional[str] = None,
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any], str]:
         """
         Check SQL Query or tables for quality using Alation's Data Quality API.
         Returns dict (JSON) or str (YAML Markdown) depending on output_format.
@@ -303,6 +239,7 @@ class AlationAIAgentSDK:
                 default_schema_name=default_schema_name,
                 output_format=output_format,
                 dq_score_threshold=dq_score_threshold,
+                chat_id=chat_id,
             )
         except AlationAPIError as e:
             return {"error": e.to_dict()}
