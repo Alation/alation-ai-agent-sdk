@@ -244,7 +244,7 @@ class AlationAIAgentSDK:
         except AlationAPIError as e:
             return {"error": e.to_dict()}
 
-    def generate_data_product(self) -> str:
+    def generate_data_product(self) -> Dict[str, Any]:
         """
         Generate complete instructions for creating Alation Data Products.
 
@@ -254,7 +254,7 @@ class AlationAIAgentSDK:
         - Detailed instructions for converting user input to valid YAML
 
         Returns:
-            str: Complete instruction set for data product creation
+            Dict[str, Any]: Complete instruction set for data product creation
         """
         return self.generate_data_product_tool.run()
 
@@ -271,12 +271,12 @@ class AlationAIAgentSDK:
         """
         return self.get_custom_fields_definitions_tool.run(chat_id=chat_id)
 
-    def get_data_dictionary_instructions(self) -> str:
+    def get_data_dictionary_instructions(self) -> Dict[str, Any]:
         """
         Generate comprehensive instructions for creating data dictionary CSV files.
 
         Returns:
-            Complete instruction set for data dictionary CSV generation
+            Dict[str, Any]: Complete instruction set for data dictionary CSV generation
         """
         return self.get_data_dictionary_instructions_tool.run()
 

@@ -278,7 +278,7 @@ def register_tools(
         metadata = get_tool_metadata(GenerateDataProductTool)
 
         @mcp.tool(name=metadata["name"], description=metadata["description"])
-        def generate_data_product() -> str:
+        def generate_data_product() -> dict:
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.generate_data_product()
             return result
