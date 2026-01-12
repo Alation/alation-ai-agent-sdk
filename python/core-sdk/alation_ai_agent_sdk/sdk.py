@@ -18,6 +18,7 @@ from .tools import (
     AlationLineageTool,
     CheckDataQualityTool,
     GenerateDataProductTool,
+    GetContextByIdTool,
     GetCustomFieldsDefinitionsTool,
     GetDataDictionaryInstructionsTool,
     SignatureCreationTool,
@@ -48,6 +49,7 @@ class AlationTools:
     BULK_RETRIEVAL = "bulk_retrieval"
     DATA_QUALITY = "data_quality"
     GENERATE_DATA_PRODUCT = "generate_data_product"
+    GET_CONTEXT_BY_ID = "get_context_by_id"
     GET_CUSTOM_FIELDS_DEFINITIONS = "get_custom_fields_definitions"
     GET_DATA_DICTIONARY_INSTRUCTIONS = "get_data_dictionary_instructions"
     GET_DATA_PRODUCT = "data_product"
@@ -122,6 +124,7 @@ class AlationAIAgentSDK:
         self.bulk_retrieval_tool = AlationBulkRetrievalTool(self.api)
         self.data_product_tool = AlationGetDataProductTool(self.api)
         self.generate_data_product_tool = GenerateDataProductTool(self.api)
+        self.get_context_by_id_tool = GetContextByIdTool(self.api)
         self.lineage_tool = AlationLineageTool(self.api)
         self.check_data_quality_tool = CheckDataQualityTool(self.api)
         self.get_custom_fields_definitions_tool = GetCustomFieldsDefinitionsTool(
@@ -300,6 +303,27 @@ class AlationAIAgentSDK:
             - Validation rules
         """
         return self.signature_creation_tool.run(chat_id=chat_id)
+
+    def get_context_by_id(
+        self, signature: Dict[str, Any], chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+        """
+        Fetch catalog context using signature with search phrases.
+
+        This is a low-level tool that fetches context from the catalog using
+        search phrases embedded in the signature. Use after calling
+        analyze_catalog_question to determine the appropriate workflow.
+
+        Args:
+            signature (Dict[str, Any]): JSON specification with object types,
+                fields, filters, and search_phrases
+            chat_id (optional, str): Chat session identifier
+
+        Returns:
+            Dict[str, Any]: Structured data about tables, columns, documentation,
+                queries, and BI objects matching the search phrases
+        """
+        return self.get_context_by_id_tool.run(signature=signature, chat_id=chat_id)
 
     def analyze_catalog_question(
         self, question: str, chat_id: Optional[str] = None
@@ -484,6 +508,13 @@ class AlationAIAgentSDK:
             self.enabled_beta_tools,
         ):
             tools.append(self.signature_creation_tool)
+        if is_tool_enabled(
+            AlationTools.GET_CONTEXT_BY_ID,
+            self.enabled_tools,
+            self.disabled_tools,
+            self.enabled_beta_tools,
+        ):
+            tools.append(self.get_context_by_id_tool)
         if is_tool_enabled(
             AlationTools.ANALYZE_CATALOG_QUESTION,
             self.enabled_tools,

@@ -278,6 +278,74 @@ PARAMETERS:
             return {"error": e.to_dict()}
 
 
+class GetContextByIdTool:
+    def __init__(self, api: AlationAPI):
+        self.api = api
+        self.name = self._get_name()
+        self.description = self._get_description()
+
+    @staticmethod
+    def _get_name() -> str:
+        return "get_context_by_id"
+
+    @staticmethod
+    def _get_description() -> str:
+        return """LOW-LEVEL TOOL: Semantic search of Alation's data catalog using signature with search phrases.
+
+`catalog_context_search_agent` handles most catalog questions automatically.
+Use `get_context_by_id` when you need direct access to catalog context with custom signatures.
+
+You MUST call `analyze_catalog_question` first to determine workflow.
+
+WHEN TO USE:
+- User explicitly requests "get_context_by_id" or this specific tool
+- Following instructions from `analyze_catalog_question`
+- You have a pre-built signature with search phrases
+
+WHAT THIS TOOL DOES:
+Fetches context from the catalog using search phrases embedded in the signature.
+Returns structured data about tables, columns, documentation, queries, and BI objects.
+Use for semantic search and concept discovery.
+
+Supported: table, column, schema, query, documentation, BI objects
+
+USE CASES:
+✓ "Find sales-related tables" (concept discovery)
+✓ "Tables about customer data" (semantic search)
+✓ "Documentation on data warehouse" (content search)
+
+✗ "List ALL tables in schema" → use `bulk_retrieval` (enumeration)
+✗ "Get all endorsed tables" → use `bulk_retrieval` (filter-based list)
+
+PARAMETERS:
+- signature (required, JSON):
+    For complete signature specification, field options, and filter rules,
+    call `get_signature_creation_instructions` first.
+- chat_id (optional): Chat session identifier
+"""
+
+    @track_tool_execution()
+    def run(
+        self,
+        *,
+        signature: Dict[str, Any],
+        chat_id: Optional[str] = None,
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+        if not signature:
+            return {
+                "error": {
+                    "message": "Signature parameter is required",
+                    "reason": "Missing Required Parameter",
+                    "resolution_hint": "Provide a signature with search_phrases. Call get_signature_creation_instructions for format details.",
+                }
+            }
+        try:
+            ref = self.api.get_context_by_id_stream(signature=signature, chat_id=chat_id)
+            return ref if self.api.enable_streaming else next(ref)
+        except AlationAPIError as e:
+            return {"error": e.to_dict()}
+
+
 class AlationLineageTool:
     def __init__(self, api: AlationAPI):
         self.api = api

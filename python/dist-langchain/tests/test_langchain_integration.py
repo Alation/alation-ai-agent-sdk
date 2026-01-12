@@ -116,6 +116,10 @@ def get_sdk_mock():
     mock_sdk.sql_query_agent_tool.name = "sql_query_agent"
     mock_sdk.sql_query_agent_tool.description = "SQL Query Agent"
 
+    mock_sdk.get_context_by_id_tool = MagicMock()
+    mock_sdk.get_context_by_id_tool.name = "get_context_by_id"
+    mock_sdk.get_context_by_id_tool.description = "Get Context By ID"
+
     # Patch .run for StructuredTool.func compatibility
     def run_with_signature(*args, **kwargs):
         return mock_sdk.context_tool.run(*args, **kwargs)

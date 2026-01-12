@@ -11,6 +11,7 @@ from .tool import (
     get_analyze_catalog_question_tool,
     get_catalog_context_search_agent_tool,
     get_check_data_quality_tool,
+    get_context_by_id_tool,
     get_custom_agent_tool,
     get_custom_fields_definitions_tool,
     get_data_dictionary_instructions_tool,
@@ -123,6 +124,13 @@ def get_tools(sdk: AlationAIAgentSDK):
         sdk.enabled_beta_tools,
     ):
         tools.append(get_signature_creation_tool(sdk))
+    if is_tool_enabled(
+        AlationTools.GET_CONTEXT_BY_ID,
+        sdk.enabled_tools,
+        sdk.disabled_tools,
+        sdk.enabled_beta_tools,
+    ):
+        tools.append(get_context_by_id_tool(sdk))
     if is_tool_enabled(
         AlationTools.SQL_QUERY_AGENT,
         sdk.enabled_tools,

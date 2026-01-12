@@ -34,6 +34,7 @@ from alation_ai_agent_sdk.tools import (
     AlationLineageTool,
     CheckDataQualityTool,
     GenerateDataProductTool,
+    GetContextByIdTool,
     GetCustomFieldsDefinitionsTool,
     GetDataDictionaryInstructionsTool,
     SignatureCreationTool,
@@ -323,6 +324,23 @@ def register_tools(
         def get_signature_creation_instructions(chat_id: Optional[str] = None):
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.get_signature_creation_instructions(chat_id=chat_id)
+            return result
+
+    if is_tool_enabled(
+        AlationTools.GET_CONTEXT_BY_ID,
+        config_enabled,
+        config_disabled,
+        config_enabled_beta,
+    ):
+        metadata = get_tool_metadata(GetContextByIdTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def get_context_by_id(
+            signature: Dict[str, Any],
+            chat_id: Optional[str] = None,
+        ):
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.get_context_by_id(signature=signature, chat_id=chat_id)
             return result
 
     if is_tool_enabled(

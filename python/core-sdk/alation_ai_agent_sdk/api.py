@@ -965,6 +965,24 @@ class AlationAPI:
             timeouts=None,
         )
 
+    def get_context_by_id_stream(
+        self,
+        signature: Dict[str, Any],
+        chat_id: Optional[str] = None,
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Retrieve catalog context using signature with search phrases.
+        """
+        url = f"{self.base_url}/ai/api/v1/chats/tool/default/get_context_by_id_tool/stream"
+        if chat_id is not None:
+            url += f"?chat_id={chat_id}"
+        yield from self._safe_sse_post_request(
+            tool_name="get_context_by_id",
+            url=url,
+            payload={"signature": signature},
+            timeouts=None,
+        )
+
     def catalog_context_search_agent_stream(
         self,
         message: str,
