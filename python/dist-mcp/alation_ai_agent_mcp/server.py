@@ -14,10 +14,12 @@ Architecture:
 """
 
 from typing import Optional
+from functools import partial
 import logging
 
-from mcp.server.fastmcp import FastMCP
-from mcp.server.auth.settings import AuthSettings
+
+from fastmcp import FastMCP
+from fastmcp.server.auth import RemoteAuthProvider
 from pydantic import AnyHttpUrl
 import uvicorn
 
@@ -71,15 +73,14 @@ def create_fastmcp_server(
         # Determine the resource server URL (external URL vs internal binding)
         resource_server_url = external_url if external_url else f"http://{host}:{port}"
 
-        auth = AuthSettings(
-            issuer_url=AnyHttpUrl(base_url),
-            resource_server_url=AnyHttpUrl(resource_server_url),
+        auth_provider = RemoteAuthProvider(
+            token_verifier=AlationTokenVerifier(base_url, token_verification=token_verification),
+            authorization_servers=[AnyHttpUrl(base_url)],
+            base_url=resource_server_url,
         )
         return FastMCP(
             name="Alation MCP Server",
-            stateless_http=True,
-            auth=auth,
-            token_verifier=AlationTokenVerifier(base_url, token_verification=token_verification),
+            auth=auth_provider,
         )
 
     else:
@@ -196,7 +197,7 @@ def run_server() -> None:
     elif transport == "http":
         logging.info(f"Starting Alation MCP HTTP Server on {host}:{port}")
         logging.info(f"OAuth authentication enabled for {base_url}")
-        uvicorn.run(mcp.streamable_http_app, host=host, port=port)
+        uvicorn.run(partial(mcp.http_app, stateless_http=True), host=host, port=port)
     else:
         raise ValueError(f"Unknown transport mode: {transport}")
 

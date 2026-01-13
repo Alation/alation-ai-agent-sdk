@@ -44,7 +44,7 @@ from alation_ai_agent_sdk.tools import (
     GetDataSourcesTool,
     CustomAgentTool,
 )
-from mcp.server.fastmcp import FastMCP
+from fastmcp import FastMCP
 from fastmcp.server.dependencies import get_access_token
 
 from .utils import MCP_SERVER_VERSION
@@ -95,7 +95,8 @@ def register_tools(
             if access_token is None:
                 raise ValueError("No authenticated user found. Authorization required.")
 
-            auth_params = BearerTokenAuthParams(token=access_token.token)
+            auth_params = BearerTokenAuthParams(access_token.token)
+
             return AlationAIAgentSDK(
                 base_url=base_url,
                 auth_method="bearer_token",
