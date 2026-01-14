@@ -34,6 +34,7 @@ from alation_ai_agent_sdk.tools import (
     AlationLineageTool,
     CheckDataQualityTool,
     GenerateDataProductTool,
+    GetContextByIdTool,
     GetCustomFieldsDefinitionsTool,
     GetDataDictionaryInstructionsTool,
     SignatureCreationTool,
@@ -217,9 +218,10 @@ def register_tools(
             allowed_otypes: LineageOTypeFilterType | None = None,
             time_from: LineageTimestampType | None = None,
             time_to: LineageTimestampType | None = None,
+            chat_id: str | None = None,
         ):
             alation_sdk = create_sdk_for_tool()
-            result = alation_sdk.get_lineage(
+            result = alation_sdk.lineage_tool.run(
                 root_node=root_node,
                 direction=direction,
                 limit=limit,
@@ -233,6 +235,7 @@ def register_tools(
                 allowed_otypes=allowed_otypes,
                 time_from=time_from,
                 time_to=time_to,
+                chat_id=chat_id,
             )
             return result
 
@@ -251,6 +254,7 @@ def register_tools(
             default_schema_name: Optional[str] = None,
             output_format: Optional[str] = None,
             dq_score_threshold: int | None = None,
+            chat_id: Optional[str] = None,
         ) -> dict | str:
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.check_data_quality(
@@ -262,6 +266,7 @@ def register_tools(
                 default_schema_name=default_schema_name,
                 output_format=output_format,
                 dq_score_threshold=dq_score_threshold,
+                chat_id=chat_id,
             )
             return result
 
@@ -274,7 +279,7 @@ def register_tools(
         metadata = get_tool_metadata(GenerateDataProductTool)
 
         @mcp.tool(name=metadata["name"], description=metadata["description"])
-        def generate_data_product() -> str:
+        def generate_data_product() -> dict:
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.generate_data_product()
             return result
@@ -319,6 +324,23 @@ def register_tools(
         def get_signature_creation_instructions(chat_id: Optional[str] = None):
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.get_signature_creation_instructions(chat_id=chat_id)
+            return result
+
+    if is_tool_enabled(
+        AlationTools.GET_CONTEXT_BY_ID,
+        config_enabled,
+        config_disabled,
+        config_enabled_beta,
+    ):
+        metadata = get_tool_metadata(GetContextByIdTool)
+
+        @mcp.tool(name=metadata["name"], description=metadata["description"])
+        def get_context_by_id(
+            signature: Dict[str, Any],
+            chat_id: Optional[str] = None,
+        ):
+            alation_sdk = create_sdk_for_tool()
+            result = alation_sdk.get_context_by_id(signature=signature, chat_id=chat_id)
             return result
 
     if is_tool_enabled(

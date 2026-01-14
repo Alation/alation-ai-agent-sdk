@@ -6,8 +6,6 @@ import requests
 import requests.exceptions
 from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 from http import HTTPStatus
-from uuid import uuid4
-from alation_ai_agent_sdk.lineage_filtering import filter_graph
 from .types import (
     ServiceAccountAuthParams,
     BearerTokenAuthParams,
@@ -20,9 +18,7 @@ from .errors import AlationAPIError, AlationErrorClassifier
 from alation_ai_agent_sdk.lineage import (
     LineageBatchSizeType,
     LineageDesignTimeType,
-    LineageGraphProcessingOptions,
     LineageGraphProcessingType,
-    LineageKeyTypeType,
     LineageOTypeFilterType,
     LineagePagination,
     LineageRootNode,
@@ -805,28 +801,11 @@ class AlationAPI:
                 help_links=["https://developer.alation.com/"],
             )
 
-    def _fetch_marketplace_id(self, headers: Dict[str, str]) -> str:
-        """Fetch and return the marketplace ID."""
-        marketplace_url = f"{self.base_url}/api/v1/setting/marketplace/"
-        try:
-            response = requests.get(marketplace_url, headers=headers, timeout=30)
-            response.raise_for_status()
-            marketplace_data = response.json()
-            marketplace_id = marketplace_data.get("default_marketplace")
-            if not marketplace_id:
-                raise AlationAPIError(
-                    message="Marketplace ID not found in response",
-                    reason="Missing Marketplace ID",
-                )
-            return marketplace_id
-        except requests.RequestException as e:
-            self._handle_request_error(e, "fetching marketplace ID")
-
     def get_data_products(
         self, product_id: Optional[str] = None, query: Optional[str] = None
     ) -> dict:
         """
-        Retrieve Alation Data Products by product id or free-text search.
+        Retrieve Alation Data Products by product id or free-text search using streaming endpoints.
 
         Args:
             product_id (str, optional): product id for direct lookup.
@@ -839,275 +818,27 @@ class AlationAPI:
             ValueError: If neither product_id nor query is provided.
             AlationAPIError: On network, API, or response errors.
         """
-        self._with_valid_auth()
-        headers = self._get_request_headers()
-
         if product_id:
-            # Fetch data product by ID
-            url = f"{self.base_url}/integration/data-products/v1/data-product/{product_id}/"
-            try:
-                response = requests.get(url, headers=headers, timeout=30)
-                if response.status_code == HTTPStatus.NOT_FOUND:
-                    return {
-                        "instructions": "The product ID provided does not exist. Please verify the ID and try again.",
-                        "results": [],
-                    }
-                response.raise_for_status()
-                response_data = response.json()
-                if isinstance(response_data, dict):
-                    instructions = f"The following is the complete specification for data product '{product_id}'."
-                    return {"instructions": instructions, "results": [response_data]}
-                return {
-                    "instructions": "No data products found for the given product ID.",
-                    "results": [],
-                }
-            except requests.RequestException as e:
-                self._handle_request_error(
-                    e, f"fetching data product by id: {product_id}"
-                )
+            # Use get_data_product_spec_tool via streaming
+            for event in self.get_data_product_spec_stream(data_product_id=product_id):
+                if isinstance(event, dict) and "content" in event:
+                    return event["content"]
+                elif isinstance(event, dict):
+                    return event
+            return {"instructions": "No data found", "results": []}
 
         elif query:
-            # Fetch marketplace ID if not cached
-            if not hasattr(self, "marketplace_id"):
-                self.marketplace_id = self._fetch_marketplace_id(headers)
-
-            # Search data products by query
-            url = f"{self.base_url}/integration/data-products/v1/search-internally/{self.marketplace_id}/"
-            try:
-                response = requests.post(
-                    url, headers=headers, json={"user_query": query}, timeout=30
-                )
-                response.raise_for_status()
-                response_data = response.json()
-                if response_data and (
-                    data_products := response_data.get("results", [])
-                ):
-                    instructions = (
-                        f"Found {len(data_products)} data product{'s' if len(data_products) > 1 else ''} matching your query. "
-                        "The following contains summary information (name, id, description, url) for each product. "
-                        "To get complete specifications, call this tool again with a specific product_id."
-                    )
-                    results = [
-                        {
-                            "id": product["product"]["product_id"],
-                            "name": product["product"]["spec_json"]["product"]["en"][
-                                "name"
-                            ],
-                            "description": product["product"]["spec_json"]["product"][
-                                "en"
-                            ]["description"],
-                            "url": f"{self.base_url}/app/marketplace/{self.marketplace_id}/data-product/{product['product']['product_id']}/",
-                        }
-                        for product in data_products
-                    ]
-                    return {"instructions": instructions, "results": results}
-                return {
-                    "instructions": "No data products found for the given query.",
-                    "results": [],
-                }
-            except requests.RequestException as e:
-                self._handle_request_error(
-                    e, f"searching data products with query: {query}"
-                )
+            # Use list_data_products_tool via streaming
+            for event in self.list_data_products_stream(search_term=query):
+                if isinstance(event, dict) and "content" in event:
+                    return event["content"]
+                elif isinstance(event, dict):
+                    return event
+            return {"instructions": "No data found", "results": []}
 
         else:
             raise ValueError(
                 "You must provide either a product_id or a query to search for data products."
-            )
-
-    def get_bulk_lineage(
-        self,
-        root_nodes: List[LineageRootNode],
-        direction: LineageDirectionType,
-        limit: int,
-        batch_size: LineageBatchSizeType,
-        processing_mode: LineageGraphProcessingType,
-        show_temporal_objects: bool,
-        design_time: LineageDesignTimeType,
-        max_depth: int,
-        excluded_schema_ids: LineageExcludedSchemaIdsType,
-        allowed_otypes: LineageOTypeFilterType,
-        time_from: LineageTimestampType,
-        time_to: LineageTimestampType,
-        key_type: LineageKeyTypeType,
-        pagination: Optional[LineagePagination] = None,
-    ) -> dict:
-        """
-        Fetch lineage information from Alation's catalog for a given object / root node.
-
-        Args:
-            root_nodes (List[LineageRootNode]): The root nodes to start lineage from.
-            direction (LineageDirectionType): The direction of lineage to fetch, either "upstream" or "downstream".
-            limit (int, optional): The maximum number of nodes to return. Defaults to the maximum 1,000.
-            batch_size (int, optional): The size of each batch for chunked processing. Defaults to 1,000.
-            pagination (LineagePagination, optional): Pagination parameters only used with chunked processing.
-            processing_mode (LineageGraphProcessingType, optional): The processing mode for lineage graph. Strongly recommended to use 'complete' for full lineage graphs.
-            show_temporal_objects (bool, optional): Whether to include temporary objects in the lineage. Defaults to False.
-            design_time (LineageDesignTimeType, optional): The design time option to filter lineage. Defaults to LineageDesignTimeOptions.EITHER_DESIGN_OR_RUN_TIME.
-            max_depth (int, optional): The maximum depth to traverse in the lineage graph. Defaults to 10.
-            excluded_schema_ids (LineageExcludedSchemaIdsType, optional): A list of excluded schema IDs to filter lineage nodes. Defaults to None.
-            allowed_otypes (LineageOTypeFilterType, optional): A list of allowed object types to filter lineage nodes. Defaults to None.
-            time_from (LineageTimestampType, optional): The start time for temporal lineage filtering. Defaults to None.
-            time_to (LineageTimestampType, optional): The end time for temporal lineage filtering. Defaults to None.
-
-        Returns:
-            Dict[str, Dict[str, any]]]: A dictionary containing the lineage `graph` and `pagination` information.
-
-        Raises:
-            ValueError: When argument combinations are invalid, such as:
-                pagination in complete processing mode,
-                allowed_otypes in chunked processing mode
-            AlationAPIError: On network, API, or response errors.
-        """
-        # Filter out any incompatible options
-        if limit > 1000:
-            raise ValueError("limit cannot exceed 1,000.")
-        if allowed_otypes is not None:
-            if processing_mode != LineageGraphProcessingOptions.COMPLETE:
-                raise ValueError(
-                    "allowed_otypes is only supported in 'complete' processing mode."
-                )
-            if len(allowed_otypes) == 0:
-                raise ValueError("allowed_otypes cannot be empty list.")
-        if (
-            pagination is not None
-            and processing_mode == LineageGraphProcessingOptions.COMPLETE
-        ):
-            raise ValueError(
-                "pagination is only supported in 'chunked' processing mode."
-            )
-
-        self._with_valid_auth()
-
-        headers = self._get_request_headers()
-
-        lineage_request_dict = {
-            "key_type": key_type,
-            "root_nodes": root_nodes,
-            "direction": direction,
-            "limit": limit,
-            "filters": {
-                "depth": max_depth,
-                "time_filter": {
-                    "from": time_from,
-                    "to": time_to,
-                },
-                "schema_filter": excluded_schema_ids,
-                "design_time": design_time,
-            },
-            "request_id": pagination.get("request_id") if pagination else uuid4().hex,
-            "cursor": pagination.get("cursor", 0) if pagination else 0,
-            "batch_size": (
-                limit
-                if processing_mode == LineageGraphProcessingOptions.COMPLETE
-                else pagination.get("batch_size", limit)
-                if pagination
-                else batch_size
-            ),
-        }
-        if show_temporal_objects:
-            lineage_request_dict["filters"]["temp_filter"] = show_temporal_objects
-        url = f"{self.base_url}/integration/v2/bulk_lineage/"
-        try:
-            response = requests.post(
-                url,
-                headers=headers,
-                json=lineage_request_dict,
-                timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS,
-            )
-            response.raise_for_status()
-            response_data = response.json()
-            if (
-                "graph" in response_data
-                and processing_mode == LineageGraphProcessingOptions.COMPLETE
-            ):
-                if allowed_otypes is not None:
-                    allowed_otypes_set = set(allowed_otypes)
-                    response_data["graph"] = filter_graph(
-                        response_data["graph"], allowed_otypes_set
-                    )
-            request_id = response_data.get("request_id", "")
-            # Deliberately Pascal cased to match implementation. We'll change it to be consistent for anything
-            # invoking the tool.
-            pagination = response_data.get("Pagination", None)
-            if pagination is not None:
-                new_pagination = {
-                    "request_id": request_id,
-                    "cursor": pagination.get("cursor", 0),
-                    "batch_size": pagination.get("batch_size", batch_size),
-                    "has_more": pagination.get("has_more", False),
-                }
-                response_data["pagination"] = new_pagination
-                del response_data["Pagination"]
-                del response_data["request_id"]
-            response_data["direction"] = direction
-            return response_data
-        except requests.RequestException as e:
-            self._handle_request_error(
-                e,
-                f"getting lineage for: {json.dumps(lineage_request_dict)}",
-                timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS,
-            )
-
-    def check_sql_query_tables(
-        self,
-        table_ids: Optional[list] = None,
-        sql_query: Optional[str] = None,
-        db_uri: Optional[str] = None,
-        ds_id: Optional[int] = None,
-        bypassed_dq_sources: Optional[list] = None,
-        default_schema_name: Optional[str] = None,
-        output_format: Optional[str] = None,
-        dq_score_threshold: Optional[int] = None,
-    ) -> Union[Dict[str, Any], str]:
-        """
-        Check SQL query tables for data quality using the integration/v1/dq/check_sql_query_tables endpoint.
-        Returns dict (JSON) or str (YAML Markdown) depending on output_format.
-        """
-        self._with_valid_auth()
-        headers = self._get_request_headers()
-        url = f"{self.base_url}/integration/v1/dq/check_sql_query_tables/"
-        payload = {}
-        if table_ids is not None:
-            payload["table_ids"] = table_ids
-        if sql_query is not None:
-            payload["sql_query"] = sql_query
-        if db_uri is not None:
-            payload["db_uri"] = db_uri
-        if ds_id is not None:
-            payload["ds_id"] = ds_id
-
-        if bypassed_dq_sources is not None:
-            payload["bypassed_dq_sources"] = bypassed_dq_sources
-        if default_schema_name is not None:
-            payload["default_schema_name"] = default_schema_name
-        if output_format is not None:
-            payload["output_format"] = output_format
-        if dq_score_threshold is not None:
-            payload["dq_score_threshold"] = dq_score_threshold
-        try:
-            response = requests.post(
-                url,
-                headers=headers,
-                json=payload,
-                timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS,
-            )
-            response.raise_for_status()
-            if output_format and output_format.lower() == "yaml_markdown":
-                return response.text
-            return response.json()
-        except requests.RequestException as e:
-            self._handle_request_error(
-                e, "check_sql_query_tables", timeout=DEFAULT_CONNECT_TIMEOUT_IN_SECONDS
-            )
-        except ValueError:
-            raise AlationAPIError(
-                message="Invalid JSON in data quality check response",
-                status_code=None,
-                response_body=None,
-                reason="Malformed Response",
-                resolution_hint="The server returned a non-JSON response. Contact support if this persists.",
-                help_links=["https://developer.alation.com/"],
             )
 
     def get_custom_fields(self) -> List[Dict[str, Any]]:
@@ -1231,6 +962,24 @@ class AlationAPI:
             tool_name="get_signature_creation_instructions",
             url=url,
             payload={},
+            timeouts=None,
+        )
+
+    def get_context_by_id_stream(
+        self,
+        signature: Dict[str, Any],
+        chat_id: Optional[str] = None,
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Retrieve catalog context using signature with search phrases.
+        """
+        url = f"{self.base_url}/ai/api/v1/chats/tool/default/get_context_by_id_tool/stream"
+        if chat_id is not None:
+            url += f"?chat_id={chat_id}"
+        yield from self._safe_sse_post_request(
+            tool_name="get_context_by_id",
+            url=url,
+            payload={"signature": signature},
             timeouts=None,
         )
 
@@ -1365,6 +1114,86 @@ class AlationAPI:
             timeouts=None,
         )
 
+    def get_data_product_spec_stream(
+        self,
+        data_product_id: str,
+        chat_id: Optional[str] = None,
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Get data product specification by ID using get_data_product_spec_tool.
+        """
+        url = f"{self.base_url}/ai/api/v1/chats/tool/default/get_data_product_spec_tool/stream"
+        if chat_id is not None:
+            url += f"?chat_id={chat_id}"
+        yield from self._safe_sse_post_request(
+            tool_name="get_data_product_spec",
+            url=url,
+            payload={"data_product_id": data_product_id},
+            timeouts=None,
+        )
+
+    def list_data_products_stream(
+        self,
+        search_term: str,
+        limit: int = 5,
+        chat_id: Optional[str] = None,
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Search data products using list_data_products_tool.
+        """
+        url = f"{self.base_url}/ai/api/v1/chats/tool/default/list_data_products_tool/stream"
+        if chat_id is not None:
+            url += f"?chat_id={chat_id}"
+        yield from self._safe_sse_post_request(
+            tool_name="list_data_products",
+            url=url,
+            payload={"search_term": search_term, "limit": limit},
+            timeouts=None,
+        )
+
+    def get_data_quality_tool_stream(
+        self,
+        table_ids: Optional[list] = None,
+        sql_query: Optional[str] = None,
+        db_uri: Optional[str] = None,
+        ds_id: Optional[int] = None,
+        bypassed_dq_sources: Optional[list] = None,
+        default_schema_name: Optional[str] = None,
+        output_format: Optional[str] = None,
+        dq_score_threshold: Optional[int] = None,
+        chat_id: Optional[str] = None,
+    ) -> Generator[Dict[str, Any], None, None]:
+        """
+        Check data quality for tables or SQL queries using streaming endpoint.
+        """
+        payload = {}
+        if table_ids is not None:
+            payload["table_ids"] = table_ids
+        if sql_query is not None:
+            payload["sql_query"] = sql_query
+        if db_uri is not None:
+            payload["db_uri"] = db_uri
+        if ds_id is not None:
+            payload["ds_id"] = ds_id
+        if bypassed_dq_sources is not None:
+            payload["bypassed_dq_sources"] = bypassed_dq_sources
+        if default_schema_name is not None:
+            payload["default_schema_name"] = default_schema_name
+        if output_format is not None:
+            payload["output_format"] = output_format
+        if dq_score_threshold is not None:
+            payload["dq_score_threshold"] = dq_score_threshold
+
+        url = f"{self.base_url}/ai/api/v1/chats/tool/default/get_data_quality_tool/stream"
+        if chat_id is not None:
+            url += f"?chat_id={chat_id}"
+        yield from self._safe_sse_post_request(
+            tool_name="get_data_quality",
+            url=url,
+            payload=payload,
+            timeouts=None,
+        )
+
     def alation_lineage_stream(
         self,
         root_node: LineageRootNode,
@@ -1411,7 +1240,7 @@ class AlationAPI:
         if time_to is not None:
             payload["time_to"] = time_to
 
-        url = f"{self.base_url}/ai/api/v1/chats/tool/default/get_lineage_tool/stream"
+        url = f"{self.base_url}/ai/api/v1/chats/tool/default/lineage_tool/stream"
         if chat_id is not None:
             url += f"?chat_id={chat_id}"
         yield from self._safe_sse_post_request(

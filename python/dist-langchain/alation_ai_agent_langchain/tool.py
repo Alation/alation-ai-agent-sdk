@@ -80,6 +80,38 @@ def get_alation_bulk_retrieval_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     )
 
 
+def get_context_by_id_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
+    context_by_id_tool = sdk.get_context_by_id_tool
+
+    def run_with_signature(*args, **kwargs):
+        """
+        Handles multiple calling patterns similar to bulk_retrieval.
+        """
+        signature = None
+        chat_id = kwargs.get("chat_id", None)
+
+        # Pattern 1: Called with signature parameter
+        if "signature" in kwargs:
+            signature = kwargs["signature"]
+
+        # Pattern 2: direct dict without signature keyword
+        elif "args" in kwargs and kwargs["args"]:
+            signature = kwargs["args"][0]
+
+        # Pattern 3: Positional argument
+        elif args and len(args) > 0:
+            signature = args[0]
+
+        return context_by_id_tool.run(signature=signature, chat_id=chat_id)
+
+    return StructuredTool.from_function(
+        name=context_by_id_tool.name,
+        description=context_by_id_tool.description,
+        func=run_with_signature,
+        args_schema=None,
+    )
+
+
 def get_alation_data_products_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     data_products_tool = sdk.data_product_tool
 
@@ -164,6 +196,7 @@ def get_check_data_quality_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
         default_schema_name: Optional[str] = "public",
         output_format: Optional[str] = "JSON",
         dq_score_threshold: Optional[int] = None,
+        chat_id: Optional[str] = None,
     ):
         return check_data_quality_tool.run(
             table_ids=table_ids,
@@ -174,6 +207,7 @@ def get_check_data_quality_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
             default_schema_name=default_schema_name,
             output_format=output_format,
             dq_score_threshold=dq_score_threshold,
+            chat_id=chat_id,
         )
 
     return StructuredTool.from_function(
