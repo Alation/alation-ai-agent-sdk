@@ -38,7 +38,8 @@ import time
 import logging
 
 import httpx
-from mcp.server.auth.provider import AccessToken, TokenVerifier
+from fastmcp.server.auth import AccessToken
+from fastmcp.server.auth import TokenVerifier
 
 from alation_ai_agent_sdk import ServiceAccountAuthParams
 
@@ -46,7 +47,9 @@ from alation_ai_agent_sdk import ServiceAccountAuthParams
 class AlationTokenVerifier(TokenVerifier):
     """Token verifier for Alation OAuth authentication."""
 
-    # TODO: this logic works for opaque token, but if JWT is enabled, we need to use the /introspect flow
+    # NOTE: this logic works for opaque token, but if JWT is enabled, we should consider
+    # using the /introspect flow as it doesn't require the userinfo endpoint
+    #
     # See if you can pass base_url value dynamically either from the JWT payload or header
 
     def __init__(
@@ -60,6 +63,9 @@ class AlationTokenVerifier(TokenVerifier):
         self.token_verification = token_verification
         self.userinfo_path = userinfo_path
         self.jwt_introspect_path = jwt_introspect_path
+        # Required by FastMCP RemoteAuthProvider
+        # Neither auth modes require specific OAuth scopes
+        self.required_scopes: list[str] = []
 
     async def verify_token(self, token: str) -> AccessToken | None:
         """Verify OAuth token with Alation userinfo endpoint."""
