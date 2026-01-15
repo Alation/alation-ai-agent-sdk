@@ -1,5 +1,4 @@
-from typing import NamedTuple, Union, Any
-from typing_extensions import TypedDict
+from typing import NamedTuple, Union
 
 
 class ServiceAccountAuthParams(NamedTuple):

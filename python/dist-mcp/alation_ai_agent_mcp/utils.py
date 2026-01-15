@@ -127,7 +127,7 @@ def parse_arguments() -> Tuple[
         default="opaque",
         choices=["jwt", "opaque"],
         help="Token verification method (default: opaque)",
-        required=False
+        required=False,
     )
     # Uses parse_known_args() to prevent exit(2) when there are unknown arguments
     args = parser.parse_known_args()[0]

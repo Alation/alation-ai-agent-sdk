@@ -340,7 +340,9 @@ PARAMETERS:
                 }
             }
         try:
-            ref = self.api.get_context_by_id_stream(signature=signature, chat_id=chat_id)
+            ref = self.api.get_context_by_id_stream(
+                signature=signature, chat_id=chat_id
+            )
             return ref if self.api.enable_streaming else next(ref)
         except AlationAPIError as e:
             return {"error": e.to_dict()}
@@ -486,7 +488,9 @@ class GenerateDataProductTool:
         """
 
     @track_tool_execution()
-    def run(self, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+    def run(
+        self, chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Assembles and returns the complete instructional prompt for creating
         an Alation Data Product using the current schema from the instance.
@@ -732,7 +736,9 @@ class GetDataDictionaryInstructionsTool:
         """
 
     @track_tool_execution()
-    def run(self, chat_id: Optional[str] = None) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
+    def run(
+        self, chat_id: Optional[str] = None
+    ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         """
         Generate comprehensive data dictionary CSV formatting instructions.
 

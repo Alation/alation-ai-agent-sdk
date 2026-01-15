@@ -29,17 +29,6 @@ from .tools import (
     GetDataSourcesTool,
     CustomAgentTool,
 )
-from .lineage import (
-    LineageRootNode,
-    LineageDirectionType,
-    LineageDesignTimeType,
-    LineageGraphProcessingType,
-    LineageExcludedSchemaIdsType,
-    LineageOTypeFilterType,
-    LineageTimestampType,
-    LineagePagination,
-    LineageBatchSizeType,
-)
 
 
 class AlationTools:

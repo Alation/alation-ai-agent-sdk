@@ -19,7 +19,9 @@ def generate_data_product_tool(mock_api):
     return GenerateDataProductTool(mock_api)
 
 
-def test_generate_data_product_tool_initialization(generate_data_product_tool, mock_api):
+def test_generate_data_product_tool_initialization(
+    generate_data_product_tool, mock_api
+):
     """Test that the GenerateDataProductTool initializes correctly."""
     assert generate_data_product_tool.name == "generate_data_product"
     assert "Alation Data Product" in generate_data_product_tool.description
@@ -97,7 +99,9 @@ def test_generate_data_product_tool_run_api_error(generate_data_product_tool, mo
     assert result["error"]["reason"] == "Schema Fetch Failed"
 
 
-def test_generate_data_product_tool_content_validation(generate_data_product_tool, mock_api):
+def test_generate_data_product_tool_content_validation(
+    generate_data_product_tool, mock_api
+):
     """Test that the generated content follows expected patterns."""
     # Mock response with expected patterns
     mock_response = """

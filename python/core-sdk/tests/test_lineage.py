@@ -327,11 +327,11 @@ def test_alation_lineage_tool_calls_streaming_api(get_lineage_tool, mock_api):
                 "id": 1,
                 "otype": "table",
                 "fully_qualified_name": "db.schema.table1",
-                "neighbors": []
+                "neighbors": [],
             }
         ],
         "direction": "downstream",
-        "pagination": None
+        "pagination": None,
     }
 
     # Mock the streaming method to return a generator
