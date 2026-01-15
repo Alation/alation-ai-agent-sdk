@@ -8,17 +8,17 @@ This is the Alation AI Agent SDK for Python, structured as a monorepo with three
 
 ### Core Packages
 
-1. **core-sdk/** - `alation-ai-agent-sdk` (v1.0.0rc2)
+1. **core-sdk/** - `alation-ai-agent-sdk` (v1.0.0rc3)
    - Main SDK for accessing Alation Data Catalog metadata
    - Core functionality: context retrieval, data products, catalog asset updates
    - Source: `core-sdk/alation_ai_agent_sdk/`
 
-2. **dist-langchain/** - `alation-ai-agent-langchain` (v1.0.0rc2)
+2. **dist-langchain/** - `alation-ai-agent-langchain` (v1.0.0rc3)
    - LangChain integration wrapper around the core SDK
    - Provides LangChain-compatible tools and toolkit
    - Source: `dist-langchain/alation_ai_agent_langchain/`
 
-3. **dist-mcp/** - `alation-ai-agent-mcp` (v1.0.0rc2)
+3. **dist-mcp/** - `alation-ai-agent-mcp` (v1.0.0rc3)
    - Model Context Protocol (MCP) server implementation
    - Supports both STDIO and HTTP transport modes
    - Provides CLI entry point: `start-alation-mcp-server`
@@ -121,7 +121,7 @@ For MCP HTTP mode, authentication is handled per-request via OAuth bearer tokens
 
 ## Important Notes
 
-- All three packages maintain synchronized version numbers (currently 1.0.0rc2)
+- All three packages maintain synchronized version numbers (currently 1.0.0rc3)
 - The core SDK is the foundation; LangChain and MCP packages depend on it
 - When making changes, ensure version bumps are coordinated across packages that are affected
 - The MCP server can run in two modes: STDIO (for direct MCP clients) and HTTP (for web integrations)

@@ -117,7 +117,7 @@ def register_tools(
       That is no longer the case as we're clocking in at 28 tools (including agents as tools).
     """
     if len(config_enabled) == 0:
-        logger.info('No tools explicitly enabled; using default tools')
+        logger.info("No tools explicitly enabled; using default tools")
         config_enabled = set(
             [
                 # TBD: These tools could be restructured to not overlap such.
@@ -134,7 +134,7 @@ def register_tools(
             ]
         )
     else:
-        logger.info(f'Explicitly enabled tools: {config_enabled}')
+        logger.info(f"Explicitly enabled tools: {config_enabled}")
 
     if is_tool_enabled(
         AlationTools.AGGREGATED_CONTEXT,

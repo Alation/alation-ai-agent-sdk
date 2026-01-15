@@ -74,7 +74,9 @@ def create_fastmcp_server(
         resource_server_url = external_url if external_url else f"http://{host}:{port}"
 
         auth_provider = RemoteAuthProvider(
-            token_verifier=AlationTokenVerifier(base_url, token_verification=token_verification),
+            token_verifier=AlationTokenVerifier(
+                base_url, token_verification=token_verification
+            ),
             authorization_servers=[AnyHttpUrl(base_url)],
             base_url=resource_server_url,
         )
@@ -119,7 +121,9 @@ def create_server(
     )
 
     # Create FastMCP server based on transport mode
-    mcp = create_fastmcp_server(base_url, transport, token_verification, host, port, external_url)
+    mcp = create_fastmcp_server(
+        base_url, transport, token_verification, host, port, external_url
+    )
 
     if transport == "stdio":
         # STDIO mode: Create shared SDK instance with environment-based auth

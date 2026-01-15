@@ -58,7 +58,9 @@ def test_get_data_dictionary_instructions_tool_run_success_with_custom_fields(
     result = get_data_dictionary_instructions_tool.run()
 
     # Verify API was called
-    mock_api.get_data_dictionary_instructions_stream.assert_called_once_with(chat_id=None)
+    mock_api.get_data_dictionary_instructions_stream.assert_called_once_with(
+        chat_id=None
+    )
 
     # Verify result
     assert isinstance(result, str)
@@ -97,7 +99,9 @@ def test_get_data_dictionary_instructions_tool_run_success_without_custom_fields
     result = get_data_dictionary_instructions_tool.run()
 
     # Verify API was called
-    mock_api.get_data_dictionary_instructions_stream.assert_called_once_with(chat_id=None)
+    mock_api.get_data_dictionary_instructions_stream.assert_called_once_with(
+        chat_id=None
+    )
 
     # Verify result is still valid instructions
     assert isinstance(result, str)
@@ -132,7 +136,9 @@ No custom fields available (requires admin permissions).
     result = get_data_dictionary_instructions_tool.run()
 
     # Verify API was called
-    mock_api.get_data_dictionary_instructions_stream.assert_called_once_with(chat_id=None)
+    mock_api.get_data_dictionary_instructions_stream.assert_called_once_with(
+        chat_id=None
+    )
 
     # Verify result
     assert isinstance(result, str)
@@ -156,7 +162,9 @@ def test_get_data_dictionary_instructions_tool_run_api_error(
     result = get_data_dictionary_instructions_tool.run()
 
     # Verify API was called
-    mock_api.get_data_dictionary_instructions_stream.assert_called_once_with(chat_id=None)
+    mock_api.get_data_dictionary_instructions_stream.assert_called_once_with(
+        chat_id=None
+    )
 
     # Verify error is returned
     assert "error" in result

@@ -1184,7 +1184,9 @@ class AlationAPI:
         if dq_score_threshold is not None:
             payload["dq_score_threshold"] = dq_score_threshold
 
-        url = f"{self.base_url}/ai/api/v1/chats/tool/default/get_data_quality_tool/stream"
+        url = (
+            f"{self.base_url}/ai/api/v1/chats/tool/default/get_data_quality_tool/stream"
+        )
         if chat_id is not None:
             url += f"?chat_id={chat_id}"
         yield from self._safe_sse_post_request(

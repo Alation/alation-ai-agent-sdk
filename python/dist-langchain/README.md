@@ -12,6 +12,14 @@ The Langchain integration enables:
 
 ## New Major Version 1.x.x
 
+#### Jan 14, 2026 Update
+`1.0.0rc3` version of the Alation AI Agent SDK is now available.
+
+- Added `get_context_by_id` tool for semantic catalog search with custom signatures
+- Removed `update_catalog_asset_metadata` and `check_job_status` tools
+- Upgraded fastMCP to address security vulnerability
+- Tool refactoring and endpoint updates
+
 #### Dec 10, 2025 Update
 `1.0.0rc2` version of the Alation AI Agent SDK is now available.
 
