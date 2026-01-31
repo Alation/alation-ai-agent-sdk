@@ -1,8 +1,8 @@
 # Alation MCP Server Dockerfile
 #
-# This multi-stage Dockerfile uses distroless images for enhanced security and smaller image size.
-# Builder stage uses Python 3.11 slim, runtime uses Google's distroless Python 3.11 image.
-# The final image contains only the Python runtime and application dependencies.
+# This multi-stage Dockerfile uses slim images for enhanced security and smaller image size.
+# Builder stage uses Python 3.10 slim for dependency installation via pip.
+# Runtime stage uses Python 3.10 slim with only the virtual environment and application code.
 #
 # This container supports both STDIO and HTTP transport modes:
 #
@@ -41,20 +41,28 @@ FROM python:3.10-slim-bookworm AS builder
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir pdm
-
-COPY LICENSE README.md pyproject.toml pdm.lock ./
-
+# Copy project files
+COPY LICENSE README.md pyproject.toml ./
 COPY alation_ai_agent_mcp ./alation_ai_agent_mcp/
-RUN pdm sync --no-editable --prod
+
+# Create virtual environment and install dependencies from PyPI
+# Note: uv.lock references local path dependencies, so we use pip for Docker builds
+RUN python -m venv .venv && \
+    .venv/bin/pip install --no-cache-dir --upgrade pip && \
+    .venv/bin/pip install --no-cache-dir .
 
 # ---- Final Runtime Stage ----
 FROM python:3.10-slim-bookworm
 
+# Version ARG - override at build time: docker build --build-arg VERSION=1.0.0 .
+# Default "dev" is used for local builds; CI/CD should always pass explicit version
+# The docker/metadata-action in GitHub workflow also sets version via labels
+ARG VERSION=dev
+
 # Metadata labels for image information
 LABEL org.opencontainers.image.title="Alation MCP Server" \
     org.opencontainers.image.description="Alation AI Agent SDK with Model Context Protocol (MCP) support for both STDIO and HTTP transport modes" \
-    org.opencontainers.image.version="0.10.3" \
+    org.opencontainers.image.version="${VERSION}" \
     org.opencontainers.image.vendor="Alation" \
     org.opencontainers.image.authors="Alation Team<ai_agent_sdk@alation.com>" \
     org.opencontainers.image.maintainer="Alation Team<ai_agent_sdk@alation.com>" \
@@ -78,7 +86,7 @@ COPY --from=builder --chown=appuser:appuser /app/alation_ai_agent_mcp ./alation_
 
 ENV PATH="/app/.venv/bin:$PATH"
 ENV VIRTUAL_ENV="/app/.venv"
-ENV PYTHONPATH="/app:${PYTHONPATH}"
+ENV PYTHONPATH="/app"
 # Prevent Python from writing .pyc files
 ENV PYTHONDONTWRITEBYTECODE=1
 # Ensure Python output is unbuffered
@@ -87,4 +95,4 @@ ENV PYTHONUNBUFFERED=1
 USER appuser
 EXPOSE 8000
 
-ENTRYPOINT ["python", "-m", "alation_ai_agent_mcp"]
+ENTRYPOINT ["start-alation-mcp-server"]
