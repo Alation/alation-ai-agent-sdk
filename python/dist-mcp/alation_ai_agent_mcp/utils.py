@@ -63,13 +63,13 @@ def get_base_url(base_url_override: Optional[str] = None) -> str:
 
 
 def parse_arguments() -> Tuple[
-    str, Optional[str], Optional[str], Optional[str], str, int, Optional[str]
+    str, Optional[str], Optional[str], Optional[str], Optional[str], str, int, Optional[str], str
 ]:
     """
     Parse command-line arguments for the MCP server.
 
     Returns:
-        Tuple of (transport, base_url, disabled_tools_str, enabled_beta_tools_str, http_host, http_port, external_url)
+        Tuple of (transport, base_url, enabled_tools_str, disabled_tools_str, enabled_beta_tools_str, host, port, external_url, token_verification)
     """
     parser = argparse.ArgumentParser(description="Alation MCP Server")
     parser.add_argument(
@@ -186,16 +186,17 @@ def get_tool_configuration(
     enabled_tools_str: Optional[str] = None,
     disabled_tools_str: Optional[str] = None,
     enabled_beta_tools_str: Optional[str] = None,
-) -> tuple[list[str], list[str]]:
+) -> tuple[list[str], list[str], list[str]]:
     """
     Get tool configuration from environment variables or provided parameters.
 
     Args:
+        enabled_tools_str: Optional comma-separated string of enabled tools
         disabled_tools_str: Optional comma-separated string of disabled tools
         enabled_beta_tools_str: Optional comma-separated string of enabled beta tools
 
     Returns:
-        tuple: (tools_disabled, beta_tools_enabled)
+        tuple: (tools_enabled, tools_disabled, beta_tools_enabled)
     """
     tools_enabled = csv_str_to_tool_list(
         enabled_tools_str
@@ -221,17 +222,18 @@ def prepare_server_config(
     enabled_tools_str: Optional[str] = None,
     disabled_tools_str: Optional[str] = None,
     enabled_beta_tools_str: Optional[str] = None,
-) -> tuple[str, list[str], list[str]]:
+) -> tuple[str, list[str], list[str], list[str]]:
     """
     Prepare common server configuration.
 
     Args:
         base_url: Optional Alation instance base URL
+        enabled_tools_str: Optional comma-separated string of enabled tools
         disabled_tools_str: Optional comma-separated string of disabled tools
         enabled_beta_tools_str: Optional comma-separated string of enabled beta tools
 
     Returns:
-        Tuple of (base_url, tools_disabled, beta_tools_enabled)
+        Tuple of (base_url, tools_enabled, tools_disabled, beta_tools_enabled)
     """
     # Load server configuration
     base_url = get_base_url(base_url)

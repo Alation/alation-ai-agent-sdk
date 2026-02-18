@@ -59,6 +59,9 @@ class AlationTokenVerifier(TokenVerifier):
         userinfo_path: str = "/integration/v1/userinfo/",
         jwt_introspect_path: str = "/oauth/v2/introspect/",
     ) -> None:
+        # DESIGN DECISION: base_url is not validated to require HTTPS.
+        # This allows for local development and testing with HTTP endpoints.
+        # Production deployments should enforce HTTPS at the infrastructure level.
         self.base_url = base_url
         self.token_verification = token_verification
         self.userinfo_path = userinfo_path
@@ -79,6 +82,10 @@ class AlationTokenVerifier(TokenVerifier):
                 response = await client.get(userinfo_url, headers=headers)
                 if response.status_code == 200:
                     userinfo = response.json()
+                    # DESIGN DECISION: Token expiry is hardcoded to 1 hour (3600 seconds).
+                    # This is intentional for simplicity and compatibility with FastMCP's token caching.
+                    # The userinfo endpoint doesn't provide expiry information, and using
+                    # introspection would add unnecessary overhead for each request.
                     return AccessToken(
                         token=token,
                         client_id=str(userinfo.get("id", "alation_client_id")),

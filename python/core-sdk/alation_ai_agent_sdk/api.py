@@ -532,6 +532,13 @@ class AlationAPI:
         """
         Get the appropriate request headers for streaming requests including authentication based on the auth method.
 
+        DESIGN DECISION: Streaming requests use Bearer token authentication in the Authorization header,
+        while non-streaming requests may use Token header or Cookie depending on auth_method.
+        This difference is intentional:
+        - SSE streaming endpoints require standard Bearer authorization
+        - Non-streaming endpoints support multiple auth mechanisms for backward compatibility
+        The _get_request_headers call at the end merges these with base headers.
+
         Returns:
             Dict[str, str]: Headers dictionary with authentication and content type information
         """
@@ -680,6 +687,7 @@ class AlationAPI:
                     # Process the parsed JSON event data
                     yield event_data
                 except json.JSONDecodeError as e:
+                    # Skip invalid JSON and log error, but continue processing
                     logger.error(f"Error decoding JSON: {e} in line: {json_data_str}")
                     continue
 

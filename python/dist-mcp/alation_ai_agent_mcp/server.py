@@ -71,6 +71,10 @@ def create_fastmcp_server(
     elif transport_mode == "http":
         # HTTP mode: Server with OAuth authentication
         # Determine the resource server URL (external URL vs internal binding)
+        # DESIGN DECISION: Default resource_server_url uses HTTP scheme.
+        # This is intentional for local development. Production deployments should:
+        # 1. Use the --external-url flag to specify HTTPS URLs, or
+        # 2. Deploy behind a reverse proxy/load balancer that handles TLS termination
         resource_server_url = external_url if external_url else f"http://{host}:{port}"
 
         auth_provider = RemoteAuthProvider(
