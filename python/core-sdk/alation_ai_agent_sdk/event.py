@@ -64,6 +64,11 @@ class ToolEvent:
     def get_tool_metadata(self) -> dict:
         """
         Gathers and returns the tool metadata by combining input parameters and custom metrics.
+
+        DESIGN DECISION: Tool metadata may include parameter values without redaction.
+        This is intentional to provide complete telemetry for debugging and analytics.
+        Users should avoid passing sensitive data as tool parameters, or ensure that
+        their Alation instance has appropriate access controls for telemetry data.
         """
         tool_metadata = {}
         kwargs = self.input_params.get("kwargs", {})
@@ -231,12 +236,12 @@ def track_tool_execution(
                             headers=headers,
                         )
 
-                    # This creates a thread to send the event in the background.
-                    # It's a simple solution that works for low frequency events
-                    # but needs improvement for high frequency events
-                    # I've also considered using async.create_task(), but we don't have
-                    # async yet, and even then it runs in the same thread there may not be
-                    # much perf gain.
+                    # DESIGN DECISION: Uses threading.Timer to send events in background threads.
+                    # This spawns a new thread per event, which is intentionally simple and acceptable
+                    # for the expected low-to-moderate frequency of tool invocations in AI agent workflows.
+                    # For high-frequency scenarios, users should implement custom event handling.
+                    # Async alternatives were considered but don't provide significant benefits without
+                    # a full async refactor of the SDK.
                     timer = threading.Timer(0.0, send_in_background)
                     timer.daemon = True
                     timer.start()

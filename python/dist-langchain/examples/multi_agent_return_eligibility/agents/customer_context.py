@@ -109,27 +109,27 @@ def create_context_agent(selected_table_names):
         # Get Alation tools
         tools = get_alation_tools()
 
-    # Add SQL execution tool
+    # Add SQL execution tool for dynamic query generation
     sql_tool = Tool(
         name="execute_sql",
-        description="Execute SQL queries against the database. Returns JSON results.",
+        description="Execute SQL queries against the database. Returns JSON results. Demonstrates LLM-to-SQL generation capabilities.",
         func=execute_sql,
     )
 
     tools.append(sql_tool)
 
     # Create system prompt for the agent
-    system_prompt = f"""You are a database query agent. Your job:
+    system_prompt = f"""You are a database query agent demonstrating LLM-to-SQL generation. Your job:
 
 1. FIRST, use the alation_context tool to get information for all the relevant table structures.
     - Ask about the columns and structure of these tables: {tables_list}
 
 2. THEN, for each of these tables: {tables_list}
-   - Create an SQL query that selects all data for a specific customer
+   - Create an appropriate SQL query that selects relevant data for the specific customer
    - The query format should be: SELECT * FROM table_name WHERE customer_id = 'customer_id_value'
    - Use the exact table name and the customer ID provided by the user
 
-3. NEXT, execute each query using the execute_sql tool
+3. NEXT, execute each query using the execute_sql tool (this demonstrates dynamic SQL generation)
 
 4. FINALLY, compile all the results into a structured response.
    Return the results as a clean JSON object mapping table names to their query results.

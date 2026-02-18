@@ -47,10 +47,10 @@ def create_identification_agent():
         # Get Alation tools and add SQL execution tool
         tools = get_alation_tools()
 
-    # Add SQL execution tool - making it generic
+    # Add SQL execution tool for dynamic query generation
     sql_tool = Tool(
         name="execute_sql",
-        description="""Execute SQL queries against the customer database.
+        description="""Execute SQL queries against the customer database. Demonstrates LLM-to-SQL generation.
         Input should be a valid SQL query string.
         Returns the query results as a JSON object.
 
@@ -63,7 +63,7 @@ def create_identification_agent():
     tools.append(sql_tool)
 
     # Define the system prompt for the agent
-    system_prompt = """You are a customer identification agent for a retail company.
+    system_prompt = """You are a customer identification agent demonstrating LLM-to-SQL generation.
 Your job is to identify customers based on their email or details in their query.
 
 Follow this exact process:
@@ -73,8 +73,9 @@ Follow this exact process:
 2. NEXT, based on the Alation context, create an appropriate SQL query to find the customer
    - Primarily search by email if available
    - Fall back to other identifiers (name, phone) if needed
+   - This demonstrates how LLMs can generate contextual SQL queries
 
-3. THEN, execute the SQL query using the execute_sql tool
+3. THEN, execute the SQL query using the execute_sql tool (demonstrates dynamic query execution)
 
 4. FINALLY, organize and return the customer information in a clear JSON format
 

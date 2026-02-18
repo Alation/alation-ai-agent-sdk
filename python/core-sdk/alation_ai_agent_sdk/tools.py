@@ -150,7 +150,13 @@ class AlationContextTool:
                 signature=signature,
                 chat_id=chat_id,
             )
-            return ref if self.api.enable_streaming else next(ref)
+            if self.api.enable_streaming:
+                return ref
+            else:
+                # Use next() with default to handle empty generators gracefully
+                return next(ref, {"error": "No response from API"})
+        except StopIteration:
+            return {"error": "No response from API"}
         except AlationAPIError as e:
             return {"error": e.to_dict()}
 

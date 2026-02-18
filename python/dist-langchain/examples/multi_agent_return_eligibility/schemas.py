@@ -2,7 +2,7 @@
 State definitions and Alation signatures for the minimal customer service agent.
 """
 
-from typing import Dict, List, Optional, Literal, Any
+from typing import Dict, List, Optional, Any, Literal
 from typing_extensions import TypedDict
 
 

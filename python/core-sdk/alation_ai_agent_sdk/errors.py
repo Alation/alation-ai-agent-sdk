@@ -70,11 +70,14 @@ class AlationErrorClassifier:
 
         if status_code == HTTPStatus.BAD_REQUEST:
             reason = "Bad Request"
-            resolution_hint = (
-                response_body.get("error")
-                or response_body.get("message")
-                or "Request was malformed. Check the query and signature structure."
-            )
+            if isinstance(response_body, dict):
+                resolution_hint = (
+                    response_body.get("error")
+                    or response_body.get("message")
+                    or "Request was malformed. Check the query and signature structure."
+                )
+            else:
+                resolution_hint = "Request was malformed. Check the query and signature structure."
             help_links = [
                 "https://developer.alation.com/dev/docs/customize-the-aggregated-context-api-calls-with-a-signature",
                 "https://github.com/Alation/alation-ai-agent-sdk?tab=readme-ov-file#usage",
@@ -143,9 +146,12 @@ class AlationErrorClassifier:
 
         if status_code == HTTPStatus.BAD_REQUEST:
             reason = "Token Request Invalid"
-            resolution_hint = (
-                response_body.get("error") or "Token request payload is malformed."
-            )
+            if isinstance(response_body, dict):
+                resolution_hint = (
+                    response_body.get("error") or "Token request payload is malformed."
+                )
+            else:
+                resolution_hint = "Token request payload is malformed."
         elif status_code == HTTPStatus.UNAUTHORIZED:
             reason = "Token Unauthorized"
             resolution_hint = (
@@ -167,6 +173,8 @@ class AlationErrorClassifier:
     @staticmethod
     def _is_quota_error(status_code: int, response_body: dict) -> bool:
         """Check if the error is related to quota limits."""
+        if not isinstance(response_body, dict):
+            return False
         return (
             status_code == HTTPStatus.TOO_MANY_REQUESTS
             and "entitlement" in response_body.get("error", "").lower()

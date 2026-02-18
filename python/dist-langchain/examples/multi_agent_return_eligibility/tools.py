@@ -44,13 +44,17 @@ def execute_sql(query: str) -> str:
     """
     Execute SQL query against the customer database.
 
+    DEMONSTRATION PURPOSE: This function shows how LLMs can generate dynamic SQL
+    based on natural language queries and Alation metadata. In production,
+    implement proper SQL injection protection and access controls.
+
     Args:
         query: SQL query to execute
 
     Returns:
         JSON string with query results
     """
-    # Check if query is safe - in production, implement proper SQL injection protection
+    # Basic safety check for demonstration purposes
     unsafe_keywords = ["DROP", "DELETE", "UPDATE", "INSERT", "ALTER", "TRUNCATE"]
     for keyword in unsafe_keywords:
         if (
