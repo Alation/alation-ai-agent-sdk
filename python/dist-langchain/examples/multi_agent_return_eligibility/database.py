@@ -5,8 +5,9 @@ Database schema, views, and initialization for the customer service system.
 import sqlite3
 import os
 
-# Database path
-DB_PATH = os.path.join(os.path.dirname(__file__), "customer_service.db")
+# Database path - use current working directory instead of package directory
+# This ensures the database is created in a writable location when running the example
+DB_PATH = os.path.join(os.getcwd(), "customer_service.db")
 
 # Define the schema
 DB_SCHEMA = """

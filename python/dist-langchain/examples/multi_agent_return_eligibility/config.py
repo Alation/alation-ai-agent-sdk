@@ -19,9 +19,16 @@ ALATION_CLIENT_SECRET = None
 if ALATION_AUTH_METHOD == "service_account":
     ALATION_CLIENT_ID = os.getenv("ALATION_CLIENT_ID")
     ALATION_CLIENT_SECRET = os.getenv("ALATION_CLIENT_SECRET")
+elif ALATION_AUTH_METHOD == "user_account":
+    # This example currently only demonstrates service_account auth
+    # For user_account implementation, see core-sdk examples
+    raise ValueError(
+        "This example currently only supports 'service_account' authentication. "
+        "Please set ALATION_AUTH_METHOD=service_account in your .env file."
+    )
 else:
     raise ValueError(
-        "Invalid ALATION_AUTH_METHOD. Must be 'user_account' or 'service_account'."
+        f"Invalid ALATION_AUTH_METHOD: {ALATION_AUTH_METHOD}. Must be 'service_account'."
     )
 
 # LLM configuration
