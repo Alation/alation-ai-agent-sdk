@@ -21,7 +21,7 @@ from alation_ai_agent_sdk.lineage import (
     LineageGraphProcessingType,
     LineageOTypeFilterType,
     LineagePagination,
-    LineageRootNode,
+    LineageRootNodeIdsType,
     LineageExcludedSchemaIdsType,
     LineageTimestampType,
     LineageDirectionType,
@@ -1206,7 +1206,8 @@ class AlationAPI:
 
     def alation_lineage_stream(
         self,
-        root_node: LineageRootNode,
+        otype: str,
+        root_node_ids: LineageRootNodeIdsType,
         direction: LineageDirectionType,
         limit: Optional[int] = 1000,
         batch_size: Optional[LineageBatchSizeType] = 1000,
@@ -1225,7 +1226,8 @@ class AlationAPI:
         Retrieves lineage relationships for data catalog objects from backend.
         """
         payload = {
-            "root_node": root_node,
+            "otype": otype,
+            "root_node_ids": root_node_ids,
             "direction": direction,
             "limit": limit,
             "batch_size": batch_size,
