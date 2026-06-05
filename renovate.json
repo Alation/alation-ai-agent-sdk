@@ -53,9 +53,9 @@
       "prPriority": 30
     },
     {
-      "description": "🐳 Docker images - PATCH updates (automerge)",
+      "description": "🐳 Docker images - PATCH + DIGEST updates (automerge)",
       "matchManagers": ["dockerfile"],
-      "matchUpdateTypes": ["patch"],
+      "matchUpdateTypes": ["patch", "digest"],
       "groupName": "docker-patch-updates",
       "semanticCommitType": "fix",
       "semanticCommitScope": "docker",
@@ -75,9 +75,9 @@
       "prPriority": 30
     },
     {
-      "description": "⚙️ GitHub Actions - PATCH updates (automerge)",
+      "description": "⚙️ GitHub Actions - PATCH + DIGEST updates (automerge). digest covers SHA-pinned actions, which Renovate updates as updateType:digest.",
       "matchManagers": ["github-actions"],
-      "matchUpdateTypes": ["patch"],
+      "matchUpdateTypes": ["patch", "digest"],
       "semanticCommitType": "ci",
       "semanticCommitScope": "actions",
       "automerge": true,
