@@ -1,0 +1,151 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "enabledManagers": ["pep621", "pip_requirements", "dockerfile", "github-actions"],
+  "baseBranches": ["main"],
+  "prConcurrentLimit": 10,
+  "branchConcurrentLimit": 10,
+  "prHourlyLimit": 0,
+  "platformAutomerge": true,
+  "automergeType": "pr",
+  "automergeStrategy": "squash",
+  "reviewers": [
+    "jagannathsrs",
+    "lucyeun-alation",
+    "arpit-singh-alation"
+  ],
+  "commitMessagePrefix": "chore:",
+  "commitMessageAction": "update",
+  "prHeader": "## 📝 Summary",
+  "prFooter": "## 💡 Solution\n\nUpdate {{{depName}}} from {{currentVersion}} to {{newVersion}}",
+  "prBodyTemplate": "{{{header}}}{{{table}}}{{{warnings}}}{{{notes}}}{{{changelogs}}}{{{footer}}}",
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["dependencies", "renovate", "security"],
+    "semanticCommitType": "fix",
+    "semanticCommitScope": "security",
+    "schedule": []
+  },
+  "osvVulnerabilityAlerts": true,
+  "recreateWhen": "always",
+  "labels": ["dependencies", "renovate"],
+  "packageRules": [
+    {
+      "description": "🐍 Python dependencies - PATCH updates (automerge)",
+      "matchManagers": ["pep621", "pip_requirements"],
+      "matchUpdateTypes": ["patch"],
+      "groupName": "python-patch-updates",
+      "semanticCommitType": "fix",
+      "semanticCommitScope": "python",
+      "automerge": true,
+      "labels": ["dependencies", "renovate", "python", "patch", "automerge"],
+      "prPriority": 40
+    },
+    {
+      "description": "🐍 Python dependencies - MINOR updates (automerge)",
+      "matchManagers": ["pep621", "pip_requirements"],
+      "matchUpdateTypes": ["minor"],
+      "groupName": "python-minor-updates",
+      "semanticCommitType": "feat",
+      "semanticCommitScope": "python",
+      "automerge": true,
+      "labels": ["dependencies", "renovate", "python", "minor", "automerge"],
+      "prPriority": 30
+    },
+    {
+      "description": "🐳 Docker images - PATCH updates (automerge)",
+      "matchManagers": ["dockerfile"],
+      "matchUpdateTypes": ["patch"],
+      "groupName": "docker-patch-updates",
+      "semanticCommitType": "fix",
+      "semanticCommitScope": "docker",
+      "automerge": true,
+      "labels": ["dependencies", "renovate", "docker", "patch", "automerge"],
+      "prPriority": 40
+    },
+    {
+      "description": "🐳 Docker images - MINOR updates (automerge)",
+      "matchManagers": ["dockerfile"],
+      "matchUpdateTypes": ["minor"],
+      "groupName": "docker-minor-updates",
+      "semanticCommitType": "feat",
+      "semanticCommitScope": "docker",
+      "automerge": true,
+      "labels": ["dependencies", "renovate", "docker", "minor", "automerge"],
+      "prPriority": 30
+    },
+    {
+      "description": "⚙️ GitHub Actions - PATCH updates (automerge)",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["patch"],
+      "semanticCommitType": "ci",
+      "semanticCommitScope": "actions",
+      "automerge": true,
+      "labels": ["dependencies", "renovate", "github-actions", "patch", "automerge"],
+      "prPriority": 40
+    },
+    {
+      "description": "⚙️ GitHub Actions - MINOR updates (automerge)",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor"],
+      "semanticCommitType": "ci",
+      "semanticCommitScope": "actions",
+      "automerge": true,
+      "labels": ["dependencies", "renovate", "github-actions", "minor", "automerge"],
+      "prPriority": 30
+    },
+    {
+      "description": "🚫 DISABLED: All non-security MAJOR updates (temporarily blocked). matchJsonata '$not(isVulnerabilityAlert = true)' excludes security majors so they're never caught by this disable rule (belt-and-suspenders with the security-MAJOR rule below, which re-opens them via last-rule-wins). NOTE: use $not(...=true), NOT 'isVulnerabilityAlert != true' — in Renovate's JSONata a comparison with the (absent) field on normal updates returns false, so '!= true' would match nothing and disable no majors at all.",
+      "matchUpdateTypes": ["major"],
+      "matchJsonata": ["$not(isVulnerabilityAlert = true)"],
+      "enabled": false
+    },
+    {
+      "description": "🔐 Security PATCH vulnerability fixes (automerge, highest priority). Uses the v42 isVulnerabilityAlert matcher at the top level — nesting packageRules inside vulnerabilityAlerts is silently ignored by Renovate's force/applyPackageRules path.",
+      "matchUpdateTypes": ["patch"],
+      "isVulnerabilityAlert": true,
+      "automerge": true,
+      "prPriority": 99,
+      "labels": ["dependencies", "renovate", "security", "automerge"]
+    },
+    {
+      "description": "🔐 Security MINOR vulnerability fixes (automerge).",
+      "matchUpdateTypes": ["minor"],
+      "isVulnerabilityAlert": true,
+      "automerge": true,
+      "prPriority": 95,
+      "labels": ["dependencies", "renovate", "security", "automerge"]
+    },
+    {
+      "description": "🔐 Security MAJOR vulnerability fixes (manual review). Placed after the major catch-all so security majors re-open for manual review (last-rule-wins); enabled:true overrides the catch-all's enabled:false.",
+      "matchUpdateTypes": ["major"],
+      "isVulnerabilityAlert": true,
+      "enabled": true,
+      "automerge": false,
+      "prPriority": 90,
+      "labels": ["dependencies", "renovate", "security"]
+    },
+    {
+      "description": "🐳 python base-image MAJOR/MINOR stay MANUAL (last-rule-wins: after the generic Docker rules). A python 3.10→3.11 bump is a runtime change; keep human-reviewed. Patch + digest still auto-merge via the generic Docker rules above.",
+      "matchManagers": ["dockerfile"],
+      "matchPackageNames": ["python", "docker.io/library/python", "library/python"],
+      "matchUpdateTypes": ["major", "minor"],
+      "groupName": "python-base-image",
+      "semanticCommitType": "build",
+      "semanticCommitScope": "docker",
+      "automerge": false,
+      "labels": ["dependencies", "renovate", "docker", "base-image"],
+      "prPriority": 50
+    },
+    {
+      "description": "🚫 DISABLED: Internal Alation GitHub Actions",
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["/^alation/.*/", "/^Alation/.*/"],
+      "enabled": false
+    }
+  ],
+  "pep621": { "enabled": true },
+  "pip_requirements": { "enabled": true, "fileMatch": ["(^|/)requirements.*\\.txt$"] },
+  "ignoreDeps": [],
+  "ignorePaths": ["**/vendor/**", "**/.venv/**"]
+}
