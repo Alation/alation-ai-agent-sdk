@@ -318,6 +318,7 @@ def test_get_request_headers_service_account_auth(api_instance):
     expected = {
         "Accept": "application/json",
         "User-Agent": f"test-dist-1.0/sdk-{SDK_VERSION}",
+        "Ai-Surface": "sdk",
         "Token": MOCK_ACCESS_TOKEN,
     }
     assert result == expected
@@ -329,7 +330,11 @@ def test_get_request_headers_session_auth(session_api_instance):
 
     result = session_api_instance._get_request_headers()
 
-    expected_headers = {"Accept": "application/json", "Cookie": MOCK_SESSION_COOKIE}
+    expected_headers = {
+        "Accept": "application/json",
+        "Ai-Surface": "sdk",
+        "Cookie": MOCK_SESSION_COOKIE,
+    }
     if SDK_VERSION:
         expected_headers["User-Agent"] = f"sdk-{SDK_VERSION}"
 
@@ -345,6 +350,7 @@ def test_get_request_headers_bearer_token_auth(bearer_token_api_instance):
     expected = {
         "Accept": "application/json",
         "User-Agent": f"mcp-2.0/sdk-{SDK_VERSION}",
+        "Ai-Surface": "sdk",
         "Token": MOCK_ACCESS_TOKEN,
     }
     assert result == expected
@@ -359,6 +365,7 @@ def test_get_request_headers_with_overrides(api_instance):
 
     expected = {
         "Accept": "application/json",
+        "Ai-Surface": "sdk",
         "Token": MOCK_ACCESS_TOKEN,
         "Content-Type": "application/json",
         "Custom-Header": "custom-value",
@@ -376,7 +383,7 @@ def test_get_request_headers_no_access_token(api_instance):
 
     result = api_instance._get_request_headers()
 
-    expected = {"Accept": "application/json"}
+    expected = {"Accept": "application/json", "Ai-Surface": "sdk"}
     if SDK_VERSION:
         expected["User-Agent"] = f"sdk-{SDK_VERSION}"
 
@@ -397,6 +404,7 @@ def test_get_streaming_request_headers_service_account(api_instance):
         "Content-Type": "application/json",
         "Authorization": f"Bearer {MOCK_ACCESS_TOKEN}",
         "User-Agent": f"test-dist-1.0/sdk-{SDK_VERSION}",
+        "Ai-Surface": "sdk",
         "Token": MOCK_ACCESS_TOKEN,
     }
     assert result == expected
@@ -410,6 +418,7 @@ def test_get_streaming_request_headers_bearer_token(bearer_token_api_instance):
         "Accept": "text/event-stream",
         "Content-Type": "application/json",
         "Authorization": f"Bearer {MOCK_ACCESS_TOKEN}",
+        "Ai-Surface": "sdk",
         "Token": MOCK_ACCESS_TOKEN,
     }
     if SDK_VERSION:
@@ -425,12 +434,63 @@ def test_get_streaming_request_headers_session_auth(session_api_instance):
     expected_base = {
         "Accept": "text/event-stream",
         "Content-Type": "application/json",
+        "Ai-Surface": "sdk",
         "Cookie": MOCK_SESSION_COOKIE,
     }
     if SDK_VERSION:
         expected_base["User-Agent"] = f"sdk-{SDK_VERSION}"
 
     assert result == expected_base
+
+
+# --- Tests for Ai-Surface header ---
+
+
+def test_ai_surface_header_default():
+    """Test that Ai-Surface header defaults to 'sdk'."""
+    with patch.object(AlationAPI, "_fetch_and_cache_instance_info"):
+        api = AlationAPI(
+            base_url=MOCK_BASE_URL,
+            auth_method=AUTH_METHOD_SERVICE_ACCOUNT,
+            auth_params=ServiceAccountAuthParams(MOCK_CLIENT_ID, MOCK_CLIENT_SECRET),
+            skip_instance_info=True,
+        )
+        api.access_token = MOCK_ACCESS_TOKEN
+
+        headers = api._get_request_headers()
+        assert headers["Ai-Surface"] == "sdk"
+
+
+def test_ai_surface_header_custom():
+    """Test that Ai-Surface header can be customized."""
+    with patch.object(AlationAPI, "_fetch_and_cache_instance_info"):
+        api = AlationAPI(
+            base_url=MOCK_BASE_URL,
+            auth_method=AUTH_METHOD_SERVICE_ACCOUNT,
+            auth_params=ServiceAccountAuthParams(MOCK_CLIENT_ID, MOCK_CLIENT_SECRET),
+            skip_instance_info=True,
+            surface="custom_integration",
+        )
+        api.access_token = MOCK_ACCESS_TOKEN
+
+        headers = api._get_request_headers()
+        assert headers["Ai-Surface"] == "custom_integration"
+
+
+def test_ai_surface_header_in_streaming():
+    """Test that Ai-Surface header is present in streaming requests."""
+    with patch.object(AlationAPI, "_fetch_and_cache_instance_info"):
+        api = AlationAPI(
+            base_url=MOCK_BASE_URL,
+            auth_method=AUTH_METHOD_SERVICE_ACCOUNT,
+            auth_params=ServiceAccountAuthParams(MOCK_CLIENT_ID, MOCK_CLIENT_SECRET),
+            skip_instance_info=True,
+            surface="my_app",
+        )
+        api.access_token = MOCK_ACCESS_TOKEN
+
+        headers = api._get_streaming_request_headers()
+        assert headers["Ai-Surface"] == "my_app"
 
 
 # --- Tests for _get_streaming_timeouts ---
