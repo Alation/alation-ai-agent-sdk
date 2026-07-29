@@ -58,11 +58,13 @@ class AgentSDKOptions:
         skip_instance_info: Optional[bool] = False,
         enable_streaming: Optional[bool] = False,
         decode_nested_json: Optional[bool] = True,
+        surface: str = "sdk",
         # TBD: option for only preserving content from part instead of whole response
     ):
         self.skip_instance_info = skip_instance_info
         self.enable_streaming = enable_streaming
         self.decode_nested_json = decode_nested_json
+        self.surface = surface
         # TBD: decide on stripping extra metadata from streamed response for non-streaming cases?
         # TBD: another parameter for whether to allow tools that output html
 
@@ -108,6 +110,7 @@ class AlationAIAgentSDK:
             skip_instance_info=sdk_options.skip_instance_info,
             enable_streaming=sdk_options.enable_streaming,
             decode_nested_json=sdk_options.decode_nested_json,
+            surface=sdk_options.surface,
         )
         self.context_tool = AlationContextTool(self.api)
         self.bulk_retrieval_tool = AlationBulkRetrievalTool(self.api)

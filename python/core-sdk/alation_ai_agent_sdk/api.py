@@ -48,6 +48,7 @@ class AlationAPI:
         base_url (str): Base URL for the Alation instance
         auth_method (str): Authentication method ("service_account", "bearer_token", or "session")
         auth_params (AuthParams): Parameters required for the chosen authentication method
+        surface (str): Request surface identifier sent in Ai-Surface header (default: "sdk")
     """
 
     def __init__(
@@ -59,6 +60,7 @@ class AlationAPI:
         skip_instance_info: Optional[bool] = False,
         enable_streaming: Optional[bool] = False,
         decode_nested_json: Optional[bool] = False,
+        surface: str = "sdk",
     ):
         self.base_url = base_url.rstrip("/")
         self.access_token: Optional[str] = None
@@ -69,6 +71,7 @@ class AlationAPI:
         self.alation_release_name = None
         self.alation_version_info = None
         self.dist_version = dist_version
+        self.surface = surface
 
         # Validate auth_method and auth_params
         if auth_method == AUTH_METHOD_SERVICE_ACCOUNT:
@@ -517,6 +520,9 @@ class AlationAPI:
             user_agent += f"sdk-{SDK_VERSION}"
         if user_agent:
             headers["User-Agent"] = user_agent
+
+        # Set Ai-Surface header to identify request origin
+        headers["Ai-Surface"] = self.surface
 
         if self.auth_method == AUTH_METHOD_SESSION:
             headers["Cookie"] = self.session_cookie
