@@ -18,9 +18,7 @@ class LineageGraphProcessingOptions:
     COMPLETE = "complete"
 
 
-class LineageRootNode(TypedDict):
-    id: Union[str, int]
-    otype: str
+LineageRootNodeIdsType = List[Union[str, int]]
 
 
 class LineagePagination(TypedDict):
@@ -68,7 +66,7 @@ class LineageToolResponse(TypedDict):
 
 
 def make_lineage_kwargs(
-    root_node: LineageRootNode,
+    root_node_ids: LineageRootNodeIdsType,
     processing_mode: Optional[LineageGraphProcessingType] = None,
     show_temporal_objects: Optional[bool] = False,
     design_time: Optional[LineageDesignTimeType] = None,
@@ -82,7 +80,7 @@ def make_lineage_kwargs(
     Prepare the keyword arguments for the lineage API call.
 
     Args:
-        root_node (LineageRootNode): The root node for the lineage query.
+        root_node_ids (LineageRootNodeIdsType): List of root node IDs for the lineage query.
         processing_mode (Optional[LineageGraphProcessingType]): The processing mode for the query.
         show_temporal_objects (Optional[bool]): Whether to show temporal objects.
         design_time (Optional[LineageDesignTimeType]): The design time option.
@@ -95,6 +93,9 @@ def make_lineage_kwargs(
     Returns:
         dict: The keyword arguments for the lineage API call.
     """
+
+    if not root_node_ids:
+        raise ValueError("root_node_ids must not be empty")
 
     if processing_mode is None:
         # This is much simpler for the LLM to understand
@@ -115,11 +116,16 @@ def make_lineage_kwargs(
     if time_to is None:
         time_to = ""
 
-    key_type = (
-        "fully_qualified_name"
-        if isinstance(root_node.get("id"), str) and "." in root_node.get("id")
-        else "id"
-    )
+    first = root_node_ids[0]
+    if isinstance(first, str) and "." in first:
+        if not all(isinstance(rid, str) and "." in rid for rid in root_node_ids):
+            raise ValueError(
+                "root_node_ids must be all integer IDs or all fully qualified names, not mixed"
+            )
+        key_type = "fully_qualified_name"
+    else:
+        key_type = "id"
+
     return {
         "processing_mode": processing_mode,
         "show_temporal_objects": show_temporal_objects,

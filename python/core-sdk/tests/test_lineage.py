@@ -17,7 +17,7 @@ from alation_ai_agent_sdk.api import AlationAPIError
 
 
 def test_make_lineage_kwargs_creates_defaults():
-    response = make_lineage_kwargs(root_node={"id": 1, "otype": "table"})
+    response = make_lineage_kwargs(root_node_ids=[1])
     assert response["processing_mode"] == LineageGraphProcessingOptions.COMPLETE
     assert not response["show_temporal_objects"]
     assert response["design_time"] == LineageDesignTimeOptions.EITHER_DESIGN_OR_RUN_TIME
@@ -30,7 +30,7 @@ def test_make_lineage_kwargs_creates_defaults():
 
 def test_make_lineage_kwargs_recognizes_fully_qualified_name_as_key_type():
     response = make_lineage_kwargs(
-        root_node={"id": "1.my_schema.my_table", "otype": "table"}
+        root_node_ids=["1.my_schema.my_table"]
     )
     assert response["key_type"] == "fully_qualified_name"
 
@@ -42,7 +42,7 @@ def test_make_lineage_kwargs_respects_provided_values():
     expected_processing_mode = LineageGraphProcessingOptions.CHUNKED
     expected_design_time = LineageDesignTimeOptions.ONLY_DESIGN_TIME
     response = make_lineage_kwargs(
-        root_node={"id": 1, "otype": "table"},
+        root_node_ids=[1],
         max_depth=expected_max_depth,
         excluded_schema_ids=expected_excluded_schema_ids,
         allowed_otypes=expected_allowed_otypes,
@@ -54,6 +54,16 @@ def test_make_lineage_kwargs_respects_provided_values():
     assert response["allowed_otypes"] == expected_allowed_otypes
     assert response["processing_mode"] == expected_processing_mode
     assert response["design_time"] == expected_design_time
+
+
+def test_make_lineage_kwargs_rejects_empty_ids():
+    with pytest.raises(ValueError, match="must not be empty"):
+        make_lineage_kwargs(root_node_ids=[])
+
+
+def test_make_lineage_kwargs_rejects_mixed_id_types():
+    with pytest.raises(ValueError, match="not mixed"):
+        make_lineage_kwargs(root_node_ids=["1.schema.table", 2])
 
 
 def test_get_node_object_key():
@@ -341,10 +351,8 @@ def test_alation_lineage_tool_calls_streaming_api(get_lineage_tool, mock_api):
     mock_api.alation_lineage_stream.return_value = mock_generator()
 
     result = get_lineage_tool.run(
-        root_node={
-            "id": 1,
-            "otype": "table",
-        },
+        otype="table",
+        root_node_ids=[1],
         direction="downstream",
     )
 
@@ -369,7 +377,8 @@ def test_alation_lineage_tool_returns_api_errors(get_lineage_tool, mock_api):
     mock_api.alation_lineage_stream.side_effect = api_error
 
     result = get_lineage_tool.run(
-        root_node={"id": 1, "otype": "table"},
+        otype="table",
+        root_node_ids=[1],
         direction="downstream",
         limit=100,
         batch_size=100,
