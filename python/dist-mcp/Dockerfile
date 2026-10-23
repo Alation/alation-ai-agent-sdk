@@ -82,6 +82,9 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends --only-upgrade ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
+# Keep the base image's pip out: its vendored certifi lags upstream CA removals. Only /app/.venv is needed at runtime.
+RUN python -m pip uninstall -y pip
+
 ARG APP_USER_UID=10001
 RUN useradd --uid ${APP_USER_UID} --user-group --system --create-home --home-dir /app --shell /sbin/nologin appuser
 
