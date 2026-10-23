@@ -52,13 +52,13 @@ The MCP integration provides an MCP-compatible server that exposes Alation's con
 pip install uv
 
 # Install the core SDK
-uv pip install alation-ai-agent-sdk==1.0.0rc3
+uv pip install alation-ai-agent-sdk==1.0.0
 
 # Install LangChain integration
-uv pip install alation-ai-agent-langchain==1.0.0rc3
+uv pip install alation-ai-agent-langchain==1.0.0
 
 # Install the MCP integration
-uv pip install alation-ai-agent-mcp==1.0.0rc3
+uv pip install alation-ai-agent-mcp==1.0.0
 
 ```
 
@@ -85,6 +85,14 @@ alation_api = AlationAPI(
 If you cannot obtain service account credentials (admin only), see the [User Account Authentication Guide](https://github.com/Alation/alation-ai-agent-sdk/blob/main/guides/authentication.md#user-account-authentication) for instructions.
 
 ## New Major Version 1.x.x
+
+#### Oct 23, 2026 Update
+`1.0.0` is the first stable release of the Alation AI Agent SDK.
+
+- Requests now send an `Ai-Surface` header (default `sdk`); set `AgentSDKOptions(surface=...)` to identify your integration
+- The MCP server requires `certifi>=2026.10.19`, and its Docker image refreshes the OS CA store, removing trust in the compromised eMudhra intermediate CAs
+- Auth parameter objects redact secrets in their `repr()`
+- Streaming and non-streaming responses handle malformed or empty payloads more gracefully
 
 #### Jan 2, 2026 Update
 

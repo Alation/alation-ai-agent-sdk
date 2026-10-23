@@ -4,7 +4,7 @@ requires-python = ">=3.10"
 
 [[package]]
 name = "alation-ai-agent-sdk"
-version = "1.0.0rc3"
+version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "requests" },
