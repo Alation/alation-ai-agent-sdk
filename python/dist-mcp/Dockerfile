@@ -77,6 +77,11 @@ LABEL org.opencontainers.image.title="Alation MCP Server" \
 
 WORKDIR /app
 
+# The base image's CA store lags Debian's; older stores trust the compromised eMudhra intermediates.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends --only-upgrade ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
 ARG APP_USER_UID=10001
 RUN useradd --uid ${APP_USER_UID} --user-group --system --create-home --home-dir /app --shell /sbin/nologin appuser
 
