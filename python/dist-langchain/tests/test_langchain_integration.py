@@ -653,14 +653,12 @@ def test_lineage_tool_wrapper():
     assert lineage_tool.description == "Provides lineage from SDK"
 
     # Test the tool function
-    from alation_ai_agent_sdk.lineage import LineageRootNode
-
-    root_node = LineageRootNode(otype="table", oid=123)
-    result = lineage_tool.func(root_node=root_node, direction="downstream")
+    result = lineage_tool.func(otype="table", root_node_ids=[123], direction="downstream")
 
     # Check that run was called with the expected arguments
     call_args = mock_sdk.lineage_tool.run.call_args
-    assert call_args.kwargs["root_node"] == root_node
+    assert call_args.kwargs["otype"] == "table"
+    assert call_args.kwargs["root_node_ids"] == [123]
     assert call_args.kwargs["direction"] == "downstream"
     assert result == {"lineage": "test lineage data"}
 

@@ -21,7 +21,7 @@ from alation_ai_agent_sdk.lineage import (
     LineageDirectionType,
     LineageGraphProcessingType,
     LineagePagination,
-    LineageRootNode,
+    LineageRootNodeIdsType,
     LineageOTypeFilterType,
 )
 from alation_ai_agent_sdk.event import track_tool_execution
@@ -366,15 +366,17 @@ class AlationLineageTool:
 
     @staticmethod
     def _get_description() -> str:
-        return """Retrieves lineage relationships for data catalog objects. Shows what data flows upstream (sources) or downstream (destinations) from a given object.
+        return """Retrieves lineage relationships for data catalog objects. Shows what data flows upstream (sources) or downstream (destinations) from given objects.
 
         WHEN TO USE:
         Use this tool when users ask about data lineage, data flow, dependencies, impact analysis, or questions like "what feeds into this table?" or "what uses this data?"
 
         REQUIRED PARAMETERS:
-        - root_node: The starting object as {"id": object_id, "otype": "object_type"}
-        Example: {"id": 123, "otype": "table"} or {"id": 456, "otype": "attribute"}
+        - otype: The object type to query (e.g., "table", "attribute"). All root_node_ids must be of this type.
+        - root_node_ids: List of object IDs to query lineage for. Can be integers (e.g., [123, 456]) or fully qualified names (e.g., ["3.catalog.schema.table1"]). All IDs must be the same type — do not mix integers and fully qualified names.
         - direction: Either "upstream" (sources/inputs) or "downstream" (destinations/outputs)
+
+        IMPORTANT: All root_node_ids must share the same otype. To query both tables and attributes, make separate calls.
 
         COMMON OPTIONAL PARAMETERS:
         - allowed_otypes: Filter to specific object types like ["table", "attribute"]
@@ -395,13 +397,14 @@ class AlationLineageTool:
 
         SPECIAL OBJECT TYPES:
         For file, directory, and external objects, use fully qualified names:
-        {"id": "filesystem_id.path/to/file", "otype": "file"}
+        get_lineage(otype="file", root_node_ids=["filesystem_id.path/to/file"], direction="downstream")
 
         COMMON EXAMPLES:
-        - Find upstream tables: get_lineage(root_node={"id": 123, "otype": "table"}, direction="upstream", allowed_otypes=["table"])
-        - Find all downstream objects: get_lineage(root_node={"id": 123, "otype": "table"}, direction="downstream")
-        - Column-level lineage: get_lineage(root_node={"id": 456, "otype": "attribute"}, direction="upstream", allowed_otypes=["attribute"])
-        - Exclude test schemas: get_lineage(root_node={"id": 123, "otype": "table"}, direction="upstream", excluded_schema_ids=[999, 1000])
+        - Find upstream tables: get_lineage(otype="table", root_node_ids=[123], direction="upstream", allowed_otypes=["table"])
+        - Find all downstream objects: get_lineage(otype="table", root_node_ids=[123], direction="downstream")
+        - Column-level lineage: get_lineage(otype="attribute", root_node_ids=[456], direction="upstream", allowed_otypes=["attribute"])
+        - Multiple tables at once: get_lineage(otype="table", root_node_ids=[123, 124, 125], direction="downstream")
+        - Exclude test schemas: get_lineage(otype="table", root_node_ids=[123], direction="upstream", excluded_schema_ids=[999, 1000])
 
         RETURNS:
         {"graph": [list of connected objects with relationships], "direction": "upstream|downstream", "pagination": {...}}
@@ -415,7 +418,8 @@ class AlationLineageTool:
     def run(
         self,
         *,
-        root_node: LineageRootNode,
+        otype: str,
+        root_node_ids: LineageRootNodeIdsType,
         direction: LineageDirectionType,
         limit: Optional[int] = 1000,
         batch_size: Optional[LineageBatchSizeType] = 1000,
@@ -432,7 +436,8 @@ class AlationLineageTool:
     ) -> Union[Generator[Dict[str, Any], None, None], Dict[str, Any]]:
         try:
             ref = self.api.alation_lineage_stream(
-                root_node=root_node,
+                otype=otype,
+                root_node_ids=root_node_ids,
                 direction=direction,
                 limit=limit,
                 batch_size=batch_size,
