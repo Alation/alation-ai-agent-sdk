@@ -12,6 +12,14 @@ The Langchain integration enables:
 
 ## New Major Version 1.x.x
 
+#### Oct 23, 2026 Update
+`1.0.0` is the first stable release of the Alation AI Agent SDK.
+
+- Requests now send an `Ai-Surface` header (default `sdk`); set `AgentSDKOptions(surface=...)` to identify your integration
+- The MCP server requires `certifi>=2026.10.19`, and its Docker image refreshes the OS CA store, removing trust in the compromised eMudhra intermediate CAs
+- Auth parameter objects redact secrets in their `repr()`
+- Streaming and non-streaming responses handle malformed or empty payloads more gracefully
+
 #### Jan 14, 2026 Update
 `1.0.0rc3` version of the Alation AI Agent SDK is now available.
 
