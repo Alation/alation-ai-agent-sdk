@@ -190,7 +190,6 @@ def register_tools(
         AlationTools.LINEAGE, config_enabled, config_disabled, config_enabled_beta
     ):
         from alation_ai_agent_sdk.lineage import (
-            LineageRootNode,
             LineageDirectionType,
             LineageBatchSizeType,
             LineagePagination,
@@ -205,7 +204,8 @@ def register_tools(
 
         @mcp.tool(name=metadata["name"], description=metadata["description"])
         def get_lineage(
-            root_node: LineageRootNode,
+            otype: str,
+            root_node_ids: list[int | str],
             direction: LineageDirectionType,
             limit: int | None = 1000,
             batch_size: LineageBatchSizeType | None = 1000,
@@ -222,7 +222,8 @@ def register_tools(
         ):
             alation_sdk = create_sdk_for_tool()
             result = alation_sdk.lineage_tool.run(
-                root_node=root_node,
+                otype=otype,
+                root_node_ids=root_node_ids,
                 direction=direction,
                 limit=limit,
                 batch_size=batch_size,
