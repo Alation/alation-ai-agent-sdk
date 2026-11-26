@@ -8,7 +8,7 @@ from alation_ai_agent_sdk.lineage import (
     LineageGraphProcessingType,
     LineageOTypeFilterType,
     LineagePagination,
-    LineageRootNode,
+    LineageRootNodeIdsType,
     LineageTimestampType,
 )
 from langchain_core.tools import StructuredTool
@@ -146,7 +146,8 @@ def get_alation_lineage_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
     lineage_tool = sdk.lineage_tool
 
     def run_with_args(
-        root_node: LineageRootNode,
+        otype: str,
+        root_node_ids: LineageRootNodeIdsType,
         direction: LineageDirectionType,
         limit: Optional[int] = 1000,
         batch_size: Optional[LineageBatchSizeType] = 1000,
@@ -161,7 +162,8 @@ def get_alation_lineage_tool(sdk: AlationAIAgentSDK) -> StructuredTool:
         time_to: Optional[LineageTimestampType] = None,
     ):
         return lineage_tool.run(
-            root_node=root_node,
+            otype=otype,
+            root_node_ids=root_node_ids,
             direction=direction,
             limit=limit,
             batch_size=batch_size,
